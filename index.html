@@ -148,8 +148,20 @@ h1 {
   letter-spacing: 0.03em;
   line-height: 1.0;
   color: #fff;
-  text-wrap: balance;
   margin-bottom: 20px;
+}
+@media (max-width:600px) {
+  .hero-content { padding-block: 32px 44px; }
+  .hero-eyebrow { font-size:0.68rem; margin-bottom:12px; }
+  h1 { font-size: 1.95rem; letter-spacing:0.01em; margin-bottom:14px; }
+  .hero-sub { font-size:0.9rem; margin-bottom:20px; max-width:100%; }
+  .hero-ctas { flex-wrap:nowrap; margin-bottom:22px; }
+  .btn-primary { padding:7px 16px; font-size:0.78rem; flex:none; white-space:nowrap; border-radius:100px; }
+  .btn-outline-light { padding:5px 14px; font-size:0.78rem; flex:none; white-space:nowrap; border-radius:100px; border-width:1.5px; }
+  .hero-pills { gap:6px; margin-top:18px; }
+  .hero-pill { font-size:0.73rem; padding:4px 10px; }
+  .hero-badges { gap:12px; margin-top:16px; }
+  .badge-item { font-size:0.78rem; }
 }
 h1 em { font-style:normal; color:var(--orange); }
 h1 .hw { font-style:normal; color:rgba(255,255,255,0.45); transition:color 0.9s ease; }
@@ -820,10 +832,9 @@ footer {
       <p class="hero-sub">From gutter cleaning and pressure washing to fence installation, concrete, and paver patios — fully insured and Google Guaranteed.</p>
       <div class="hero-ctas">
         <a class="btn-primary" href="#pricing">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
           Free Instant Quote
         </a>
-        <a class="btn-outline-light" href="#projects">See Our Projects</a>
+        <a class="btn-outline-light" href="#projects">Our Work</a>
       </div>
       <div class="hero-pills">
         <span class="hero-pill">✓ Gutter Cleaning</span>
