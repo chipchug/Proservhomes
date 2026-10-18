@@ -226,16 +226,6 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
   }
 }
 
-/* ── Pinned header + nav ───────────────────────── */
-.app-hdr{position:fixed!important;top:0!important;left:0!important;right:0!important;z-index:100!important}
-.bnav{position:fixed!important;bottom:0!important;left:0!important;right:0!important;z-index:100!important}
-/* Push content clear of fixed header (~56px) and fixed nav (~64px) */
-.tab-content,.tab-pane,.page-content,[class*="tab-"]{padding-top:56px!important}
-body>*:not(.app-hdr):not(.bnav):not(.sheet):not(.modal):not([class*="overlay"]):not([class*="toast"]){
-  /* fallback: add body padding so first child clears header */
-}
-body{padding-top:56px;padding-bottom:64px}
-
 </style>
 <script>try{var _pt=JSON.parse(localStorage.getItem('ps_theme'));if(_pt)document.documentElement.setAttribute('data-theme',_pt);}catch(e){}</script>
 
