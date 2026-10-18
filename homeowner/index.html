@@ -911,7 +911,7 @@ function updateEstimate(){
   function parseRange(s){
     s=String(s).replace(/[$,\s]/g,'');
     function toNum(v){v=String(v).toLowerCase();return v.endsWith('k')?parseFloat(v)*1000:parseFloat(v)||0;}
-    var parts=s.split('-');
+    var parts=s.split(/[-–]/);
     if(parts.length>=2){return[toNum(parts[0]),toNum(parts[1])];}
     return[toNum(parts[0]),toNum(parts[0])];
   }
