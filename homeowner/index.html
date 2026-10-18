@@ -1089,6 +1089,7 @@ function switchTab(t){
   document.getElementById('nav-'+t).classList.add('on');
   curTab = t;
   closeSheet();
+  if(t==='schedule' && selectedSvc){renderSvcPanel(selectedSvc);}
 }
 
 // ─── INVOICE PDF ────────────────────────────────────────────────────────
