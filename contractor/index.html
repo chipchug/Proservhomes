@@ -382,11 +382,17 @@ var SURL='https://chmicqvorgjqlthufgwt.supabase.co';
 var SKEY='sb_publishable_7W-vHGcu-U60LiTsG_7i5g_7ijIyTOJ';
 var _sb=supabase.createClient(SURL,SKEY);
 
-function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,status:r.status||'New',notes:r.notes||''}}
+function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,status:r.status||'New',notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}}
 function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,status:j.status||'New',notes:j.notes||''}}
 function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,specialty:r.specialty||'',spec:r.specialty||''}}
 
 var SEED_CONTRACTORS=[{id:'c1',name:'Jake R.',phone:'(732) 555-1234',specialty:'General'}];
+var SEED_JOBS=[
+  {id:'j2',client:'Sarah Martinez',phone:'(732) 555-9876',address:'14 Oak Lane, Howell NJ 07731',service:'Paver Patio',date:'2026-09-20',price:5800,contractorId:'c1',contractorPay:2800,status:'Complete',notes:'Front walkway + driveway border pavers, approx 380 sq ft',beforePhoto:null,afterPhoto:null},
+  {id:'j3',client:'Sarah Martinez',phone:'(732) 555-9876',address:'14 Oak Lane, Howell NJ 07731',service:'Gutter Cleaning',date:'2026-05-22',price:149,contractorId:'c1',contractorPay:75,status:'Complete',notes:'Spring cleaning, cleared heavy debris',beforePhoto:null,afterPhoto:null},
+  {id:'j4',client:'Sarah Martinez',phone:'(732) 555-9876',address:'14 Oak Lane, Howell NJ 07731',service:'Dryer Vent Cleaning',date:'2026-03-10',price:129,contractorId:'c1',contractorPay:60,status:'Complete',notes:'Vent completely clogged with 5 years of lint buildup',beforePhoto:null,afterPhoto:null},
+  {id:'j1',client:'Tom Henderson',phone:'(732) 555-4321',address:'22 Birch St, Freehold NJ 07728',service:'Gutter Cleaning',date:'2026-11-05',price:149,contractorId:'c1',contractorPay:75,status:'Scheduled',notes:'Full perimeter cleaning + flush downspouts',beforePhoto:null,afterPhoto:null}
+];
 
 var jobs=[];var contractors=[];
 
@@ -509,7 +515,7 @@ async function enterApp(){
   if(cSess&&!cc){var cr=await _sb.from('contractors').select('*').eq('id',cSess.contractorId).limit(1);if(cr.data&&cr.data.length)cc=cr2l(cr.data[0]);}
   if(cc){
     var jr=await _sb.from('jobs').select('*').eq('contractor_id',cc.id).order('date',{ascending:false});
-    jobs=jr.data?jr.data.map(jr2l):[];
+    jobs=jr.data&&jr.data.length?jr.data.map(jr2l):SEED_JOBS;
     document.getElementById('hInit').textContent=cc.name[0];document.getElementById('hName').textContent=cc.name;
   }
   var now=new Date();document.getElementById('homeDateLine').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
@@ -571,6 +577,16 @@ function openS(id){
   if(j.phone) h+='<a class="sl" href="tel:'+j.phone.replace(/\D/g,'')+'"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.13 1 .37 1.97.71 2.91a2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.94.34 1.91.58 2.91.71A2 2 0 0 1 21.73 16.92z"/></svg> Call</a>';
   h+='</div>';
 
+  // ── Admin before/after preview (read-only) ──
+  if(j.beforePhoto || j.afterPhoto){
+    h+='<div style="margin:14px 0 6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-2)">Before / After</div>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">';
+    if(j.beforePhoto) h+='<div style="position:relative;cursor:pointer" onclick="_ctxViewPhoto(\''+j.beforePhoto+'\')">'+'<img src="'+j.beforePhoto+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px">'+'<div style="position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.06em">BEFORE</div></div>';
+    else h+='<div style="aspect-ratio:4/3;background:var(--surface-2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--fg-2)">No Before</div>';
+    if(j.afterPhoto) h+='<div style="position:relative;cursor:pointer" onclick="_ctxViewPhoto(\''+j.afterPhoto+'\')">'+'<img src="'+j.afterPhoto+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px">'+'<div style="position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.06em">AFTER</div></div>';
+    else h+='<div style="aspect-ratio:4/3;background:var(--surface-2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--fg-2)">No After</div>';
+    h+='</div>';
+  }
   // ── Photo upload sections ──
   h+='<div class="ph-section">';
   h+='<div class="ph-sec-lbl">📷 Before Photos</div>';
@@ -722,4 +738,14 @@ if(cSess){enterApp()}
   document.documentElement.setAttribute('data-theme',_t);
   _updateThemeBtn(_t);
 })();
+
+function _ctxViewPhoto(src){
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:16px';
+  ov.innerHTML='<button style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer" onclick="this.parentNode.remove()">&#x2715;</button>'
+    +'<img src="'+src+'" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:12px">';
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
+}
+
 </script>

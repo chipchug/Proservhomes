@@ -407,7 +407,11 @@ textarea{resize:vertical;min-height:80px}
           <div class="bs-tile"><div class="bs-val" id="bsProfit" style="color:var(--fg)">$0</div><div class="bs-lbl">Net</div></div>
         </div>
         <div class="books-table" id="booksTable"></div>
-        <div style="padding:20px 16px 0"><button class="bf bfg2" onclick="doLogout()">Sign Out</button></div>
+        <div style="padding:14px 16px 0;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="mbtn" style="background:var(--surface-2);border:1px solid var(--border);font-size:13px" onclick="printStatement(document.getElementById('booksMonth').value,null)">📄 All Jobs PDF</button>
+          <button class="mbtn" style="background:var(--surface-2);border:1px solid var(--border);font-size:13px" onclick="openContractorStatementPicker()">👷 By Contractor</button>
+        </div>
+        <div style="padding:14px 16px 0"><button class="bf bfg2" onclick="doLogout()">Sign Out</button></div>
       </div>
 
     </div>
@@ -663,7 +667,7 @@ function renderDashboard(){
   var fuEl=document.getElementById('fuTile');
   if(!fuJobs.length){fuEl.innerHTML='<div class="fu-hd"><span class="fu-eye">Follow-Up Queue</span><div class="fu-dot" style="background:var(--green)"></div></div><div style="font-size:13px;color:var(--fg-3)">All caught up — no follow-ups needed</div>';return}
   var h2='<div class="fu-hd"><span class="fu-eye">Follow-Up Queue</span><div class="fu-dot"></div></div><div class="fu-items">';
-  fuJobs.slice(0,3).forEach(function(j){var cfg=svcCfg(j.service);h2+='<div class="fu-item"><div class="fu-ico" style="background:'+cfg.bg+'">'+cfg.icon+'</div><div class="fu-client"><div class="fu-name">'+esc(j.client)+'</div><div class="fu-reason">'+esc(j.service)+' · '+fmtDate(j.date)+'</div></div><button class="fu-act" onclick="openJobDetail(\''+j.id+'\')">Review</button></div>'});
+  fuJobs.slice(0,3).forEach(function(j){var cfg=svcCfg(j.service);h2+='<div class="fu-item"><div class="fu-ico" style="background:'+cfg.bg+';overflow:hidden;padding:0">'+(cfg.img?'<img src="'+cfg.img+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px">':cfg.icon)+'</div><div class="fu-client"><div class="fu-name">'+esc(j.client)+'</div><div class="fu-reason">'+esc(j.service)+' · '+fmtDate(j.date)+'</div></div><button class="fu-act" onclick="openJobDetail(\''+j.id+'\')">Review</button></div>'});
   h2+='</div>';fuEl.innerHTML=h2;
   // recent jobs
   var recent=jobs.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date)}).slice(0,5);
@@ -686,7 +690,7 @@ function setPipFilter(s){_filterSt=s;renderJobsTable()}
 function jrow(j){
   var cfg=svcCfg(j.service);
   var dstr=j.date?new Date(j.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'—';
-  return'<div class="jr" onclick="openJobDetail(\''+j.id+'\')"><div class="jr-thumb" style="background:'+cfg.bg+'">'+cfg.icon+'</div><div class="jr-body"><div class="jr-svc">'+esc(j.service)+'</div><div class="jr-client">'+esc(j.client)+'</div><div class="jr-meta"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+dstr+'</div><div class="jr-bot"><div class="jr-price" style="color:'+(Number(j.price)>0?'var(--green)':'var(--fg-3)')+'">'+( Number(j.price)>0?'$'+Number(j.price).toLocaleString():'Free')+'</div>'+statusBadge(j.status)+'</div></div><div class="jr-chev"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>'
+  return'<div class="jr" onclick="openJobDetail(\''+j.id+'\')"><div class="jr-thumb" style="background:'+cfg.bg+';overflow:hidden;padding:0">'+(cfg.img?'<img src="'+cfg.img+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px">':cfg.icon)+'</div><div class="jr-body"><div class="jr-svc">'+esc(j.service)+'</div><div class="jr-client">'+esc(j.client)+'</div><div class="jr-meta"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+dstr+'</div><div class="jr-bot"><div class="jr-price" style="color:'+(Number(j.price)>0?'var(--green)':'var(--fg-3)')+'">'+( Number(j.price)>0?'$'+Number(j.price).toLocaleString():'Free')+'</div>'+statusBadge(j.status)+'</div></div><div class="jr-chev"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>'
 }
 
 function openJobDetail(id){
@@ -699,9 +703,17 @@ function openJobDetail(id){
   h+='<div class="det-grid"><div class="det-f"><div class="det-l">Address</div><div class="det-v"><a href="'+mu+'" target="_blank" style="color:var(--blue);text-decoration:none">'+esc(j.address)+'</a></div></div><div class="det-f"><div class="det-l">Contractor</div><div class="det-v">'+(c?esc(c.name):'Unassigned')+'</div></div></div>';
   h+='<div class="det-grid"><div class="det-f"><div class="det-l">Job Price</div><div class="det-price">$'+Number(j.price||0).toLocaleString()+'</div></div><div class="det-f"><div class="det-l">Contractor Pay</div><div class="det-v" style="font-size:22px;font-weight:700;color:var(--orange)">$'+Number(j.contractorPay||0).toLocaleString()+'</div></div></div>';
   if(j.notes)h+='<div class="det-l" style="margin-bottom:5px">Notes</div><div class="det-note">'+esc(j.notes)+'</div>';
+  h+='<div class="det-l" style="margin:14px 0 6px">Before / After Photos</div>';
+  h+='<div class="photo-grid">';
+  h+='<div class="photo-slot">'+(j.beforePhoto?'<img src="'+j.beforePhoto+'" onclick="viewPhoto(\''+id+'\',\'before\')"><span class="photo-lbl">Before</span><button class="photo-repick" onclick="event.stopPropagation();uploadPhoto(\''+id+'\',\'before\')">Replace</button>':'<button class="photo-add" onclick="uploadPhoto(\''+id+'\',\'before\')">\u{1F4F7} Before</button>')+'</div>';
+  h+='<div class="photo-slot">'+(j.afterPhoto?'<img src="'+j.afterPhoto+'" onclick="viewPhoto(\''+id+'\',\'after\')"><span class="photo-lbl">After</span><button class="photo-repick" onclick="event.stopPropagation();uploadPhoto(\''+id+'\',\'after\')">Replace</button>':'<button class="photo-add" onclick="uploadPhoto(\''+id+'\',\'after\')">\u{1F4F7} After</button>')+'</div>';
+  h+='</div>';
   h+='<div class="det-l" style="margin-bottom:6px">Update Status</div>';
   h+='<div class="status-btns">'+STATUSES.map(function(s){return'<button class="st-btn'+(j.status===s?' current':'')+'" onclick="updateStatus(\''+id+'\',\''+s+'\')">'+s+'</button>'}).join('')+'</div>';
-  h+='<button class="mbtn mbtn-primary" style="width:100%;margin-top:12px;margin-bottom:8px" onclick="openEditJob(\''+id+'\')">Edit Job</button>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;margin-bottom:8px">';
+  h+='<button class="mbtn mbtn-primary" onclick="openEditJob(\''+id+'\')">Edit Job</button>';
+  h+='<button class="mbtn" style="background:var(--surface-2);border:1px solid var(--border)" onclick="printInvoice(\''+id+'\')">📄 Invoice</button>';
+  h+='</div>';
   document.getElementById('detContent').innerHTML=h;document.getElementById('detModal').classList.remove('hidden')
 }
 async function updateStatus(id,st){var i=jobs.findIndex(function(x){return x.id===id});if(i<0)return;jobs[i].status=st;await _sb.from('jobs').update({status:st}).eq('id',id);renderDashboard();renderJobsTable();renderBooks();closeModal('detModal');showToast('Status: '+st)}
@@ -721,7 +733,7 @@ async function saveContractor(){var name=document.getElementById('ctName').value
 async function deleteContractor(){var id=document.getElementById('ctEditId').value;if(!id)return;contractors=contractors.filter(function(c){return c.id!==id});await _sb.from('contractors').delete().eq('id',id);populateContractorSelect();renderContractors();closeModal('ctModal');showToast('Contractor removed')}
 
 function populateBooksMonths(){var months={};jobs.forEach(function(j){if(j.date){var d=new Date(j.date+'T12:00:00');var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(!months[k]){var lbl=d.toLocaleDateString('en-US',{month:'long',year:'numeric'});months[k]=lbl}}});var sel=document.getElementById('booksMonth');var now=new Date();var ck=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');if(!months[ck])months[ck]=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});sel.innerHTML=Object.keys(months).sort().reverse().map(function(k){return'<option value="'+k+'"'+(k===ck?' selected':'')+'>'+months[k]+'</option>'}).join('')}
-function renderBooks(){var v=document.getElementById('booksMonth').value;if(!v)return;var parts=v.split('-');var yr=parseInt(parts[0]);var mn=parseInt(parts[1])-1;var flt=jobs.filter(function(j){if(!j.date)return false;var d=new Date(j.date+'T12:00:00');return d.getFullYear()===yr&&d.getMonth()===mn});var rev=flt.reduce(function(s,j){return s+Number(j.price||0)},0);var cost=flt.reduce(function(s,j){return s+Number(j.contractorPay||0)},0);var profit=rev-cost;document.getElementById('bsRev').textContent='$'+rev.toLocaleString();document.getElementById('bsCost').textContent='$'+cost.toLocaleString();document.getElementById('bsProfit').textContent='$'+profit.toLocaleString();var el=document.getElementById('booksTable');if(!flt.length){el.innerHTML='<div style="padding:32px;text-align:center;color:var(--fg-3)">No jobs this month</div>';return}flt=flt.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date)});el.innerHTML=flt.map(function(j){var cfg=svcCfg(j.service);return'<div class="bt-row" onclick="openJobDetail(\''+j.id+'\')"><div class="bt-thumb" style="background:'+cfg.bg+'">'+cfg.icon+'</div><div class="bt-body"><div class="bt-svc">'+esc(j.service)+'</div><div class="bt-client">'+esc(j.client)+' · '+fmtDate(j.date)+'</div></div><div class="bt-right"><div class="bt-price" style="color:'+(Number(j.price)>0?'var(--green)':'var(--fg-3))')+'">$'+Number(j.price).toLocaleString()+'</div><div class="bt-pay">$'+Number(j.contractorPay||0).toLocaleString()+' paid</div></div></div>'}).join('')}
+function renderBooks(){var v=document.getElementById('booksMonth').value;if(!v)return;var parts=v.split('-');var yr=parseInt(parts[0]);var mn=parseInt(parts[1])-1;var flt=jobs.filter(function(j){if(!j.date)return false;var d=new Date(j.date+'T12:00:00');return d.getFullYear()===yr&&d.getMonth()===mn});var rev=flt.reduce(function(s,j){return s+Number(j.price||0)},0);var cost=flt.reduce(function(s,j){return s+Number(j.contractorPay||0)},0);var profit=rev-cost;document.getElementById('bsRev').textContent='$'+rev.toLocaleString();document.getElementById('bsCost').textContent='$'+cost.toLocaleString();document.getElementById('bsProfit').textContent='$'+profit.toLocaleString();var el=document.getElementById('booksTable');if(!flt.length){el.innerHTML='<div style="padding:32px;text-align:center;color:var(--fg-3)">No jobs this month</div>';return}flt=flt.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date)});el.innerHTML=flt.map(function(j){var cfg=svcCfg(j.service);return'<div class="bt-row" onclick="openJobDetail(\''+j.id+'\')"><div class="bt-thumb" style="background:'+cfg.bg+';overflow:hidden;padding:0">'+(cfg.img?'<img src="'+cfg.img+'" style="width:100%;height:100%;object-fit:cover;border-radius:9px">':cfg.icon)+'</div><div class="bt-body"><div class="bt-svc">'+esc(j.service)+'</div><div class="bt-client">'+esc(j.client)+' · '+fmtDate(j.date)+'</div></div><div class="bt-right"><div class="bt-price" style="color:'+(Number(j.price)>0?'var(--green)':'var(--fg-3))')+'">$'+Number(j.price).toLocaleString()+'</div><div class="bt-pay">$'+Number(j.contractorPay||0).toLocaleString()+' paid</div></div></div>'}).join('')}
 
 function statusBadge(s){var mp={'New':'badge-new','Scheduled':'badge-sched','In Progress':'badge-prog','Complete':'badge-done','Invoiced':'badge-inv'};return'<span class="badge '+(mp[s]||'badge-inv')+'">'+s+'</span>'}
 function fmtDate(s){if(!s)return'—';var d=new Date(s+'T12:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
@@ -737,4 +749,199 @@ if(session)enterApp()
   document.documentElement.setAttribute('data-theme',_t);
   _updateThemeBtn(_t);
 })();
+
+function uploadPhoto(jobId,type){
+  var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=function(){
+    var file=inp.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=async function(e){
+      var b64=e.target.result;
+      var i=jobs.findIndex(function(x){return x.id===jobId});if(i<0)return;
+      if(type==='before')jobs[i].beforePhoto=b64;else jobs[i].afterPhoto=b64;
+      var upd={};upd[type==='before'?'before_photo':'after_photo']=b64;
+      await _sb.from('jobs').update(upd).eq('id',jobId);
+      openJobDetail(jobId);showToast((type==='before'?'Before':'After')+' photo saved \u2713');
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+function viewPhoto(jobId,type){
+  var j=jobs.find(function(x){return x.id===jobId});if(!j)return;
+  var src=type==='before'?j.beforePhoto:j.afterPhoto;if(!src)return;
+  var ov=document.createElement('div');ov.className='photo-viewer';
+  ov.innerHTML='<button class="photo-viewer-close" onclick="this.parentNode.remove()">\u2715</button><img src="'+src+'" alt="'+type+' photo"><div style="color:rgba(255,255,255,.6);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:12px">'+type+' photo</div>';
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
+}
+
+function printInvoice(id){
+  var j=jobs.find(function(x){return x.id===id});if(!j)return;
+  var c=contractors.find(function(x){return x.id===j.contractorId});
+  var doc=new jspdf.jsPDF({unit:'pt',format:'letter'});
+  var W=612,mg=56,y=mg;
+  // Green header bar
+  doc.setFillColor(31,155,42);doc.rect(0,0,W,6,'F');
+  // Try to add logo from page
+  try{
+    var logoEl=document.querySelector('.lbrand img');
+    if(logoEl&&logoEl.src){doc.addImage(logoEl.src,'PNG',mg,y+8,120,36);}
+    else{throw 'no logo';}
+  }catch(e){
+    doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(31,155,42);
+    doc.text('ProServ Homes',mg,y+28);
+  }
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(120,120,120);
+  doc.text('proservhomes.co',mg,y+54);
+  // Invoice label
+  doc.setFont('helvetica','bold');doc.setFontSize(28);doc.setTextColor(31,155,42);
+  doc.text('INVOICE',W-mg,y+30,{align:'right'});
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(120,120,120);
+  var invNum='INV-'+j.id.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(-8);
+  doc.text(invNum,W-mg,y+44,{align:'right'});
+  y+=76;
+  doc.setDrawColor(220,220,220);doc.line(mg,y,W-mg,y);y+=18;
+  // Bill-to + job info columns
+  doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(120,120,120);
+  doc.text('BILL TO',mg,y);doc.text('JOB DETAILS',W/2,y);
+  y+=14;
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(20,20,20);
+  doc.text(j.client||'\u2014',mg,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(60,60,60);
+  if(j.phone)doc.text(j.phone,mg,y+14);
+  if(j.address)doc.text(j.address,mg,y+26);
+  var rd=j.date?new Date(j.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'}):'—';
+  doc.text('Service: '+j.service,W/2,y);
+  doc.text('Date: '+rd,W/2,y+14);
+  doc.text('Contractor: '+(c?c.name:'\u2014'),W/2,y+26);
+  doc.text('Status: '+j.status,W/2,y+38);
+  y+=62;
+  doc.setDrawColor(220,220,220);doc.line(mg,y,W-mg,y);y+=18;
+  // Table header
+  doc.setFillColor(245,247,245);doc.rect(mg,y-4,W-mg*2,20,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(80,80,80);
+  doc.text('Description',mg+6,y+10);doc.text('Amount',W-mg-6,y+10,{align:'right'});
+  y+=24;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(20,20,20);
+  doc.text(j.service+(j.notes?' \u2014 '+j.notes:''),mg+6,y+10);
+  doc.text('$'+Number(j.price||0).toLocaleString(),W-mg-6,y+10,{align:'right'});
+  y+=28;
+  doc.setDrawColor(220,220,220);doc.line(mg,y,W-mg,y);y+=14;
+  // Total
+  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(20,20,20);
+  doc.text('Total',mg+6,y+12);
+  doc.setFontSize(14);doc.setTextColor(31,155,42);
+  doc.text('$'+Number(j.price||0).toLocaleString(),W-mg-6,y+12,{align:'right'});
+  y+=44;
+  // Before/After photos
+  if(j.beforePhoto||j.afterPhoto){
+    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(120,120,120);
+    doc.text('BEFORE / AFTER',mg,y);y+=14;
+    var imgW=(W-mg*2-12)/2,imgH=130;
+    if(j.beforePhoto){try{doc.addImage(j.beforePhoto,'JPEG',mg,y,imgW,imgH);}catch(e){}
+      doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(80,80,80);
+      doc.text('BEFORE',mg+4,y+imgH-4);}
+    if(j.afterPhoto){try{doc.addImage(j.afterPhoto,'JPEG',mg+imgW+12,y,imgW,imgH);}catch(e){}
+      doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(80,80,80);
+      doc.text('AFTER',mg+imgW+16,y+imgH-4);}
+    y+=imgH+20;
+  }
+  // Footer
+  doc.setDrawColor(220,220,220);doc.line(mg,y,W-mg,y);y+=12;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150,150,150);
+  doc.text('Thank you for your business! \u00b7 proservhomes.co \u00b7 Ocean & Monmouth County, NJ',W/2,y,{align:'center'});
+  var slug=(j.client||'job').replace(/\s+/g,'-').toLowerCase()+'-'+(j.date||'');
+  doc.save('invoice-'+slug+'.pdf');
+}
+
+function printStatement(month,contractorId){
+  if(!month)return;
+  var parts=month.split('-'),yr=parseInt(parts[0]),mn=parseInt(parts[1])-1;
+  var label=new Date(yr,mn,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  var flt=jobs.filter(function(j){
+    if(!j.date)return false;
+    var d=new Date(j.date+'T12:00:00');
+    if(d.getFullYear()!==yr||d.getMonth()!==mn)return false;
+    if(contractorId)return j.contractorId===contractorId;
+    return true;
+  }).slice().sort(function(a,b){return new Date(a.date)-new Date(b.date)});
+  if(!flt.length){showToast('No jobs for this period');return;}
+  var ctxName=contractorId?(contractors.find(function(x){return x.id===contractorId})||{}).name||'Contractor':'All Contractors';
+  var doc=new jspdf.jsPDF({unit:'pt',format:'letter'});
+  var W=612,mg=48,y=mg;
+  doc.setFillColor(31,155,42);doc.rect(0,0,W,6,'F');
+  try{
+    var logoEl=document.querySelector('.lbrand img');
+    if(logoEl&&logoEl.src){doc.addImage(logoEl.src,'PNG',mg,y+6,100,30);}
+    else{throw 'no logo';}
+  }catch(e){
+    doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(31,155,42);
+    doc.text('ProServ Homes',mg,y+26);
+  }
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(120,120,120);
+  doc.text('proservhomes.co',mg,y+46);
+  doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(31,155,42);
+  doc.text('JOB STATEMENT',W-mg,y+22,{align:'right'});
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(80,80,80);
+  doc.text(label,W-mg,y+36,{align:'right'});
+  doc.text(ctxName,W-mg,y+50,{align:'right'});
+  y+=68;doc.setDrawColor(220,220,220);doc.line(mg,y,W-mg,y);y+=14;
+  var rev=flt.reduce(function(s,j){return s+Number(j.price||0)},0);
+  var cost=flt.reduce(function(s,j){return s+Number(j.contractorPay||0)},0);
+  var net=rev-cost;
+  var smry=[['Jobs',String(flt.length)],['Revenue','$'+rev.toLocaleString()],['Paid Out','$'+cost.toLocaleString()],['Net','$'+net.toLocaleString()]];
+  var cw=(W-mg*2)/4;
+  smry.forEach(function(col,i){
+    var cx=mg+i*cw+cw/2;
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20,20,20);
+    doc.text(col[1],cx,y+16,{align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(120,120,120);
+    doc.text(col[0],cx,y+28,{align:'center'});
+  });
+  y+=44;doc.setDrawColor(220,220,220);doc.line(mg,y,W-mg,y);y+=14;
+  doc.setFillColor(245,247,245);doc.rect(mg,y-4,W-mg*2,18,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(80,80,80);
+  var hdrs=['Date','Client','Service','Contractor','Price','Status'];
+  var cws=[60,100,110,100,56,60];
+  var hx=mg+4;hdrs.forEach(function(h,i){doc.text(h,hx,y+10);hx+=cws[i];});
+  y+=20;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);
+  flt.forEach(function(j,idx){
+    if(y>720){doc.addPage();y=mg;}
+    if(idx%2===0){doc.setFillColor(252,252,252);doc.rect(mg,y-3,W-mg*2,16,'F');}
+    doc.setTextColor(40,40,40);
+    var ctr=contractors.find(function(x){return x.id===j.contractorId});
+    var rd=j.date?new Date(j.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'—';
+    var row=[rd,j.client||'',j.service||'',(ctr?ctr.name:'—'),'$'+Number(j.price||0).toLocaleString(),j.status||''];
+    var rx=mg+4;
+    row.forEach(function(v,i){doc.text(doc.splitTextToSize(v,cws[i]-4)[0]||'',rx,y+10);rx+=cws[i];});
+    y+=16;
+  });
+  y+=8;doc.setDrawColor(220,220,220);doc.line(mg,y,W-mg,y);y+=12;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150,150,150);
+  doc.text('ProServHomes.co \u00b7 Generated '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),W/2,y,{align:'center'});
+  var slug=label.replace(/\s+/g,'-').toLowerCase()+'-'+(contractorId?ctxName.replace(/\s+/g,'-').toLowerCase():'all');
+  doc.save('statement-'+slug+'.pdf');
+}
+
+function openContractorStatementPicker(){
+  var month=document.getElementById('booksMonth').value;
+  if(!contractors.length){showToast('No contractors');return;}
+  var parts=month.split('-'),yr=parseInt(parts[0]),mn=parseInt(parts[1])-1;
+  var active=contractors.filter(function(c){
+    return jobs.some(function(j){
+      if(!j.date)return false;
+      var d=new Date(j.date+'T12:00:00');
+      return d.getFullYear()===yr&&d.getMonth()===mn&&j.contractorId===c.id;
+    });
+  });
+  if(!active.length){showToast('No contractor jobs this month');return;}
+  var existing=document.getElementById('ctxPickModal');if(existing)existing.remove();
+  var ov=document.createElement('div');ov.className='overlay';ov.id='ctxPickModal';
+  ov.innerHTML='<div class="modal-box" style="max-width:340px"><div class="modal-hd"><div class="modal-title">Select Contractor</div><button class="modal-close" onclick="closeModal(\'ctxPickModal\')">&#x2715;</button></div><div style="padding:16px">'+active.map(function(c){return'<button class="mbtn" style="background:var(--surface-2);border:1px solid var(--border);width:100%;margin-bottom:8px;text-align:left" onclick="printStatement(\''+month+'\',\''+c.id+'\');closeModal(\'ctxPickModal\')">'+esc(c.name)+'</button>';}).join('')+'</div></div>';
+  document.body.appendChild(ov);ov.classList.remove('hidden');
+}
+
 </script>

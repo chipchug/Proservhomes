@@ -545,7 +545,7 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 <script>
 var SURL='https://chmicqvorgjqlthufgwt.supabase.co';
 var SKEY='sb_publishable_7W-vHGcu-U60LiTsG_7i5g_7ijIyTOJ';
-var _sb=null; // DB client disabled in demo mode
+var _sb=supabase.createClient(SURL,SKEY);
 // ── Stripe Payment Links — replace each URL after creating links in your Stripe dashboard ──
 var STRIPE_LINKS = {
   'Gutter Cleaning':     'https://buy.stripe.com/REPLACE_GUTTER',
@@ -554,20 +554,20 @@ var STRIPE_LINKS = {
   'Window Cleaning':     'https://buy.stripe.com/REPLACE_WINDOWS',
   'Christmas Lights':    'https://buy.stripe.com/REPLACE_LIGHTS',
 };
-function jr2l(r){return{id:r.id,svc:r.service||r.svc,date:r.date,time:r.time||'',addr:r.address||r.addr,price:Number(r.price)||0,status:r.status||'Scheduled',tech:r.tech||'ProServ Crew',notes:r.notes||''}}
+function jr2l(r){return{id:r.id,svc:r.service||r.svc,date:r.date,time:r.time||'',addr:r.address||r.addr,price:Number(r.price)||0,status:r.status||'Scheduled',tech:r.tech||'ProServ Crew',notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}}
 var _homePhone='';
 
 
 // ─── DATA ───────────────────────────────────────────────────────────────
 var JOBS = [
   {id:'j1',svc:'Gutter Cleaning',date:'2026-11-05',time:'Morning (8am–12pm)',addr:'14 Oak Lane, Howell NJ 07731',price:149,status:'Scheduled',tech:'Jake R.',notes:'Full perimeter cleaning + flush downspouts'},
-  {id:'j2',svc:'Pressure Washing',date:'2026-09-14',time:'Afternoon',addr:'14 Oak Lane, Howell NJ 07731',price:275,status:'Complete',tech:'Marcus T.',notes:'Driveway & front walkway'},
-  {id:'j3',svc:'Gutter Cleaning',date:'2026-05-22',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:149,status:'Complete',tech:'Jake R.',notes:'Spring cleaning, cleared heavy debris'},
-  {id:'j4',svc:'Dryer Vent Cleaning',date:'2026-03-10',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:89,status:'Complete',tech:'Marcus T.',notes:'Full duct cleared, ~8ft vent'},
-  {id:'j5',svc:'Window Cleaning',date:'2025-11-18',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:220,status:'Complete',tech:'Jake R.',notes:'12 windows exterior + 6 interior'},
+  {id:'j2',svc:'Paver Patio',date:'2026-09-20',time:'Full Day',addr:'14 Oak Lane, Howell NJ 07731',price:5800,status:'Complete',tech:'Marcus T.',notes:'Front walkway + driveway border pavers, approx 380 sq ft',beforePhoto:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1591382386627-349b692688ff?w=600&q=80'},
+  {id:'j3',svc:'Gutter Cleaning',date:'2026-05-22',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:149,status:'Complete',tech:'Jake R.',notes:'Spring cleaning, cleared heavy debris',beforePhoto:'https://images.unsplash.com/photo-1604079628040-94301bb21b91?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1601972599720-36938d4ecd31?w=600&q=80'},
+  {id:'j4',svc:'Dryer Vent Cleaning',date:'2026-03-10',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:129,status:'Complete',tech:'Jake R.',notes:'Vent completely clogged with 5 years of lint buildup',beforePhoto:'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=600&q=80'},
+  {id:'j5',svc:'Window Cleaning',date:'2025-11-18',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:220,status:'Complete',tech:'Jake R.',notes:'12 windows exterior + 6 interior',beforePhoto:'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1527515637462-cff94edd49bb?w=600&q=80'},
   {id:'j6',svc:'Christmas Lights',date:'2025-11-25',time:'Afternoon',addr:'14 Oak Lane, Howell NJ 07731',price:199,status:'Complete',tech:'Jake R.',notes:'Roofline + bushes, client supplied lights'},
   {id:'j7',svc:'Gutter Cleaning',date:'2025-09-08',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:149,status:'Complete',tech:'Jake R.',notes:'Fall prep cleaning'},
-  {id:'j8',svc:'Pressure Washing',date:'2025-05-14',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:275,status:'Complete',tech:'Marcus T.',notes:'Full driveway + patio'}
+  {id:'j8',svc:'Pressure Washing',date:'2025-05-14',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:275,status:'Complete',tech:'Marcus T.',notes:'Full driveway + patio',beforePhoto:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1591382386627-349b692688ff?w=600&q=80'}
 ];
 
 var USER = {name:'Sarah Martinez',first:'Sarah',phone:'(732) 555-0177',addr:'14 Oak Lane, Howell NJ 07731',init:'S'};
@@ -591,7 +591,7 @@ async function verifyOtp(){
   document.getElementById('appShell').classList.remove('hidden');
   // Load real jobs by homeowner_phone from Supabase
   if(_homePhone&&_sb){
-    var jr=await _sb.from('jobs').select('*').eq('homeowner_phone',_homePhone).order('date',{ascending:false});
+    var jr=await _sb.from('jobs').select('*').eq('phone',_homePhone).order('date',{ascending:false});
     if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
     // Load homeowner profile
     var hr=await _sb.from('homeowners').select('*').eq('phone',_homePhone).limit(1);
@@ -884,14 +884,26 @@ function updateEstimate(){
   if(!d){bar.style.display='none';return;}
   var tier = d.tiers.find(function(t){return t.name===selectedTier;});
   var basePrice = tier ? tier.price : '';
-  // Build addons string
-  var addonParts = [];
+  if(!basePrice){num.textContent='—';bar.style.display='none';return;}
+  // Parse a price string like "5k-9k", "1500-3k", "$149", "150-250" → [min, max]
+  function parseRange(s){
+    s=String(s).replace(/[$,\s]/g,'');
+    function toNum(v){v=String(v).toLowerCase();return v.endsWith('k')?parseFloat(v)*1000:parseFloat(v)||0;}
+    var parts=s.split('-');
+    if(parts.length>=2){return[toNum(parts[0]),toNum(parts[1])];}
+    return[toNum(parts[0]),toNum(parts[0])];
+  }
+  function fmtNum(n){
+    if(n>=1000&&n%1000===0)return(n/1000)+'k';
+    if(n>=1000)return'$'+Math.round(n).toLocaleString();
+    return'$'+Math.round(n);
+  }
+  var base=parseRange(basePrice);
+  var lo=base[0],hi=base[1];
   selectedAddons.forEach(function(i){
-    if(d.addons && d.addons[i]) addonParts.push(d.addons[i].price);
+    if(d.addons&&d.addons[i]){var r=parseRange(d.addons[i].price);lo+=r[0];hi+=r[1];}
   });
-  var displayPrice = basePrice;
-  if(addonParts.length){displayPrice += ' + ' + addonParts.join(' + ');}
-  num.textContent = displayPrice || '—';
+  num.textContent = lo===hi ? fmtNum(lo) : fmtNum(lo)+'–'+fmtNum(hi);
   bar.style.display = 'block';
 }
 
@@ -989,11 +1001,17 @@ function openSheet(id){
   var pill = j.status==='Scheduled'?'<span class="pill pill-sched">Scheduled</span>':'<span class="pill pill-done">Complete</span>';
   var photosHtml = '';
   var photos = j.photos || [];
+  if(j.beforePhoto && !photos.some(function(p){return p.label==='Before';})){
+    photos = [{url:j.beforePhoto,label:'Before'}].concat(photos);
+  }
+  if(j.afterPhoto && !photos.some(function(p){return p.label==='After';})){
+    photos = photos.concat([{url:j.afterPhoto,label:'After'}]);
+  }
   if(photos.length > 0){
     photosHtml = '<div style="margin:16px 0 0"><div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-2);margin-bottom:10px">Job Photos</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
     photos.forEach(function(p){
-      photosHtml += '<div style="position:relative"><img src="'+p.url+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px" loading="lazy">'
+      photosHtml += '<div style="position:relative;cursor:pointer" onclick="_hwViewPhoto(\''+p.url+'\')">' + '<img src="'+p.url+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px" loading="lazy">'
         +(p.label?'<div style="position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px">'+p.label+'</div>':'')+'</div>';
     });
     photosHtml += '</div></div>';
@@ -1259,4 +1277,14 @@ function _hwPickDate(iso){
   _updateThemeBtn(_t);
   // init calendar
   setTimeout(function(){_hwRenderCal();}, 100);
+
+function _hwViewPhoto(src){
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:16px';
+  ov.innerHTML='<button style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer" onclick="this.parentNode.remove()">&#x2715;</button>'
+    +'<img src="'+src+'" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:12px">';
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
+}
+
 </script>
