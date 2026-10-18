@@ -1032,8 +1032,7 @@ function openSheet(id){
     photosHtml = '<div style="margin:16px 0 0"><div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-2);margin-bottom:10px">Job Photos</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
     photos.forEach(function(p){
-      photosHtml += '<div class="photo-slot" onclick="_hwViewPhoto('"+p.url+"','"+p.label+"')">'  + '<img src="'+p.url+'" loading="lazy">'
-        +(p.label?'<div class="photo-lbl">'+p.label+'</div>':'')+'</div>';
+      photosHtml += '<div class="photo-slot" onclick="_hwViewPhoto(\''+p.url+'\',\''+p.label+'\')">' + '<img src="'+p.url+'" loading="lazy">' + (p.label?'<div class="photo-lbl">'+p.label+'</div>':'')+'</div>';
     });
     photosHtml += '</div></div>';
   }
