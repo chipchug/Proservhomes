@@ -1089,7 +1089,15 @@ function switchTab(t){
   document.getElementById('nav-'+t).classList.add('on');
   curTab = t;
   closeSheet();
-  if(t==='schedule' && selectedSvc){renderSvcPanel(selectedSvc);}
+  if(t==='schedule'){
+    var svc = selectedSvc || 'Gutter Cleaning';
+    selectedSvc = svc;
+    renderSvcPanel(svc);
+    // Also make sure the correct tab is highlighted
+    document.querySelectorAll('.svc-tab').forEach(function(el){
+      el.classList.toggle('on', el.getAttribute('onclick').indexOf("'"+svc+"'") >= 0);
+    });
+  }
 }
 
 // ─── INVOICE PDF ────────────────────────────────────────────────────────
