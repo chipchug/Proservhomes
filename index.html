@@ -105,6 +105,14 @@ nav {
   text-decoration: none; transition: background 0.15s; white-space:nowrap;
 }
 .nav-cta:hover { background: var(--orange-hi); }
+.nav-login {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--green); color: #fff;
+  font-weight: 700; font-size: 0.92rem;
+  padding: 10px 16px; border-radius: var(--radius);
+  text-decoration: none; transition: background 0.15s; white-space:nowrap;
+}
+.nav-login:hover { background: var(--green-hi); }
 
 /* HERO */
 .hero {
@@ -811,6 +819,10 @@ footer {
         <a class="nav-cta" href="tel:7323858683">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M1.5 4.5a3 3 0 013-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 01-.694 1.955l-1.293.97c-.135.101-.164.249-.1.37a7.008 7.008 0 006.449 6.449c.121.064.269.035.37-.1l.97-1.293a1.875 1.875 0 011.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 01-3 3h-.75C8.322 22.5 1.5 15.678 1.5 7.5V6.75z"/></svg>
           (732) 385-8683
+        </a>
+        <a class="nav-login" href="login.html">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          Login
         </a>
       </div>
     </div>
