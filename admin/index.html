@@ -1,3 +1,4 @@
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ProServ Homes · Admin</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,900;1,900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -52,7 +53,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--fg);font-
 .lbox p{font-size:13px;color:var(--fg-2);margin-bottom:22px}
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
 label{font-size:11px;font-weight:700;color:var(--fg-2);letter-spacing:.06em;text-transform:uppercase}
-input,select,textarea{font-family:'DM Sans',sans-serif;font-size:15px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:11px;padding:12px 14px;width:100%;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none}
+input,select,textarea{font-family:'DM Sans',sans-serif;font-size:16px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:11px;padding:12px 14px;width:100%;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none}
 input:focus,select:focus,textarea:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 textarea{resize:vertical;min-height:80px}
 .bf{width:100%;padding:14px;border-radius:11px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:opacity .15s,transform .1s}
@@ -143,7 +144,7 @@ textarea{resize:vertical;min-height:80px}
 .jobs-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;flex:1}
 .search-wrap{padding:0 16px 12px}
 .search-inp{position:relative}
-.search-inp input{padding-left:38px;font-size:14px}
+.search-inp input{padding-left:38px;font-size:16px}
 .search-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--fg-3);pointer-events:none}
 .pipeline{display:flex;padding:0 16px 14px;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .pipeline::-webkit-scrollbar{display:none}
@@ -216,6 +217,40 @@ textarea{resize:vertical;min-height:80px}
 /* TOAST */
 #toast{position:fixed;bottom:max(90px,calc(env(safe-area-inset-bottom,0px)+82px));left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-3);border:1px solid var(--border-2);color:var(--fg);font-size:13px;font-weight:600;padding:10px 18px;border-radius:100px;z-index:200;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── Mobile responsive ─────────────────────────── */
+@media (max-width:480px){
+  .grid-2,.stats-grid,[style*="grid-template-columns:1fr 1fr 1fr"]{
+    grid-template-columns:1fr!important;
+  }
+  [style*="grid-template-columns:1fr 1fr"]{
+    grid-template-columns:1fr!important;
+  }
+  .card,.stat-card,.summary-card{
+    padding:12px!important;
+  }
+  .modal-content,.modal-box{
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    border-radius:20px 20px 0 0!important;
+    position:fixed!important;
+    bottom:0!important;
+    left:0!important;
+    right:0!important;
+    max-height:90vh!important;
+    overflow-y:auto!important;
+  }
+  .modal{
+    align-items:flex-end!important;
+  }
+  table{
+    font-size:13px!important;
+  }
+  th,td{
+    padding:8px 6px!important;
+  }
+}
 </style>
 <script>try{var _pt=JSON.parse(localStorage.getItem('ps_theme'));if(_pt)document.documentElement.setAttribute('data-theme',_pt);}catch(e){}</script>
 

@@ -1,3 +1,4 @@
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ProServ Homes · Client</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:ital,wght@0,700;0,900;1,700;1,900&family=DM+Sans:wght@400;500;600&display=swap">
@@ -201,6 +202,40 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 /* CONFIRM TOAST */
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#fff;padding:10px 20px;border-radius:100px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s;white-space:nowrap;z-index:200}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── Mobile responsive ─────────────────────────── */
+@media (max-width:480px){
+  .grid-2,.stats-grid,[style*="grid-template-columns:1fr 1fr 1fr"]{
+    grid-template-columns:1fr!important;
+  }
+  [style*="grid-template-columns:1fr 1fr"]{
+    grid-template-columns:1fr!important;
+  }
+  .card,.stat-card,.summary-card{
+    padding:12px!important;
+  }
+  .modal-content,.modal-box{
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    border-radius:20px 20px 0 0!important;
+    position:fixed!important;
+    bottom:0!important;
+    left:0!important;
+    right:0!important;
+    max-height:90vh!important;
+    overflow-y:auto!important;
+  }
+  .modal{
+    align-items:flex-end!important;
+  }
+  table{
+    font-size:13px!important;
+  }
+  th,td{
+    padding:8px 6px!important;
+  }
+}
 </style>
 <script>try{var _pt=JSON.parse(localStorage.getItem('ps_theme'));if(_pt)document.documentElement.setAttribute('data-theme',_pt);}catch(e){}</script>
 
