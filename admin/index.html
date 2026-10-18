@@ -252,6 +252,27 @@ textarea{resize:vertical;min-height:80px}
   }
 }
 
+
+/* ── Before / After photo grid ──────────────────────────────────────────── */
+.photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 4px}
+.photo-slot{position:relative;border-radius:10px;overflow:hidden;background:var(--surface-2);border:1.5px solid var(--border-2);cursor:pointer}
+.photo-slot img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover}
+.photo-lbl{position:absolute;bottom:0;left:0;right:0;padding:4px 8px 6px;background:linear-gradient(0deg,rgba(0,0,0,.72) 0%,transparent 100%);color:#fff;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;pointer-events:none}
+.photo-add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:100%;aspect-ratio:3/2;background:transparent;border:none;color:var(--fg-3);font-size:11px;font-weight:600;cursor:pointer;padding:0}
+.photo-add::before{content:'\1F4F7';font-size:24px}
+.photo-slot:has(.photo-add){border-style:dashed}
+.photo-repick{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);border:none;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;opacity:0;transition:opacity .15s}
+.photo-slot:hover .photo-repick{opacity:1}
+/* ── Fullscreen photo viewer ─────────────────────────────────────────────── */
+.photo-viewer{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 16px}
+.photo-viewer img{max-width:100%;max-height:74vh;object-fit:contain;border-radius:10px}
+.photo-viewer-bar{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:640px;margin-top:14px}
+.photo-viewer-lbl{color:rgba(255,255,255,.7);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.photo-viewer-acts{display:flex;gap:8px;align-items:center}
+.photo-viewer-dl{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;font-size:12px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.photo-viewer-dl:hover{background:rgba(255,255,255,.22)}
+.photo-viewer-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.photo-viewer-close:hover{background:rgba(255,255,255,.22)}
 </style>
 <script>try{var _pt=JSON.parse(localStorage.getItem('ps_theme'));if(_pt)document.documentElement.setAttribute('data-theme',_pt);}catch(e){}</script>
 
@@ -771,8 +792,20 @@ function uploadPhoto(jobId,type){
 function viewPhoto(jobId,type){
   var j=jobs.find(function(x){return x.id===jobId});if(!j)return;
   var src=type==='before'?j.beforePhoto:j.afterPhoto;if(!src)return;
-  var ov=document.createElement('div');ov.className='photo-viewer';
-  ov.innerHTML='<button class="photo-viewer-close" onclick="this.parentNode.remove()">\u2715</button><img src="'+src+'" alt="'+type+' photo"><div style="color:rgba(255,255,255,.6);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:12px">'+type+' photo</div>';
+  var lbl=type==='before'?'Before':'After';
+  _openPhotoViewer(src,lbl);
+}
+function _openPhotoViewer(src,lbl){
+  var existing=document.getElementById('_pvOv');if(existing)existing.remove();
+  var ov=document.createElement('div');ov.className='photo-viewer';ov.id='_pvOv';
+  var dlName=(lbl||'photo').toLowerCase()+'.jpg';
+  ov.innerHTML='<img src="'+src+'" alt="'+lbl+' photo">'
+    +'<div class="photo-viewer-bar">'
+    +'<span class="photo-viewer-lbl">'+lbl+' Photo</span>'
+    +'<div class="photo-viewer-acts">'
+    +'<a class="photo-viewer-dl" href="'+src+'" download="'+dlName+'" target="_blank">\u2b07\ufe0f\u00a0Download</a>'
+    +'<button class="photo-viewer-close" onclick="document.getElementById(\'_pvOv\').remove()">\u2715</button>'
+    +'</div></div>';
   ov.onclick=function(e){if(e.target===ov)ov.remove();};
   document.body.appendChild(ov);
 }
