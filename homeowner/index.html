@@ -284,21 +284,32 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
   <div class="lbox">
     <div id="phoneStep">
       <h2>Welcome Back</h2>
-      <p>Enter your phone number to sign in to your account.</p>
-      <div class="field">
-        <label>Phone Number</label>
-        <input type="tel" id="phoneIn" placeholder="(732) 555-0100" autocomplete="tel">
+      <div id="hPhoneMethod">
+        <p>Enter your phone number to get a sign-in code.</p>
+        <div class="field">
+          <label>Phone Number</label>
+          <input type="tel" id="phoneIn" placeholder="(732) 555-0000" maxlength="14" autocomplete="tel" inputmode="tel">
+        </div>
+        <button class="bf bfo" id="sendOtpBtn" onclick="sendOtp()" style="margin-top:4px">Send Code</button>
+        <p style="text-align:center;margin-top:14px;font-size:14px;color:var(--fg-3)">No phone access? <a href="#" onclick="showHEmailLogin();return false;" style="color:var(--accent);text-decoration:none">Use email instead</a></p>
       </div>
-      <button class="bf bfo" id="sendOtpBtn" onclick="sendOtp()" style="margin-top:4px">Send Code</button>
+      <div id="hEmailMethod" style="display:none">
+        <p>Enter your email to receive a sign-in code.</p>
+        <div class="field">
+          <label>Email Address</label>
+          <input type="email" id="emailIn" placeholder="you@email.com" autocomplete="email" inputmode="email">
+        </div>
+        <button class="bf bfo" id="sendEmailOtpBtn" onclick="sendEmailOtp()" style="margin-top:4px">Send Code</button>
+        <p style="text-align:center;margin-top:14px;font-size:14px;color:var(--fg-3)"><a href="#" onclick="showHPhoneLogin();return false;" style="color:var(--accent);text-decoration:none">← Use phone instead</a></p>
+      </div>
     </div>
     <div id="otpStep">
       <h2>Enter Code</h2>
-      <p id="otpSub" style="margin-bottom:20px">We sent a 6-digit code to your phone.</p>
+      <p id="otpSub" style="margin-bottom:20px">Enter the 6-digit code.</p>
       <div class="field">
         <label>Verification Code</label>
         <input type="number" id="otpIn" class="otpi" placeholder="••••••" maxlength="6" inputmode="numeric">
       </div>
-      <div class="otp-hint">Use any 6-digit code to demo</div>
       <button class="bf bfo" id="verifyOtpBtn" onclick="verifyOtp()">Verify &amp; Sign In</button>
       <button class="bf" onclick="backToPhone()" style="background:transparent;color:var(--fg-3);margin-top:8px;font-family:DM Sans,sans-serif;font-weight:500;font-size:14px;text-transform:none;letter-spacing:0;padding:8px">← Back</button>
     </div>
@@ -615,29 +626,52 @@ var selectedSvc = 'Gutter Cleaning';
 var openJobId = null;
 
 // ─── LOGIN ───────────────────────────────────────────────────────────────
-function sendOtp(){
-  var ph = document.getElementById('phoneIn').value.trim();
-  if(!ph){showToast('Enter your phone number');return;}
-  _homePhone=ph;
-  document.getElementById('otpSub').textContent = 'We texted a 6-digit code to '+ph;
+var _useEmailLogin=false;
+function showHEmailLogin(){_useEmailLogin=true;document.getElementById('hPhoneMethod').style.display='none';document.getElementById('hEmailMethod').style.display='block';}
+function showHPhoneLogin(){_useEmailLogin=false;document.getElementById('hEmailMethod').style.display='none';document.getElementById('hPhoneMethod').style.display='block';}
+
+async function sendOtp(){
+  // Phone OTP — requires Twilio (pending A2P setup)
+  var phone = document.getElementById('phoneIn').value.trim();
+  if(!phone||phone.replace(/\D/g,'').length<10){showToast('Enter a valid phone number');return;}
+  _homePhone=phone;
+  showToast('SMS sign-in coming soon — use email instead');
+  showHEmailLogin();
+}
+
+async function sendEmailOtp(){
+  var email = document.getElementById('emailIn').value.trim().toLowerCase();
+  if(!email||!email.includes('@')){showToast('Enter a valid email address');return;}
+  _homePhone=email;
+  var btn=document.getElementById('sendEmailOtpBtn');
+  btn.disabled=true; btn.textContent='Sending…';
+  var res=await _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true}});
+  btn.disabled=false; btn.textContent='Send Code';
+  if(res.error){showToast('Error: '+res.error.message);return;}
+  document.getElementById('otpSub').textContent='We emailed a 6-digit code to '+email;
   document.getElementById('phoneStep').style.display='none';
   document.getElementById('otpStep').style.display='block';
 }
 async function verifyOtp(){
   var code = document.getElementById('otpIn').value.trim();
   if(code.length < 6){showToast('Enter a 6-digit code');return;}
+  var btn=document.getElementById('verifyOtpBtn');
+  btn.disabled=true; btn.textContent='Verifying…';
+  var res=await _sb.auth.verifyOtp({email:_homePhone,token:code,type:'email'});
+  btn.disabled=false; btn.textContent='Verify &amp; Sign In';
+  if(res.error){showToast('Invalid code — check your email and try again');return;}
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
-  // Load real jobs by homeowner_phone from Supabase
+  // Load real jobs by email from Supabase
   if(_homePhone&&_sb){
-    var jr=await _sb.from('jobs').select('*').eq('phone',_homePhone).order('date',{ascending:false});
+    var jr=await _sb.from('jobs').select('*').eq('email',_homePhone).order('date',{ascending:false});
     if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
     // Load homeowner profile
-    var hr=await _sb.from('homeowners').select('*').eq('phone',_homePhone).limit(1);
+    var hr=await _sb.from('homeowners').select('*').eq('email',_homePhone).limit(1);
     if(hr.data&&hr.data.length){
       var hw=hr.data[0];
-      USER={name:hw.name||USER.name,first:(hw.name||USER.name).split(' ')[0],phone:_homePhone,addr:hw.address||USER.addr,init:(hw.name||USER.name)[0]};
-    } else USER.phone=_homePhone;
+      USER={name:hw.name||USER.name,first:(hw.name||USER.name).split(' ')[0],email:_homePhone,addr:hw.address||USER.addr,init:(hw.name||USER.name)[0]};
+    } else USER.email=_homePhone;
   }
   initApp();
   var _qs=new URLSearchParams(window.location.search);
@@ -666,6 +700,9 @@ async function verifyOtp(){
 function backToPhone(){
   document.getElementById('otpStep').style.display='none';
   document.getElementById('phoneStep').style.display='block';
+  document.getElementById('otpIn').value='';
+  if(_useEmailLogin){document.getElementById('hPhoneMethod').style.display='none';document.getElementById('hEmailMethod').style.display='block';}
+  else{document.getElementById('hPhoneMethod').style.display='block';document.getElementById('hEmailMethod').style.display='none';}
 }
 function doLogout(){
   document.getElementById('appShell').classList.add('hidden');
@@ -673,7 +710,11 @@ function doLogout(){
   document.getElementById('phoneStep').style.display='block';
   document.getElementById('otpStep').style.display='none';
   document.getElementById('phoneIn').value='';
+  document.getElementById('emailIn').value='';
   document.getElementById('otpIn').value='';
+  _useEmailLogin=false;
+  document.getElementById('hPhoneMethod').style.display='block';
+  document.getElementById('hEmailMethod').style.display='none';
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────
@@ -1376,6 +1417,8 @@ function _hwPickDate(iso){
 (function(){
   var btn = document.getElementById('sendOtpBtn');
   if(btn) btn.addEventListener('click', sendOtp);
+  var btnE = document.getElementById('sendEmailOtpBtn');
+  if(btnE) btnE.addEventListener('click', sendEmailOtp);
   var btn2 = document.getElementById('verifyOtpBtn');
   if(btn2) btn2.addEventListener('click', verifyOtp);
   var btn3 = document.getElementById('backBtn');
