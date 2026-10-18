@@ -506,6 +506,7 @@ textarea{resize:vertical;min-height:80px}
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 var SURL='https://chmicqvorgjqlthufgwt.supabase.co';
 var SKEY='sb_publishable_7W-vHGcu-U60LiTsG_7i5g_7ijIyTOJ';
@@ -519,8 +520,17 @@ function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,address:j.address,
 function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,specialty:r.specialty||'',spec:r.specialty||''}}
 function cl2r(c){return{id:c.id,name:c.name,phone:c.phone,specialty:c.specialty||c.spec||''}}
 
-var SEED_JOBS=[{id:'j1',client:'Robert French',phone:'(732) 555-0101',address:'14 Bayview Ln, Toms River NJ',service:'Gutter Cleaning',date:'2026-10-15',price:175,contractorId:'c1',contractorPay:65,status:'Complete',notes:'Second story on left side only'},{id:'j2',client:'Brianna Peterson',phone:'(732) 555-0202',address:'8 Spruce Hill Rd, Jackson NJ',service:'Gutter Cleaning',date:'2026-10-17',price:150,contractorId:'c1',contractorPay:65,status:'Complete',notes:''},{id:'j3',client:'Grandpa Pete',phone:'(732) 555-0303',address:'22 Maple Ct, Howell NJ',service:'Gutter Cleaning',date:'2026-10-17',price:0,contractorId:'c1',contractorPay:0,status:'Complete',notes:'Family — free job'},{id:'j4',client:'Mike Sanchez',phone:'(732) 555-0404',address:'88 Oceanview Dr, Brick NJ',service:'Pressure Washing',date:'2026-10-22',price:250,contractorId:'c1',contractorPay:65,status:'Scheduled',notes:'Driveway + front walkway'}];
-var SEED_CONTRACTORS=[{id:'c1',name:'Jake R.',phone:'(732) 555-1234',specialty:'Fence · Concrete · Pavers'}];
+var SEED_JOBS=[
+  {id:'j1',client:'Robert French',phone:'(732) 555-0101',address:'14 Bayview Ln, Toms River NJ',service:'Gutter Cleaning',date:'2026-10-15',price:175,contractorId:'c1',contractorPay:65,status:'Complete',notes:'Second story on left side only'},
+  {id:'j2',client:'Brianna Peterson',phone:'(732) 555-0202',address:'8 Spruce Hill Rd, Jackson NJ',service:'Gutter Cleaning',date:'2026-10-17',price:150,contractorId:'c1',contractorPay:65,status:'Complete',notes:''},
+  {id:'j3',client:'Grandpa Pete',phone:'(732) 555-0303',address:'22 Maple Ct, Howell NJ',service:'Gutter Cleaning',date:'2026-10-17',price:0,contractorId:'c1',contractorPay:0,status:'Complete',notes:'Family — free job'},
+  {id:'j4',client:'Mike Sanchez',phone:'(732) 555-0404',address:'88 Oceanview Dr, Brick NJ',service:'Pressure Washing',date:'2026-10-22',price:250,contractorId:'c1',contractorPay:65,status:'Scheduled',notes:'Driveway + front walkway'},
+  {id:'s1',client:'Sarah Mitchell',phone:'(732) 555-0811',address:'14 Oak Lane, Howell NJ 07731',service:'Pressure Washing',date:'2026-05-10',price:275,contractorId:'c1',contractorPay:75,status:'Complete',notes:'Full driveway + front patio — came out great'},
+  {id:'s2',client:'Sarah Mitchell',phone:'(732) 555-0811',address:'14 Oak Lane, Howell NJ 07731',service:'Gutter Cleaning',date:'2026-09-18',price:149,contractorId:'c1',contractorPay:55,status:'Complete',notes:'Fall clean, downspouts flushed'},
+  {id:'s3',client:'Sarah Mitchell',phone:'(732) 555-0811',address:'14 Oak Lane, Howell NJ 07731',service:'Gutter Cleaning',date:'2026-11-05',price:149,contractorId:'c1',contractorPay:55,status:'Scheduled',notes:'Scheduled via homeowner portal'},
+  {id:'s4',client:'Sarah Mitchell',phone:'(732) 555-0811',address:'14 Oak Lane, Howell NJ 07731',service:'Christmas Lights',date:'2026-11-20',price:399,contractorId:'',contractorPay:0,status:'New',notes:'Requested via app — roofline + front bushes. Needs contractor assigned.'}
+];
+var SEED_CONTRACTORS=[{id:'c1',name:'Jake R.',phone:'(732) 555-1234',specialty:'Gutters · Pressure Washing · Dryer Vents'},{id:'c2',name:'Marcus T.',phone:'(732) 555-5678',specialty:'Fence · Concrete · Pavers · Landscaping'}];
 
 var jobs=[];var contractors=[];
 

@@ -108,6 +108,19 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 .pill-done{background:transparent;border:1.5px solid var(--green);color:var(--green)}
 .pill-cancel{background:transparent;border:1.5px solid var(--fg-3);color:var(--fg-3)}
 .pill-pend{background:var(--orange-dim);color:var(--orange)}
+.pill-req{background:#3b5bdb22;border:1.5px solid #4c6ef5;color:#4c6ef5}
+/* REVIEW BANNER */
+.review-banner{display:flex;align-items:flex-start;gap:12px;background:linear-gradient(135deg,#fffbeb,#fff8dc);border:1.5px solid #FBBC04;border-radius:14px;padding:14px 14px 14px 14px;margin-bottom:12px}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .review-banner{background:linear-gradient(135deg,#2a2200,#1e1a00);border-color:#c49a00}}
+:root[data-theme="dark"] .review-banner{background:linear-gradient(135deg,#2a2200,#1e1a00);border-color:#c49a00}
+.review-icon{flex-shrink:0;margin-top:1px}
+.review-body{flex:1;min-width:0}
+.review-title{font-weight:700;font-size:14px;color:var(--fg-1)}
+.review-sub{font-size:12px;color:var(--fg-2);margin-top:3px;line-height:1.4}
+.review-actions{display:flex;align-items:center;gap:8px;margin-top:0;flex-shrink:0}
+.review-cta{display:inline-block;background:#FBBC04;color:#1a1200;font-weight:700;font-size:12px;padding:7px 12px;border-radius:8px;text-decoration:none;white-space:nowrap}
+.review-dismiss{background:none;border:none;font-size:16px;color:var(--fg-3);cursor:pointer;padding:4px;line-height:1}
+.tl-dot.req{background:#4c6ef5;border-color:#4c6ef5}
 
 /* HISTORY TAB */
 .timeline{padding:16px 16px 0;position:relative}
@@ -343,6 +356,7 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 
       <div class="sec-pad" style="margin-top:20px">
         <div class="sec-hd">Recent Activity</div>
+        <div id="reviewBanner" style="display:none;margin-bottom:8px"></div>
         <div id="recentList"><!-- filled --></div>
       </div>
     </div>
@@ -582,11 +596,13 @@ var _homePhone='';
 
 // ─── DATA ───────────────────────────────────────────────────────────────
 var JOBS = [
+  {id:'s4',svc:'Christmas Lights',date:'2026-11-20',time:'TBD — pending assignment',addr:'14 Oak Lane, Howell NJ 07731',price:399,status:'Requested',tech:'—',notes:'Roofline + front bushes. We'll confirm your appointment time shortly!'},
   {id:'j1',svc:'Gutter Cleaning',date:'2026-11-05',time:'Morning (8am–12pm)',addr:'14 Oak Lane, Howell NJ 07731',price:149,status:'Scheduled',tech:'Jake R.',notes:'Full perimeter cleaning + flush downspouts'},
+  {id:'s2',svc:'Gutter Cleaning',date:'2026-09-18',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:149,status:'Complete',tech:'Jake R.',notes:'Fall clean, downspouts flushed',reviewPrompt:true},
+  {id:'s1',svc:'Pressure Washing',date:'2026-05-10',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:275,status:'Complete',tech:'Jake R.',notes:'Full driveway + front patio',beforePhoto:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1591382386627-349b692688ff?w=600&q=80'},
   {id:'j2',svc:'Paver Patio',date:'2026-09-20',time:'Full Day',addr:'14 Oak Lane, Howell NJ 07731',price:5800,status:'Complete',tech:'Marcus T.',notes:'Front walkway + driveway border pavers, approx 380 sq ft',beforePhoto:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1591382386627-349b692688ff?w=600&q=80'},
   {id:'j3',svc:'Gutter Cleaning',date:'2026-05-22',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:149,status:'Complete',tech:'Jake R.',notes:'Spring cleaning, cleared heavy debris',beforePhoto:'https://images.unsplash.com/photo-1604079628040-94301bb21b91?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1601972599720-36938d4ecd31?w=600&q=80'},
   {id:'j4',svc:'Dryer Vent Cleaning',date:'2026-03-10',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:129,status:'Complete',tech:'Jake R.',notes:'Vent completely clogged with 5 years of lint buildup',beforePhoto:'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=600&q=80'},
-  {id:'j5',svc:'Window Cleaning',date:'2025-11-18',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:220,status:'Complete',tech:'Jake R.',notes:'12 windows exterior + 6 interior',beforePhoto:'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1527515637462-cff94edd49bb?w=600&q=80'},
   {id:'j6',svc:'Christmas Lights',date:'2025-11-25',time:'Afternoon',addr:'14 Oak Lane, Howell NJ 07731',price:199,status:'Complete',tech:'Jake R.',notes:'Roofline + bushes, client supplied lights'},
   {id:'j7',svc:'Gutter Cleaning',date:'2025-09-08',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:149,status:'Complete',tech:'Jake R.',notes:'Fall prep cleaning'},
   {id:'j8',svc:'Pressure Washing',date:'2025-05-14',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:275,status:'Complete',tech:'Marcus T.',notes:'Full driveway + patio',beforePhoto:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1591382386627-349b692688ff?w=600&q=80'}
@@ -693,6 +709,30 @@ function renderHome(){
       +'<div style="font-size:12px;color:var(--fg-2);margin-top:2px">'+ds+' · $'+j.price+'</div></div>'
       +'<span class="pill pill-done">Done</span></div></div>';
   }).join('');
+
+  // Google Review Banner — show after most recent completed job if not dismissed
+  var reviewJob = JOBS.find(function(j){return j.status==='Complete' && j.reviewPrompt;});
+  var dismissed = false;
+  try{dismissed = localStorage.getItem('ps_review_dismissed')==='1';}catch(e){}
+  var rb = document.getElementById('reviewBanner');
+  if(reviewJob && !dismissed){
+    rb.innerHTML = '<div class="review-banner">'
+      +'<div class="review-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#FBBC04" stroke="#FBBC04" stroke-width="1.5" stroke-linejoin="round"/></svg></div>'
+      +'<div class="review-body"><div class="review-title">How did we do?</div>'
+      +'<div class="review-sub">Your '+reviewJob.svc+' is complete! A quick Google review goes a long way.</div></div>'
+      +'<div class="review-actions">'
+      +'<a href="https://g.page/r/REPLACE_WITH_YOUR_GOOGLE_REVIEW_LINK/review" target="_blank" class="review-cta">Leave a Review ⭐</a>'
+      +'<button class="review-dismiss" onclick="dismissReview()">✕</button>'
+      +'</div></div>';
+    rb.style.display = 'block';
+  } else {
+    rb.style.display = 'none';
+  }
+}
+function dismissReview(){
+  try{localStorage.setItem('ps_review_dismissed','1');}catch(e){}
+  var rb = document.getElementById('reviewBanner');
+  if(rb) rb.style.display = 'none';
 }
 
 // ─── HISTORY ─────────────────────────────────────────────────────────────
@@ -701,8 +741,8 @@ function renderHistory(){
   tl.innerHTML = JOBS.map(function(j,i){
     var d = new Date(j.date+'T12:00:00');
     var ds = d.toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
-    var dot = j.status==='Scheduled'?'sched':'done';
-    var pill = j.status==='Scheduled'?'<span class="pill pill-sched">Scheduled</span>':'<span class="pill pill-done">Complete</span>';
+    var dot = j.status==='Scheduled'?'sched':(j.status==='Requested'?'req':'done');
+    var pill = j.status==='Scheduled'?'<span class="pill pill-sched">Scheduled</span>':(j.status==='Requested'?'<span class="pill pill-req">Requested</span>':'<span class="pill pill-done">Complete</span>');
     var isLast = i===JOBS.length-1;
     return '<div class="tl-item">'
       +'<div class="tl-dot-col"><div class="tl-dot '+dot+'"></div>'+(isLast?'':'<div class="tl-line"></div>')+'</div>'
@@ -1019,7 +1059,7 @@ function openSheet(id){
   openJobId = id;
   var d = new Date(j.date+'T12:00:00');
   var ds = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  var pill = j.status==='Scheduled'?'<span class="pill pill-sched">Scheduled</span>':'<span class="pill pill-done">Complete</span>';
+  var pill = j.status==='Scheduled'?'<span class="pill pill-sched">Scheduled</span>':j.status==='Requested'?'<span class="pill pill-req">Requested</span>':'<span class="pill pill-done">Complete</span>';
   var photosHtml = '';
   var photos = j.photos || [];
   if(j.beforePhoto && !photos.some(function(p){return p.label==='Before';})){
