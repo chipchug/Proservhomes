@@ -210,6 +210,7 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 .sab:active{opacity:.75}
 .sab-inv{background:var(--surface-2);color:var(--fg)}
 .sab-pay{background:var(--green);color:#fff}
+.sab-paid{background:var(--green-dim);color:var(--green);border:1.5px solid var(--green);cursor:default;opacity:.85}
 .sheet-close{width:100%;margin-top:10px;padding:13px;border-radius:11px;border:none;background:var(--surface-2);color:var(--fg-2);font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;cursor:pointer}
 
 /* CONFIRM TOAST */
@@ -639,8 +640,28 @@ async function verifyOtp(){
     } else USER.phone=_homePhone;
   }
   initApp();
-  var _jp=new URLSearchParams(window.location.search).get('job');
-  if(_jp)setTimeout(function(){openSheet(_jp);},300);
+  var _qs=new URLSearchParams(window.location.search);
+  var _jp=_qs.get('job');
+  var _pm=_qs.get('payment');
+  if(_pm==='success'){
+    // Mark job as paid locally and show success message
+    var _pj=_qs.get('job');
+    if(_pj){
+      var _pjob=JOBS.find(function(x){return x.id===_pj;});
+      if(_pjob){_pjob.status='Paid';}
+    }
+    setTimeout(function(){
+      showToast('✅ Payment successful — thank you!');
+      if(_pj)openSheet(_pj);
+    },400);
+    // Clean URL
+    try{history.replaceState({},'',window.location.pathname);}catch(e){}
+  } else if(_pm==='cancelled'){
+    setTimeout(function(){showToast('Payment cancelled — no charge was made.');},400);
+    try{history.replaceState({},'',window.location.pathname);}catch(e){}
+  } else if(_jp){
+    setTimeout(function(){openSheet(_jp);},300);
+  }
 }
 function backToPhone(){
   document.getElementById('otpStep').style.display='none';
@@ -1059,7 +1080,7 @@ function openSheet(id){
   openJobId = id;
   var d = new Date(j.date+'T12:00:00');
   var ds = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  var pill = j.status==='Scheduled'?'<span class="pill pill-sched">Scheduled</span>':j.status==='Requested'?'<span class="pill pill-req">Requested</span>':'<span class="pill pill-done">Complete</span>';
+  var pill = j.status==='Scheduled'?'<span class="pill pill-sched">Scheduled</span>':j.status==='Requested'?'<span class="pill pill-req">Requested</span>':j.status==='Paid'?'<span class="pill" style="background:var(--green-dim);border:1.5px solid var(--green);color:var(--green)">Paid ✓</span>':'<span class="pill pill-done">Complete</span>';
   var photosHtml = '';
   var photos = j.photos || [];
   if(j.beforePhoto && !photos.some(function(p){return p.label==='Before';})){
@@ -1110,7 +1131,8 @@ function openSheet(id){
     +reviewHtml
     +'<div class="sheet-actions">'
       +'<button class="sab sab-inv" onclick="downloadInvoice(openJobId)">⬇&nbsp; Invoice PDF</button>'
-      +(j.status==='Scheduled'?'<button class="sab sab-pay" onclick="payOnline(openJobId)">💳&nbsp; Pay Online</button>':'')
+      +(j.status==='Paid'?'<button class="sab sab-paid" disabled>✓&nbsp; Paid</button>'
+        :(j.status==='Scheduled'||j.status==='Complete'?'<button class="sab sab-pay" onclick="payOnline(\''+j.id+'\')">💳&nbsp; Pay Online</button>':''))
     +'</div>'
     +'<button class="sheet-close" onclick="closeSheet()">Close</button>';
   document.getElementById('sheetOverlay').classList.add('open');
@@ -1247,11 +1269,34 @@ function downloadInvoice(jobId){
 function payOnline(jobId){
   var j = JOBS.find(function(x){return x.id===jobId;});
   if(!j) return;
-  var link = STRIPE_LINKS[j.svc];
-  if(!link||link.indexOf('REPLACE')>-1){
-    showToast('Online payment coming soon');return;
-  }
-  window.open(link,'_blank');
+  if(j.status==='Paid'){showToast('This job has already been paid ✓');return;}
+  var btn = document.querySelector('[onclick="payOnline(\''+jobId+'\')"]');
+  if(btn){btn.disabled=true;btn.textContent='Processing…';}
+  var payload = {
+    jobId: j.id,
+    amount: j.price,
+    customerEmail: USER.email || '',
+    customerName: USER.name || '',
+    serviceDescription: j.svc + ' — ' + (j.addr||'')
+  };
+  fetch(SURL+'/functions/v1/create-checkout',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+    body:JSON.stringify(payload)
+  })
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.url){
+      window.location.href = d.url;
+    } else {
+      showToast('Payment error: '+(d.error||'Unknown error'));
+      if(btn){btn.disabled=false;btn.innerHTML='💳&nbsp; Pay Online';}
+    }
+  })
+  .catch(function(err){
+    showToast('Could not connect to payment service');
+    if(btn){btn.disabled=false;btn.innerHTML='💳&nbsp; Pay Online';}
+  });
 }
 
 // ─── TOAST ───────────────────────────────────────────────────────────────

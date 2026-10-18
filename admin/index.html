@@ -138,6 +138,7 @@ textarea{resize:vertical;min-height:80px}
 .badge-prog{background:var(--orange-dim);color:var(--orange)}
 .badge-done{background:transparent;color:var(--green);border:1px solid rgba(31,155,42,.6)}
 .badge-inv{background:var(--surface-3);color:var(--fg-2)}
+.badge-paid{background:var(--green-dim);color:var(--green);border:1px solid rgba(31,155,42,.5);font-weight:700}
 
 /* JOBS TAB */
 .jobs-head{padding:16px 16px 12px;display:flex;align-items:center;gap:10px}
@@ -512,7 +513,7 @@ var SURL='https://chmicqvorgjqlthufgwt.supabase.co';
 var SKEY='sb_publishable_7W-vHGcu-U60LiTsG_7i5g_7ijIyTOJ';
 var _sb=null;try{_sb=supabase.createClient(SURL,SKEY);}catch(e){}
 
-var STATUSES=['New','Scheduled','In Progress','Complete','Invoiced'];
+var STATUSES=['New','Scheduled','In Progress','Complete','Invoiced','Paid'];
 
 // Field mapping: local camelCase <-> DB snake_case
 function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,status:r.status||'New',notes:r.notes||''}}
@@ -741,10 +742,15 @@ function openJobDetail(id){
   h+='</div>';
   h+='<div class="det-l" style="margin-bottom:6px">Update Status</div>';
   h+='<div class="status-btns">'+STATUSES.map(function(s){return'<button class="st-btn'+(j.status===s?' current':'')+'" onclick="updateStatus(\''+id+'\',\''+s+'\')">'+s+'</button>'}).join('')+'</div>';
-  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;margin-bottom:8px">';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;margin-bottom:4px">';
   h+='<button class="mbtn mbtn-primary" onclick="openEditJob(\''+id+'\')">Edit Job</button>';
   h+='<button class="mbtn" style="background:var(--surface-2);border:1px solid var(--border)" onclick="printInvoice(\''+id+'\')">📄 Invoice</button>';
   h+='</div>';
+  if(j.status!=='Paid'){
+    h+='<button class="mbtn" style="background:var(--green);color:#fff;width:100%;margin-bottom:8px" onclick="sendPaymentLink(\''+id+'\')" id="payLinkBtn-'+id+'">💳 Send Payment Link</button>';
+  } else {
+    h+='<div style="background:var(--green-dim);border:1.5px solid var(--green);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--green)">✓ Payment received</div>';
+  }
   document.getElementById('detContent').innerHTML=h;document.getElementById('detModal').classList.remove('hidden')
 }
 async function updateStatus(id,st){var i=jobs.findIndex(function(x){return x.id===id});if(i<0)return;jobs[i].status=st;await _sb.from('jobs').update({status:st}).eq('id',id);renderDashboard();renderJobsTable();renderBooks();closeModal('detModal');showToast('Status: '+st)}
@@ -766,11 +772,56 @@ async function deleteContractor(){var id=document.getElementById('ctEditId').val
 function populateBooksMonths(){var months={};jobs.forEach(function(j){if(j.date){var d=new Date(j.date+'T12:00:00');var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(!months[k]){var lbl=d.toLocaleDateString('en-US',{month:'long',year:'numeric'});months[k]=lbl}}});var sel=document.getElementById('booksMonth');var now=new Date();var ck=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');if(!months[ck])months[ck]=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});sel.innerHTML=Object.keys(months).sort().reverse().map(function(k){return'<option value="'+k+'"'+(k===ck?' selected':'')+'>'+months[k]+'</option>'}).join('')}
 function renderBooks(){var v=document.getElementById('booksMonth').value;if(!v)return;var parts=v.split('-');var yr=parseInt(parts[0]);var mn=parseInt(parts[1])-1;var flt=jobs.filter(function(j){if(!j.date)return false;var d=new Date(j.date+'T12:00:00');return d.getFullYear()===yr&&d.getMonth()===mn});var rev=flt.reduce(function(s,j){return s+Number(j.price||0)},0);var cost=flt.reduce(function(s,j){return s+Number(j.contractorPay||0)},0);var profit=rev-cost;document.getElementById('bsRev').textContent='$'+rev.toLocaleString();document.getElementById('bsCost').textContent='$'+cost.toLocaleString();document.getElementById('bsProfit').textContent='$'+profit.toLocaleString();var el=document.getElementById('booksTable');if(!flt.length){el.innerHTML='<div style="padding:32px;text-align:center;color:var(--fg-3)">No jobs this month</div>';return}flt=flt.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date)});el.innerHTML=flt.map(function(j){var cfg=svcCfg(j.service);return'<div class="bt-row" onclick="openJobDetail(\''+j.id+'\')"><div class="bt-thumb" style="background:'+cfg.bg+';overflow:hidden;padding:0">'+(cfg.img?'<img src="'+cfg.img+'" style="width:100%;height:100%;object-fit:cover;border-radius:9px">':cfg.icon)+'</div><div class="bt-body"><div class="bt-svc">'+esc(j.service)+'</div><div class="bt-client">'+esc(j.client)+' · '+fmtDate(j.date)+'</div></div><div class="bt-right"><div class="bt-price" style="color:'+(Number(j.price)>0?'var(--green)':'var(--fg-3))')+'">$'+Number(j.price).toLocaleString()+'</div><div class="bt-pay">$'+Number(j.contractorPay||0).toLocaleString()+' paid</div></div></div>'}).join('')}
 
-function statusBadge(s){var mp={'New':'badge-new','Scheduled':'badge-sched','In Progress':'badge-prog','Complete':'badge-done','Invoiced':'badge-inv'};return'<span class="badge '+(mp[s]||'badge-inv')+'">'+s+'</span>'}
+function statusBadge(s){var mp={'New':'badge-new','Scheduled':'badge-sched','In Progress':'badge-prog','Complete':'badge-done','Invoiced':'badge-inv','Paid':'badge-paid'};return'<span class="badge '+(mp[s]||'badge-inv')+'">'+s+'</span>'}
 function fmtDate(s){if(!s)return'—';var d=new Date(s+'T12:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function closeModal(id){document.getElementById(id).classList.add('hidden')}
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
+
+// ─── STRIPE: Send Payment Link ────────────────────────────────────────────
+function sendPaymentLink(jobId){
+  var j=jobs.find(function(x){return x.id===jobId});
+  if(!j)return;
+  var btn=document.getElementById('payLinkBtn-'+jobId);
+  if(btn){btn.disabled=true;btn.textContent='Generating link…';}
+  var payload={
+    jobId:j.id,
+    amount:Number(j.price)||0,
+    customerEmail:'',
+    customerName:j.client||'',
+    serviceDescription:(j.service||'Service')+' — '+(j.address||'')
+  };
+  fetch(SURL+'/functions/v1/create-checkout',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+    body:JSON.stringify(payload)
+  })
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.url){
+      // Copy to clipboard + open
+      try{
+        navigator.clipboard.writeText(d.url).then(function(){
+          showToast('Payment link copied to clipboard!');
+        }).catch(function(){
+          window.open(d.url,'_blank');
+          showToast('Payment link opened — share with client');
+        });
+      }catch(e){
+        window.open(d.url,'_blank');
+        showToast('Payment link opened — share with client');
+      }
+      if(btn){btn.disabled=false;btn.innerHTML='💳 Send Payment Link';}
+    } else {
+      showToast('Error: '+(d.error||'Could not generate link'));
+      if(btn){btn.disabled=false;btn.innerHTML='💳 Send Payment Link';}
+    }
+  })
+  .catch(function(){
+    showToast('Could not connect to payment service');
+    if(btn){btn.disabled=false;btn.innerHTML='💳 Send Payment Link';}
+  });
+}
 
 document.querySelectorAll('.overlay').forEach(function(el){el.addEventListener('click',function(e){if(e.target===el)el.classList.add('hidden')})});
 if(session)enterApp()
