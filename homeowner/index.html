@@ -562,11 +562,12 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 <div class="toast" id="toast"></div>
 
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 var SURL='https://chmicqvorgjqlthufgwt.supabase.co';
 var SKEY='sb_publishable_7W-vHGcu-U60LiTsG_7i5g_7ijIyTOJ';
-var _sb=supabase.createClient(SURL,SKEY);
+var _sb=null;try{_sb=supabase.createClient(SURL,SKEY);}catch(e){}
 // ── Stripe Payment Links — replace each URL after creating links in your Stripe dashboard ──
 var STRIPE_LINKS = {
   'Gutter Cleaning':     'https://buy.stripe.com/REPLACE_GUTTER',
