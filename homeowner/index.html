@@ -916,7 +916,6 @@ function updateEstimate(){
     return[toNum(parts[0]),toNum(parts[0])];
   }
   function fmtNum(n){
-    if(n>=1000&&n%1000===0)return(n/1000)+'k';
     if(n>=1000)return'$'+Math.round(n).toLocaleString();
     return'$'+Math.round(n);
   }
