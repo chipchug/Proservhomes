@@ -1092,11 +1092,7 @@ function switchTab(t){
   if(t==='schedule'){
     var svc = selectedSvc || 'Gutter Cleaning';
     selectedSvc = svc;
-    renderSvcPanel(svc);
-    // Also make sure the correct tab is highlighted
-    document.querySelectorAll('.svc-tab').forEach(function(el){
-      el.classList.toggle('on', el.getAttribute('onclick').indexOf("'"+svc+"'") >= 0);
-    });
+    try { renderSvcPanel(svc); } catch(e){}
   }
 }
 
@@ -1322,5 +1318,10 @@ function _hwViewPhoto(src,lbl){
   ov.onclick=function(e){if(e.target===ov)ov.remove();};
   document.body.appendChild(ov);
 }
+
+document.addEventListener('DOMContentLoaded', function(){
+  selectedSvc = selectedSvc || 'Gutter Cleaning';
+  try { renderSvcPanel(selectedSvc); } catch(e){}
+});
 
 </script>
