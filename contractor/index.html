@@ -1044,7 +1044,7 @@ async function submitCtQuote(reqId){
   if(!total){toast('Enter material or labor cost first');return;}
   var btn=document.getElementById('qrSubmitBtn');
   if(btn){btn.disabled=true;btn.textContent='Submitting…';}
-  await _sb.from('job_requests').update({contractor_quote:total}).eq('id',reqId);
+  await _sb.from('job_requests').update({contractor_quote:total,contractor_quote_detail:{material:mat,labor:lab}}).eq('id',reqId);
   toast('Quote submitted ✓ — Nick will follow up');
   closeQR();
   rQuotes();

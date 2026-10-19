@@ -488,9 +488,12 @@ textarea{resize:vertical;min-height:80px}
     <!-- Contact preference -->
     <div id="crContactRow" style="display:none;margin-bottom:12px;font-size:13px;color:var(--fg-2)"></div>
     <!-- Contractor quote result (shown when available) -->
-    <div id="crCtQuoteRow" style="display:none;margin-bottom:12px">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Contractor Quote</div>
-      <div id="crCtQuote" style="background:#e6f7ee;color:#1a7a42;border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700"></div>
+    <div id="crCtQuoteRow" style="display:none;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">
+        <span style="background:#e63946;color:#fff;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">New</span>
+        <span style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3)">Contractor Quote Received</span>
+      </div>
+      <div id="crCtQuote" style="background:#e6f7ee;border:1.5px solid #a3d9b8;border-radius:10px;padding:12px 14px"></div>
     </div>
     <!-- Action tabs -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:16px">
@@ -513,12 +516,30 @@ textarea{resize:vertical;min-height:80px}
     </div>
     <!-- Convert to Job panel (final step after quote received) -->
     <div id="crPanelJob" style="display:none">
-      <div style="font-size:12px;color:var(--fg-3);margin-bottom:10px">Price agreed with customer? Lock it in — creates the job and sends confirmation.</div>
+      <div style="font-size:12px;color:var(--fg-3);margin-bottom:12px">Price agreed with customer? Lock it in — creates the job and sends confirmation.</div>
+      <!-- Markup calculator -->
+      <div style="background:var(--surface-2);border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Mark Up Contractor Quote</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+          <button class="markup-btn" onclick="applyMarkup(30)" data-pct="30" style="padding:9px 4px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:700;cursor:pointer;color:var(--fg)">30%</button>
+          <button class="markup-btn" onclick="applyMarkup(40)" data-pct="40" style="padding:9px 4px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:700;cursor:pointer;color:var(--fg)">40%</button>
+          <button class="markup-btn" onclick="applyMarkup(50)" data-pct="50" style="padding:9px 4px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:700;cursor:pointer;color:var(--fg)">50%</button>
+          <button class="markup-btn" onclick="applyMarkup(65)" data-pct="65" style="padding:9px 4px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:700;cursor:pointer;color:var(--fg)">65%</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;display:flex;align-items:center;background:var(--surface);border:1.5px solid var(--border);border-radius:9px;overflow:hidden">
+            <span style="padding:0 9px;font-size:14px;color:var(--fg-3);font-weight:600">$</span>
+            <input type="number" id="crMarkupCustom" placeholder="Custom price" min="0" oninput="applyCustomMarkup()" style="flex:1;border:none;background:transparent;padding:10px 10px 10px 0;font-size:14px;font-weight:700;color:var(--fg);outline:none">
+          </div>
+          <div id="crMarkupResult" style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--green);min-width:70px;text-align:right"></div>
+        </div>
+        <div id="crMarkupNote" style="font-size:11px;color:var(--fg-3);margin-top:6px;text-align:center"></div>
+      </div>
       <!-- Send quote to customer subsection -->
       <div style="background:var(--surface-2);border-radius:10px;padding:12px;margin-bottom:12px">
         <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Send Quote to Customer</div>
         <div class="form-row">
-          <div class="field"><label>Your Price ($)</label><input type="number" id="crQuotePrice" placeholder="0" min="0" oninput="document.getElementById('crPrice').value=this.value"></div>
+          <div class="field"><label>Your Price ($)</label><input type="number" id="crQuotePrice" placeholder="0" min="0" oninput="syncMarkupPrice(this.value)"></div>
           <div class="field"><label>Payment Link</label><input type="url" id="crQuotePayLink" placeholder="https://buy.stripe.com/…" oninput="document.getElementById('crPayLink').value=this.value"></div>
         </div>
         <div class="field"><label>Quote message to customer</label><textarea id="crQuoteMsg" rows="2" placeholder="e.g. Based on your photos, here's our quote. Payment link included."></textarea></div>
@@ -1012,13 +1033,72 @@ function openConfirmRequest(id){
   // Show contractor quote if returned
   var ctQRow=document.getElementById('crCtQuoteRow');
   var ctQEl=document.getElementById('crCtQuote');
-  if(r.contractor_quote){ctQRow.style.display='';ctQEl.textContent='Contractor quoted: $'+Number(r.contractor_quote).toLocaleString()+' — mark it up below';}
-  else{ctQRow.style.display='none';}
-  // Pre-fill prices if contractor quote exists
-  if(r.contractor_quote){document.getElementById('crPay').value=r.contractor_quote;document.getElementById('crPrice').value='';}
+  if(r.contractor_quote){
+    ctQRow.style.display='';
+    var ctq=Number(r.contractor_quote);
+    var detail=r.contractor_quote_detail;
+    var breakdownHtml='';
+    if(detail&&(detail.material||detail.labor)){
+      breakdownHtml='<div style="display:flex;gap:10px;margin-top:6px;padding-top:6px;border-top:1px solid #a3d9b8">'
+        +'<div style="flex:1;font-size:12px;color:#1a7a42"><div style="font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:10px;margin-bottom:2px">Materials</div>$'+Number(detail.material||0).toLocaleString()+'</div>'
+        +'<div style="flex:1;font-size:12px;color:#1a7a42"><div style="font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:10px;margin-bottom:2px">Labor</div>$'+Number(detail.labor||0).toLocaleString()+'</div>'
+        +'</div>';
+    }
+    ctQEl.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between">'
+      +'<div style="font-size:13px;font-weight:700;color:#1a7a42">Contractor Total</div>'
+      +'<div style="font-family:Barlow Condensed,sans-serif;font-size:22px;font-weight:900;color:#1a7a42">$'+ctq.toLocaleString()+'</div>'
+      +'</div>'+breakdownHtml;
+    _crCtBase=ctq;
+    document.getElementById('crPay').value=ctq;
+    document.getElementById('crMarkupCustom').value='';
+    document.getElementById('crMarkupResult').textContent='';
+    document.getElementById('crMarkupNote').textContent='';
+    document.querySelectorAll('.markup-btn').forEach(function(b){b.style.background='var(--surface)';b.style.borderColor='var(--border)';b.style.color='var(--fg)';});
+  } else {
+    ctQRow.style.display='none';
+    _crCtBase=0;
+  }
   // Default to Acknowledge mode (or 'ct' if already acknowledged)
   crSetMode(r.status==='acknowledged'?'ct':r.status==='quoted'?'job':'ack');
   document.getElementById('confirmReqModal').classList.remove('hidden');
+}
+
+// ── Markup calculator ─────────────────────────────────────────────────────
+var _crCtBase=0;
+function applyMarkup(pct){
+  if(!_crCtBase){toast('No contractor quote to mark up yet');return;}
+  var price=Math.ceil(_crCtBase*(1+pct/100));
+  document.querySelectorAll('.markup-btn').forEach(function(b){
+    var active=Number(b.dataset.pct)===pct;
+    b.style.background=active?'var(--green)':'var(--surface)';
+    b.style.color=active?'#fff':'var(--fg)';
+    b.style.borderColor=active?'var(--green)':'var(--border)';
+  });
+  document.getElementById('crMarkupCustom').value='';
+  document.getElementById('crMarkupResult').textContent='→ $'+price.toLocaleString();
+  document.getElementById('crMarkupNote').textContent=pct+'% markup on $'+_crCtBase.toLocaleString()+' = $'+price.toLocaleString();
+  setMarkupPrice(price);
+}
+function applyCustomMarkup(){
+  var val=Number(document.getElementById('crMarkupCustom').value)||0;
+  document.querySelectorAll('.markup-btn').forEach(function(b){b.style.background='var(--surface)';b.style.borderColor='var(--border)';b.style.color='var(--fg)';});
+  if(val&&_crCtBase){
+    var pct=Math.round((val/_crCtBase-1)*100);
+    document.getElementById('crMarkupResult').textContent='→ $'+val.toLocaleString();
+    document.getElementById('crMarkupNote').textContent=pct>0?pct+'% markup over contractor quote':'Custom price';
+  } else {
+    document.getElementById('crMarkupResult').textContent='';
+    document.getElementById('crMarkupNote').textContent='';
+  }
+  if(val) setMarkupPrice(val);
+}
+function setMarkupPrice(price){
+  document.getElementById('crQuotePrice').value=price;
+  document.getElementById('crPrice').value=price;
+}
+function syncMarkupPrice(val){
+  document.getElementById('crPrice').value=val||'';
+  document.getElementById('crMarkupResult').textContent=val?'→ $'+Number(val).toLocaleString():'';
 }
 
 async function doAcknowledgeRequest(){
