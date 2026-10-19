@@ -710,10 +710,7 @@ async function verifyOtp(){
   var res=await _sb.auth.verifyOtp({email:_homePhone,token:code,type:'email'});
   btn.disabled=false; btn.textContent='Verify &amp; Sign In';
   if(res.error){showToast('Invalid code — check your email and try again');return;}
-  // Show profile setup immediately — no async DB call blocking the screen transition
-  _showProfileSetup(_homePhone);
-  // In background, check if they already have a profile and go straight to dashboard
-  _checkExistingProfile(_homePhone);
+  _goToProfileSetup(_homePhone);
   var _qs=new URLSearchParams(window.location.search);
   var _jp=_qs.get('job');
   var _pm=_qs.get('payment');
@@ -1485,40 +1482,45 @@ document.addEventListener('DOMContentLoaded', function(){
 
 // ── Auth helpers ──────────────────────────────────────────────────────────
 
-// v3 2026-10-19
-// Show profile setup screen immediately (synchronous — no async calls)
-function _showProfileSetup(email){
-  _homePhone = email;
-  USER = {name:'',first:email.split('@')[0],email:email,addr:'',phone:'',init:email[0].toUpperCase()};
-  document.getElementById('profileSetup').classList.remove('hidden');
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('appShell').classList.add('hidden');
+// ── Screen management — ONE function to show a screen, always safe ─────────
+function _showScreen(id){
+  ['loginScreen','profileSetup','appShell'].forEach(function(sid){
+    var el=document.getElementById(sid);
+    if(!el) return;
+    if(sid===id) el.classList.remove('hidden');
+    else el.classList.add('hidden');
+  });
 }
 
-// After showing profile setup, check DB in background — if profile exists, skip straight to dashboard
-async function _checkExistingProfile(email){
-  try{
-    var hr=await _sb.from('homeowners').select('*').eq('email',email).limit(1);
-    if(hr.data && hr.data.length){
-      var hw=hr.data[0];
-      var name=hw.name||'';
-      USER={name:name||email,first:name?name.split(' ')[0]:email.split('@')[0],email:email,addr:hw.address||'',phone:hw.phone||'',init:(name||email)[0].toUpperCase()};
-      // Load jobs
-      var jr=await _sb.from('jobs').select('*').eq('email',email).order('date',{ascending:false});
-      if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
-      // Go straight to dashboard
-      document.getElementById('profileSetup').classList.add('hidden');
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('appShell').classList.remove('hidden');
-      initApp();
-    } else {
-      // New user — pre-fill email in profile form if helpful
-      document.getElementById('psName').focus();
-    }
-  }catch(e){
-    console.warn('[PSH] _checkExistingProfile error (staying on profile setup):', e);
-    // User stays on profile setup — that's fine
-  }
+// Show profile setup and check DB in background
+function _goToProfileSetup(email){
+  _homePhone = email;
+  USER = {name:'',first:email.split('@')[0],email:email,addr:'',phone:'',init:email[0].toUpperCase()};
+  _showScreen('profileSetup');
+  // Background: if profile already exists, skip to dashboard
+  setTimeout(function(){
+    _sb.from('homeowners').select('*').eq('email',email).limit(1).then(function(hr){
+      if(hr.data && hr.data.length){
+        var hw=hr.data[0]; var name=hw.name||'';
+        USER={name:name||email,first:name?name.split(' ')[0]:email.split('@')[0],email:email,addr:hw.address||'',phone:hw.phone||'',init:(name||email)[0].toUpperCase()};
+        _sb.from('jobs').select('*').eq('email',email).order('date',{ascending:false}).then(function(jr){
+          if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
+          _showScreen('appShell');
+          try{initApp();}catch(e){console.error('[PSH] initApp',e);}
+        }).catch(function(){
+          // No jobs is fine — still go to dashboard
+          _showScreen('appShell');
+          try{initApp();}catch(e){console.error('[PSH] initApp',e);}
+        });
+      } else {
+        // New user — focus name field
+        var nf=document.getElementById('psName');
+        if(nf) nf.focus();
+      }
+    }).catch(function(e){
+      console.warn('[PSH] profile check failed, staying on setup:', e);
+    });
+  }, 50);
 }
 
 async function saveProfile(){
@@ -1532,10 +1534,9 @@ async function saveProfile(){
   var ins=await _sb.from('homeowners').upsert({email:email,name:name,address:addr,phone:phone},{onConflict:'email'});
   btn.disabled=false;btn.textContent='Save & Continue →';
   if(ins.error){showToast('Error saving: '+ins.error.message);return;}
-  USER={name:name,first:name.split(' ')[0],email:email,addr:addr,init:name[0].toUpperCase()};
-  document.getElementById('profileSetup').classList.add('hidden');
-  document.getElementById('appShell').classList.remove('hidden');
-  initApp();
+  USER={name:name,first:name.split(' ')[0],email:email,addr:addr,phone:phone,init:name[0].toUpperCase()};
+  _showScreen('appShell');
+  try{initApp();}catch(e){console.error('[PSH] initApp',e);}
 }
 
 (async function(){
@@ -1544,14 +1545,11 @@ async function saveProfile(){
     var sess = await _sb.auth.getSession();
     var session = sess && sess.data && sess.data.session;
     if(session && session.user){
-      // Has existing session — show profile setup immediately, then check DB in background
-      _showProfileSetup(session.user.email);
-      _checkExistingProfile(session.user.email);
+      _goToProfileSetup(session.user.email);
     }
-    // else: loginScreen stays visible (default state)
+    // else: loginScreen stays visible (default state — no hidden class on it initially)
   }catch(e){
-    console.error('[PSH] Session check failed:',e);
-    // loginScreen stays visible — user can log in manually
+    console.error('[PSH] Session check failed — loginScreen stays visible:', e);
   }
 })();
 
