@@ -1483,13 +1483,24 @@ document.addEventListener('DOMContentLoaded', function(){
 // ── Auth helpers ──────────────────────────────────────────────────────────
 
 // ── Screen management — ONE function to show a screen, always safe ─────────
+var _SCREENS = {
+  loginScreen: 'block',
+  profileSetup: 'flex',
+  appShell: 'flex'
+};
 function _showScreen(id){
-  ['loginScreen','profileSetup','appShell'].forEach(function(sid){
+  Object.keys(_SCREENS).forEach(function(sid){
     var el=document.getElementById(sid);
     if(!el) return;
-    if(sid===id) el.classList.remove('hidden');
-    else el.classList.add('hidden');
+    if(sid===id){
+      el.classList.remove('hidden');
+      el.style.display = _SCREENS[sid]; // force display — belt AND suspenders
+    } else {
+      el.classList.add('hidden');
+      el.style.display = 'none';
+    }
   });
+  console.log('[PSH] _showScreen:', id);
 }
 
 // Show profile setup and check DB in background
