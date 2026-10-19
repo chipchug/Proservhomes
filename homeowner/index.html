@@ -710,20 +710,15 @@ async function verifyOtp(){
   var res=await _sb.auth.verifyOtp({email:_homePhone,token:code,type:'email'});
   btn.disabled=false; btn.textContent='Verify &amp; Sign In';
   if(res.error){showToast('Invalid code — check your email and try again');return;}
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('appShell').classList.remove('hidden');
-  // Load real jobs by email from Supabase
-  if(_homePhone&&_sb){
-    var jr=await _sb.from('jobs').select('*').eq('email',_homePhone).order('date',{ascending:false});
-    if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
-    // Load homeowner profile
-    var hr=await _sb.from('homeowners').select('*').eq('email',_homePhone).limit(1);
-    if(hr.data&&hr.data.length){
-      var hw=hr.data[0];
-      USER={name:hw.name||USER.name,first:(hw.name||USER.name).split(' ')[0],email:_homePhone,addr:hw.address||USER.addr,init:(hw.name||USER.name)[0]};
-    } else USER.email=_homePhone;
+  try{
+    await _loadAndLaunch(_homePhone);
+  }catch(e){
+    console.error('[PSH] verifyOtp launch failed:',e);
+    showToast('Signed in — loading dashboard…');
+    document.getElementById('appShell').classList.remove('hidden');
+    document.getElementById('loginScreen').classList.add('hidden');
+    initApp();
   }
-  initApp();
   var _qs=new URLSearchParams(window.location.search);
   var _jp=_qs.get('job');
   var _pm=_qs.get('payment');
@@ -1515,15 +1510,16 @@ async function _loadAndLaunch(email){
     var jr=await _sb.from('jobs').select('*').eq('email',email).order('date',{ascending:false});
     if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
     console.log('[PSH] showing appShell, calling initApp');
-    document.getElementById('loginScreen').classList.add('hidden');
+    // Show next screen BEFORE hiding current to avoid blank flash
     document.getElementById('appShell').classList.remove('hidden');
     initApp();
     console.log('[PSH] initApp done');
+    document.getElementById('loginScreen').classList.add('hidden');
   } else {
     // New user — show profile setup
     console.log('[PSH] new user, showing profileSetup');
-    document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('profileSetup').classList.remove('hidden');
+    document.getElementById('loginScreen').classList.add('hidden');
   }
 }
 
