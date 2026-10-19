@@ -663,7 +663,7 @@ async function sendEmailOtp(){
   _homePhone=email;
   var btn=document.getElementById('sendEmailOtpBtn');
   btn.disabled=true; btn.textContent='Sending…';
-  var res=await _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true}});
+  var res=await _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true,emailRedirectTo:'https://proservhomes.co/homeowner/'}});
   btn.disabled=false; btn.textContent='Send Code';
   if(res.error){showToast('Error: '+res.error.message);return;}
   document.getElementById('otpSub').textContent='We emailed a 6-digit code to '+email;
