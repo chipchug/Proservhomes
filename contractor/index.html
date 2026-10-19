@@ -199,6 +199,9 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 .ph-thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--surface-2)}
 .ph-thumb img{width:100%;height:100%;object-fit:cover}
 .ph-thumb .ph-del{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.65);border:none;border-radius:50%;width:20px;height:20px;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.ph-thumb.ph-pending::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.45);border-radius:8px}
+.ph-thumb.ph-pending::before{content:'';position:absolute;top:50%;left:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;z-index:1;animation:ph-spin .7s linear infinite}
+@keyframes ph-spin{to{transform:rotate(360deg)}}
 .ph-add-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;aspect-ratio:1;border-radius:8px;border:1.5px dashed var(--border-2);background:var(--surface-2);cursor:pointer;font-size:11px;font-weight:600;color:var(--fg-3);transition:border-color .15s}
 .ph-add-btn:hover{border-color:var(--orange)}
 .ph-add-btn svg{opacity:.5}
@@ -755,7 +758,8 @@ function renderPhGrid(label, arr, gridId){
   if(!g) return;
   var h = '';
   arr.forEach(function(p, i){
-    h += '<div class="ph-thumb">'
+    var pendCls = p.uploaded ? '' : ' ph-pending';
+    h += '<div class="ph-thumb'+pendCls+'">'
       + '<img src="'+p.url+'" loading="lazy">'
       + '<button class="ph-del" onclick="removePhoto(\''+label+'\','+i+')" title="Remove">✕</button>'
       + '</div>';
@@ -795,7 +799,7 @@ function removePhoto(label, idx){
 
 async function savePhotos(){
   var btn = document.getElementById('phSaveBtn');
-  if(btn) btn.disabled = true;
+  if(btn){ btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:ph-spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Uploading…'; }
   var jobId = _photoJobId;
   var allPhotos = [];
 
@@ -837,14 +841,15 @@ async function savePhotos(){
   // Save photo URLs to Supabase job record
   var upd = await _sb.from('jobs').update({photos: allPhotos}).eq('id', jobId);
   if(upd.error){
-    showT('Could not save to job record — photos uploaded but not linked');
+    console.error('[PSH] savePhotos DB error:', upd.error);
+    showT('⚠️ Photos uploaded but not saved to job: '+upd.error.message);
   } else {
     // Also update local jobs array
     var j = jobs.find(function(x){return x.id===jobId;});
     if(j) j.photos = allPhotos;
     showT('Photos saved ✓');
   }
-  if(btn){ btn.disabled = false; btn.textContent = '✓ Saved'; }
+  if(btn){ btn.disabled = false; btn.innerHTML = '✓ Saved'; }
   renderPhotoGrids();
   // Re-render action buttons now that photos are saved
   var actWrap = document.getElementById('phActButtons');
@@ -1056,251 +1061,6 @@ function jrow(j){
   return'<div class="jr" onclick="openS(\''+j.id+'\')"><div class="jr-thumb" style="background:'+cfg.bg+'">'+cfg.icon+'</div><div class="jr-body"><div class="jr-svc">'+esc(j.service)+'</div><div class="jr-client">'+esc(j.client)+'</div><div class="jr-meta"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'+esc(j.address)+'</div><div class="jr-meta"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+dstr+'</div><div class="jr-bot"><div class="jr-pay">$'+Number(j.contractorPay||0).toLocaleString()+'</div>'+sbadge(j.status)+'</div></div><div class="jr-chev"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>'
 }
 
-// photo state per open sheet
-var _photoJobId = null;
-var _photoBefore = []; // [{file, url, uploaded:bool, storagePath}]
-var _photoAfter  = [];
-
-function openS(id){
-  var j=jobs.find(function(x){return x.id===id});
-  if(!j) return;
-  _photoJobId = id;
-  // Load existing photos from job record if present
-  _photoBefore = (j.photos||[]).filter(function(p){return p.label==='before';}).map(function(p){return {file:null,url:p.url,uploaded:true,storagePath:p.path||''};});
-  _photoAfter  = (j.photos||[]).filter(function(p){return p.label==='after';}).map(function(p){return {file:null,url:p.url,uploaded:true,storagePath:p.path||''};});
-
-  var mu='https://www.google.com/maps/search/'+encodeURIComponent(j.address);
-  var h='<div style="display:inline-flex;margin-bottom:12px">'+sbadge(j.status)+'</div>';
-  h+='<div class="sb-svc">'+esc(j.service)+'</div>';
-  h+='<div class="sb-f"><div class="sb-l">Client</div><div class="sb-v">'+esc(j.client)+'</div></div>';
-  h+='<div class="sb-f"><div class="sb-l">Date</div><div class="sb-v">'+fd(j.date)+'</div></div>';
-  h+='<div class="sb-f"><div class="sb-l">Your Pay</div><div class="sb-pay">$'+Number(j.contractorPay||0).toLocaleString()+'</div></div>';
-  if(j.notes) h+='<div class="sb-f"><div class="sb-l">Notes from Nick</div><div class="snote">'+esc(j.notes)+'</div></div>';
-  h+='<div class="sb-links"><a class="sl" href="'+mu+'" target="_blank"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Directions</a>';
-  if(j.phone) h+='<a class="sl" href="tel:'+j.phone.replace(/\D/g,'')+'"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.13 1 .37 1.97.71 2.91a2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.94.34 1.91.58 2.91.71A2 2 0 0 1 21.73 16.92z"/></svg> Call</a>';
-  h+='</div>';
-
-  // ── Admin before/after preview (read-only) ──
-  if(j.beforePhoto || j.afterPhoto){
-    h+='<div style="margin:14px 0 6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-2)">Before / After</div>';
-    h+='<div class="photo-grid">';
-    if(j.beforePhoto) h+='<div class="photo-slot" onclick="_ctxViewPhoto(\''+j.beforePhoto+'\',\'Before\')"><img src="'+j.beforePhoto+'"><div class="photo-lbl">Before</div></div>';
-    else h+='<div style="aspect-ratio:4/3;background:var(--surface-2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--fg-2)">No Before</div>';
-    if(j.afterPhoto) h+='<div class="photo-slot" onclick="_ctxViewPhoto(\''+j.afterPhoto+'\',\'After\')"><img src="'+j.afterPhoto+'"><div class="photo-lbl">After</div></div>';
-    else h+='<div style="aspect-ratio:4/3;background:var(--surface-2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--fg-2)">No After</div>';
-    h+='</div>';
-  }
-  // ── Photo upload sections ──
-  h+='<div class="ph-section">';
-  h+='<div class="ph-sec-lbl">📷 Before Photos</div>';
-  h+='<div class="ph-grid" id="phBeforeGrid"></div>';
-  h+='<div class="ph-upload-progress" id="phBeforeProgress"></div>';
-  h+='</div>';
-  h+='<div class="ph-section">';
-  h+='<div class="ph-sec-lbl">✅ After Photos</div>';
-  h+='<div class="ph-grid" id="phAfterGrid"></div>';
-  h+='<div class="ph-upload-progress" id="phAfterProgress"></div>';
-  h+='</div>';
-  h+='<input type="file" id="phFileInput" accept="image/*" multiple style="display:none" onchange="handlePhotoFiles(event)">';
-  h+='<button class="ph-save-btn" id="phSaveBtn" onclick="savePhotos()">💾 Save Photos to Job</button>';
-  h+='<div style="height:12px"></div>';
-
-  // ── Status actions ──
-  var hasSavedBefore=(_photoBefore||[]).filter(function(p){return p.uploaded;}).length>0;
-  var hasSavedAfter=(_photoAfter||[]).filter(function(p){return p.uploaded;}).length>0;
-  h+='<div id="phActButtons">';
-  if(j.status==='Scheduled'||j.status==='New'){
-    if(hasSavedBefore){
-      h+='<button class="sact start" onclick="setSt(\''+j.id+'\',\'In Progress\')">🔧 Start Job</button>';
-    } else {
-      h+='<button class="sact start" style="opacity:.45;cursor:default" onclick="toast(\'📷 Save a Before photo first\')">🔧 Start Job</button>';
-      h+='<div style="text-align:center;font-size:11px;color:var(--fg-3);margin-top:6px">📷 Save a before photo to unlock</div>';
-    }
-  }
-  if(j.status==='In Progress'){
-    if(hasSavedAfter){
-      h+='<button class="sact complete" onclick="setSt(\''+j.id+'\',\'Complete\')">✅ Mark Complete</button>';
-    } else {
-      h+='<button class="sact complete" style="opacity:.45;cursor:default" onclick="toast(\'📷 Save an After photo first\')">✅ Mark Complete</button>';
-      h+='<div style="text-align:center;font-size:11px;color:var(--fg-3);margin-top:6px">📷 Save an after photo to unlock</div>';
-    }
-  }
-  h+='</div>';
-  if(j.status==='Complete'||j.status==='Invoiced') h+='<div style="text-align:center;padding:12px 0;font-family:Barlow Condensed,sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;color:var(--green)">✓ JOB COMPLETE</div>';
-  h+='<button class="sclose" onclick="closeS()">Close</button>';
-
-  document.getElementById('sheetC').innerHTML = h;
-  document.getElementById('sheet').classList.remove('hidden');
-  renderPhotoGrids();
-}
-function closeS(){document.getElementById('sheet').classList.add('hidden')}
-
-// ── Photo helpers ─────────────────────────────────────────────────────────
-var _phTarget = null; // 'before' | 'after'
-
-function renderPhotoGrids(){
-  renderPhGrid('before', _photoBefore, 'phBeforeGrid');
-  renderPhGrid('after',  _photoAfter,  'phAfterGrid');
-}
-
-function renderPhGrid(label, arr, gridId){
-  var g = document.getElementById(gridId);
-  if(!g) return;
-  var h = '';
-  arr.forEach(function(p, i){
-    h += '<div class="ph-thumb">'
-      + '<img src="'+p.url+'" loading="lazy">'
-      + '<button class="ph-del" onclick="removePhoto(\''+label+'\','+i+')" title="Remove">✕</button>'
-      + '</div>';
-  });
-  if(arr.length < 6){
-    h += '<div class="ph-add-btn" onclick="triggerPhPick(\''+label+'\')">'
-      + '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'
-      + '<span>Add</span>'
-      + '</div>';
-  }
-  g.innerHTML = h;
-}
-
-function triggerPhPick(label){
-  _phTarget = label;
-  var inp = document.getElementById('phFileInput');
-  if(inp){ inp.value=''; inp.click(); }
-}
-
-function handlePhotoFiles(e){
-  var files = Array.prototype.slice.call(e.target.files);
-  if(!files.length) return;
-  var arr = _phTarget === 'before' ? _photoBefore : _photoAfter;
-  files.forEach(function(file){
-    if(arr.length >= 6) return;
-    var url = URL.createObjectURL(file);
-    arr.push({file:file, url:url, uploaded:false, storagePath:''});
-  });
-  renderPhotoGrids();
-}
-
-function removePhoto(label, idx){
-  var arr = label === 'before' ? _photoBefore : _photoAfter;
-  arr.splice(idx, 1);
-  renderPhotoGrids();
-}
-
-async function savePhotos(){
-  var btn = document.getElementById('phSaveBtn');
-  if(btn) btn.disabled = true;
-  var jobId = _photoJobId;
-  var allPhotos = [];
-
-  // Upload before photos
-  var bProg = document.getElementById('phBeforeProgress');
-  var aProg = document.getElementById('phAfterProgress');
-  if(bProg) bProg.textContent = 'Uploading before photos…';
-  for(var i=0; i<_photoBefore.length; i++){
-    var p = _photoBefore[i];
-    if(!p.uploaded && p.file){
-      var path = 'jobs/'+jobId+'/before_'+Date.now()+'_'+i+'.jpg';
-      var res = await _sb.storage.from('job-photos').upload(path, p.file, {upsert:true});
-      if(res.error){ showT('Upload failed: '+res.error.message); continue; }
-      var pub = _sb.storage.from('job-photos').getPublicUrl(path);
-      p.url = pub.data.publicUrl;
-      p.storagePath = path;
-      p.uploaded = true;
-    }
-    if(p.url) allPhotos.push({url:p.url, path:p.storagePath, label:'before'});
-  }
-  if(bProg) bProg.textContent = '';
-
-  if(aProg) aProg.textContent = 'Uploading after photos…';
-  for(var i=0; i<_photoAfter.length; i++){
-    var p = _photoAfter[i];
-    if(!p.uploaded && p.file){
-      var path = 'jobs/'+jobId+'/after_'+Date.now()+'_'+i+'.jpg';
-      var res = await _sb.storage.from('job-photos').upload(path, p.file, {upsert:true});
-      if(res.error){ showT('Upload failed: '+res.error.message); continue; }
-      var pub = _sb.storage.from('job-photos').getPublicUrl(path);
-      p.url = pub.data.publicUrl;
-      p.storagePath = path;
-      p.uploaded = true;
-    }
-    if(p.url) allPhotos.push({url:p.url, path:p.storagePath, label:'after'});
-  }
-  if(aProg) aProg.textContent = '';
-
-  // Save photo URLs to Supabase job record
-  var upd = await _sb.from('jobs').update({photos: allPhotos}).eq('id', jobId);
-  if(upd.error){
-    showT('Could not save to job record — photos uploaded but not linked');
-  } else {
-    // Also update local jobs array
-    var j = jobs.find(function(x){return x.id===jobId;});
-    if(j) j.photos = allPhotos;
-    showT('Photos saved ✓');
-  }
-  if(btn){ btn.disabled = false; btn.textContent = '✓ Saved'; }
-  renderPhotoGrids();
-  // Re-render action buttons now that photos are saved
-  var actWrap = document.getElementById('phActButtons');
-  if(actWrap){
-    var j2=jobs.find(function(x){return x.id===jobId;});
-    if(j2){
-      var hasSB=(_photoBefore||[]).filter(function(p){return p.uploaded;}).length>0;
-      var hasSA=(_photoAfter||[]).filter(function(p){return p.uploaded;}).length>0;
-      var bh='';
-      if(j2.status==='Scheduled'||j2.status==='New'){
-        if(hasSB){
-          bh+='<button class="sact start" onclick="setSt(\''+j2.id+'\',\'In Progress\')">🔧 Start Job</button>';
-        } else {
-          bh+='<button class="sact start" style="opacity:.45;cursor:default" onclick="toast(\'📷 Save a Before photo first\')">🔧 Start Job</button>';
-          bh+='<div style="text-align:center;font-size:11px;color:var(--fg-3);margin-top:6px">📷 Save a before photo to unlock</div>';
-        }
-      }
-      if(j2.status==='In Progress'){
-        if(hasSA){
-          bh+='<button class="sact complete" onclick="setSt(\''+j2.id+'\',\'Complete\')">✅ Mark Complete</button>';
-        } else {
-          bh+='<button class="sact complete" style="opacity:.45;cursor:default" onclick="toast(\'📷 Save an After photo first\')">✅ Mark Complete</button>';
-          bh+='<div style="text-align:center;font-size:11px;color:var(--fg-3);margin-top:6px">📷 Save an after photo to unlock</div>';
-        }
-      }
-      actWrap.innerHTML=bh;
-    }
-  }
-}
-async function setSt(id,st){
-  // Gate: before photo required to start, after photo required to complete
-  if(st==='In Progress'){
-    var savedBefore=_photoBefore.filter(function(p){return p.uploaded;});
-    if(!savedBefore.length){
-      toast('📷 Upload & save at least one Before photo first');
-      return;
-    }
-  }
-  if(st==='Complete'){
-    var savedAfter=_photoAfter.filter(function(p){return p.uploaded;});
-    if(!savedAfter.length){
-      toast('📷 Upload & save at least one After photo first');
-      return;
-    }
-  }
-  var i=jobs.findIndex(function(x){return x.id===id});if(i<0)return;
-  jobs[i].status=st;
-  await _sb.from('jobs').update({status:st}).eq('id',id);
-  closeS();rHome();rJobs();rEarn();rMs();
-  toast(st==='In Progress'?'Job started 🔧':'Job complete ✅');
-}
-
-function rEarn(){var j=mj();var allPay=j.filter(function(x){return x.contractorPay>0});var ctPaid=allPay.filter(function(x){return x.contractorPaid});var ctOwed=allPay.filter(function(x){return !x.contractorPaid});var paidAmt=ctPaid.reduce(function(s,x){return s+Number(x.contractorPay||0)},0);var owedAmt=ctOwed.reduce(function(s,x){return s+Number(x.contractorPay||0)},0);var tot=paidAmt+owedAmt;document.getElementById('eTotal').textContent='$'+tot.toLocaleString();document.getElementById('eSub').textContent=allPay.length+' job'+(allPay.length!==1?'s':'')+' with pay';document.getElementById('ePaid').textContent='$'+paidAmt.toLocaleString();document.getElementById('eOwed').textContent='$'+owedAmt.toLocaleString();var hist=allPay.sort(function(a,b){return new Date(b.date)-new Date(a.date)});var el=document.getElementById('eHist');if(!hist.length){el.innerHTML='<div style="padding:32px;text-align:center;color:var(--fg-3)">No earnings yet</div>';return}el.innerHTML=hist.map(function(x){var isPaid=!!x.contractorPaid;return'<div class="er"><div><div class="er-svc">'+esc(x.service)+'</div><div class="er-det">'+esc(x.client)+' · '+fd(x.date)+'</div></div><div style="text-align:right"><div class="er-amt" style="color:'+(isPaid?'var(--green)':'var(--orange)')+'">$'+Number(x.contractorPay).toLocaleString()+'</div><div style="font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:'+(isPaid?'var(--green)':'var(--orange)')+'">'+( isPaid?'Paid':'Owed')+'</div></div></div>'}).join('')}
-
-function rMs(){var j=mj();var dn=j.filter(function(x){return x.status==='Complete'||x.status==='Invoiced'}).length;var ea=j.reduce(function(s,x){return s+Number(x.contractorPay||0)},0);var all=[{i:'🔧',n:'First Job',r:'Complete 1 job',e:dn>=1},{i:'⚡',n:'5 Jobs',r:'Complete 5 jobs',e:dn>=5},{i:'🏆',n:'10 Jobs',r:'Complete 10 jobs',e:dn>=10},{i:'🔥',n:'25 Jobs',r:'Complete 25 jobs',e:dn>=25},{i:'💵',n:'$500',r:'Earn $500 total',e:ea>=500},{i:'💰',n:'$1,000',r:'Earn $1,000 total',e:ea>=1000},{i:'💎',n:'$5,000',r:'Earn $5,000 total',e:ea>=5000},{i:'⭐',n:'Top Crew',r:'Complete 50 jobs',e:dn>=50}];var nx=all.find(function(m){return!m.e});document.getElementById('mhSub').textContent=nx?'Next: '+nx.n+' — '+nx.r:'🎉 All milestones unlocked!';document.getElementById('msGrid').innerHTML=all.map(function(m){return'<div class="ms-card'+(m.e?' earned':'')+'"><div class="ms-ico">'+m.i+'</div><div class="ms-name">'+m.n+'</div><div class="ms-req">'+m.r+'</div>'+(m.e?'<div class="ms-tag">EARNED</div>':'')+'</div>'}).join('')}
-
-function sbadge(s){var mp={'New':'badge-new','Scheduled':'badge-sched','In Progress':'badge-prog','Complete':'badge-done','Invoiced':'badge-inv'};return'<span class="badge '+(mp[s]||'badge-inv')+'">'+s+'</span>'}
-function fd(s){if(!s)return'—';var d=new Date(s+'T12:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
-function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
-
-document.getElementById('sheet').addEventListener('click',function(e){if(e.target===this)closeS()});
-if(cSess){enterApp()}
 
 (function(){
   var _t=JSON.parse(localStorage.getItem('ps_theme')||'"dark"');
