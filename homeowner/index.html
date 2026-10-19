@@ -198,6 +198,11 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .sched-field textarea:focus{border-color:var(--orange)}
 .sched-submit{width:100%;padding:15px;border-radius:11px;border:none;background:var(--orange);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;margin-top:16px;transition:opacity .15s,transform .1s}
 .sched-submit:active{transform:scale(.98)}
+.req-photo-slot{flex:1;aspect-ratio:1;background:var(--surface-2);border:1.5px dashed var(--border-2);border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;color:var(--fg-3);font-size:10px;font-weight:600;letter-spacing:.04em;overflow:hidden;position:relative;transition:border-color .15s}
+.req-photo-slot:active{opacity:.7}
+.req-photo-slot.has-photo{border-style:solid;border-color:var(--orange)}
+.req-photo-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.req-photo-slot .rm-photo{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.55);border:none;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:13px;line-height:1;z-index:2}
 
 /* PROFILE TAB */
 .prof-hero{background:var(--surface);border-bottom:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:10px}
@@ -492,13 +497,42 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
               <input type="email" id="schedEmail" placeholder="you@email.com">
             </div>
             <div class="sched-field">
-              <label>Notes (optional)</label>
-              <textarea id="schedNotes" rows="3" placeholder="Any access notes, gate codes, or special instructions…"></textarea>
+              <label>Best way to reach you</label>
+              <select id="schedContact" style="font-family:DM Sans,sans-serif;font-size:15px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:11px;padding:13px 15px;width:100%;outline:none;appearance:none;-webkit-appearance:none">
+                <option value="call">Phone call</option>
+                <option value="text">Text message</option>
+                <option value="email">Email only</option>
+              </select>
+            </div>
+            <div class="sched-field">
+              <label>Best time to reach you</label>
+              <select id="schedBestTime" style="font-family:DM Sans,sans-serif;font-size:15px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:11px;padding:13px 15px;width:100%;outline:none;appearance:none;-webkit-appearance:none">
+                <option value="">No preference</option>
+                <option value="morning">Morning (8am–12pm)</option>
+                <option value="afternoon">Afternoon (12pm–4pm)</option>
+                <option value="evening">Evening (4pm–7pm)</option>
+              </select>
+            </div>
+            <div class="sched-field">
+              <label>Notes / anything we should know</label>
+              <textarea id="schedNotes" rows="3" placeholder="Access codes, dogs, second floor windows, special instructions…"></textarea>
             </div>
           </div>
         </div>
-        <div style="padding:0 16px">
-          <button class="sched-submit" onclick="submitRequest()">Request Service →</button>
+        <!-- PHOTO UPLOAD -->
+        <div class="card" style="margin:12px 16px 0">
+          <div style="padding:16px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-2);margin-bottom:10px">Photos (optional but helpful)</div>
+            <div style="font-size:12px;color:var(--fg-3);margin-bottom:12px">Add up to 3 photos — helps us give you a more accurate quote without a site visit.</div>
+            <div style="display:flex;gap:10px" id="photoSlots">
+              <div class="req-photo-slot" id="ps0" onclick="pickReqPhoto(0)"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Add photo</span></div>
+              <div class="req-photo-slot" id="ps1" onclick="pickReqPhoto(1)"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Add photo</span></div>
+              <div class="req-photo-slot" id="ps2" onclick="pickReqPhoto(2)"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Add photo</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 16px 0">
+          <button class="sched-submit" onclick="submitRequest()">Submit Quote Request →</button>
         </div>
       </div>
     </div>
@@ -1102,6 +1136,59 @@ function updateEstimate(){
 
 function pickSvc(el, svc){ pickSvcTab(el, svc); } // backward compat
 function pickTier(el, name){ pickSvcTier(el, name, ''); } // backward compat
+
+// ─── PHOTO UPLOAD FOR REQUESTS ───────────────────────────────────────────
+var _reqPhotos = [null, null, null]; // base64 strings per slot
+function pickReqPhoto(idx){
+  // If already has photo, show remove option
+  var slot = document.getElementById('ps'+idx);
+  if(slot.classList.contains('has-photo')){return;} // tap remove button instead
+  var inp = document.createElement('input');
+  inp.type='file'; inp.accept='image/*'; inp.capture='environment';
+  inp.onchange=function(){
+    var file=inp.files[0];
+    if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      // Compress via canvas to ~800px max, jpeg 0.7
+      var img=new Image();
+      img.onload=function(){
+        var MAX=800;
+        var w=img.width,h=img.height;
+        if(w>MAX||h>MAX){var s=Math.min(MAX/w,MAX/h);w=Math.round(w*s);h=Math.round(h*s);}
+        var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        var b64=cv.toDataURL('image/jpeg',0.7);
+        _reqPhotos[idx]=b64;
+        renderPhotoSlot(idx,b64);
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+function renderPhotoSlot(idx, b64){
+  var slot=document.getElementById('ps'+idx);
+  slot.innerHTML='';
+  if(b64){
+    slot.classList.add('has-photo');
+    var im=document.createElement('img');im.src=b64;slot.appendChild(im);
+    var rm=document.createElement('button');rm.className='rm-photo';rm.innerHTML='✕';
+    rm.onclick=function(e){e.stopPropagation();_reqPhotos[idx]=null;slot.classList.remove('has-photo');slot.innerHTML='<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Add photo</span>';};
+    slot.appendChild(rm);
+  }
+}
+function resetReqPhotos(){
+  _reqPhotos=[null,null,null];
+  [0,1,2].forEach(function(i){
+    var s=document.getElementById('ps'+i);
+    if(!s)return;
+    s.classList.remove('has-photo');
+    s.innerHTML='<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Add photo</span>';
+  });
+}
+
 async function submitRequest(){
   var date = document.getElementById('schedDate').value;
   var addr = document.getElementById('schedAddr').value.trim();
@@ -1112,10 +1199,32 @@ async function submitRequest(){
   if(!addr){showToast('Enter the service address');return;}
   var emailEl=document.getElementById('schedEmail');
   var reqEmail=(emailEl?emailEl.value.trim():'') || (_useEmailLogin?_homePhone:'') || USER.email || '';
-  var req={id:'req'+Date.now(),homeowner_phone:(!_useEmailLogin?_homePhone:null)||USER.phone||null,homeowner_email:reqEmail||null,service:svc,date:date,address:addr,notes:notes,status:'pending'};
+  // Capture estimate range from currently displayed bar
+  var estEl=document.getElementById('svcEstimateNum');
+  var estimateRange = (estEl && estEl.textContent && estEl.textContent!=='—') ? (svc+' — '+estEl.textContent) : '';
+  // Contact prefs
+  var contactPref = (document.getElementById('schedContact')||{}).value || 'call';
+  var bestTime = (document.getElementById('schedBestTime')||{}).value || '';
+  // Photos (filter nulls)
+  var photos = _reqPhotos.filter(function(p){return !!p;});
+  var req={
+    id:'req'+Date.now(),
+    homeowner_phone:(!_useEmailLogin?_homePhone:null)||USER.phone||null,
+    homeowner_email:reqEmail||null,
+    service:svc,
+    date:date,
+    address:addr,
+    notes:notes,
+    status:'pending',
+    estimate_range:estimateRange||null,
+    contact_pref:contactPref,
+    best_time:bestTime||null,
+    photos:photos.length?photos:null
+  };
   if(_sb){await _sb.from('job_requests').upsert([req]);}
-  showToast('✓ Request sent — we\'ll confirm shortly!');
+  showToast('✓ Quote request sent — we\'ll be in touch!');
   if(emailEl)emailEl.value='';
+  resetReqPhotos();
   switchTab('home');
 }
 

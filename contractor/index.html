@@ -356,6 +356,13 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
         <div class="job-rows" id="homeList"></div>
       </div>
 
+      <!-- QUOTES -->
+      <div id="tabQuotes" class="tab-pane">
+        <div style="padding:16px 16px 8px;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.04em">Quote Requests</div>
+        <div style="padding:0 16px 12px;font-size:13px;color:var(--fg-3)">Jobs sent to you for pricing. Review the details and submit your price — Nick will mark it up and handle the customer quote.</div>
+        <div id="ctQuoteList"><div style="text-align:center;padding:48px;color:var(--fg-3)">Loading…</div></div>
+      </div>
+
       <!-- JOBS -->
       <div id="tabJobs" class="tab-pane">
         <div style="padding:16px 16px 8px;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.04em">All My Jobs</div>
@@ -418,6 +425,7 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 
   <nav class="bnav">
     <button class="nb active" onclick="swTab('Home',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
+    <button class="nb" onclick="swTab('Quotes',this)" id="ctQuoteNavBtn" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Quotes<span id="ctQuoteBadge" class="hidden" style="position:absolute;top:4px;right:4px;background:#e55;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px"></span></button>
     <button class="nb" onclick="swTab('Jobs',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Jobs</button>
     <button class="nb" onclick="swTab('Earnings',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Earnings</button>
     <button class="nb" onclick="swTab('Profile',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
@@ -579,12 +587,12 @@ async function enterApp(){
     document.getElementById('hInit').textContent=cc.name[0];document.getElementById('hName').textContent=cc.name;
   }
   var now=new Date();document.getElementById('homeDateLine').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  rHome();rJobs();rEarn();rMs();
+  rHome();rJobs();rEarn();rMs();rQuotes();
   var _jp=new URLSearchParams(window.location.search).get('job');
   if(_jp)setTimeout(function(){openS(_jp);},300);
 }
 
-function swTab(n,el){['Home','Jobs','Earnings','Profile'].forEach(function(t){document.getElementById('tab'+t).classList.remove('active')});document.getElementById('tab'+n).classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0}
+function swTab(n,el){['Home','Quotes','Jobs','Earnings','Profile'].forEach(function(t){document.getElementById('tab'+t).classList.remove('active')});document.getElementById('tab'+n).classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;if(n==='Quotes')rQuotes();}
 function mj(){return jobs.filter(function(j){return cc&&j.contractorId===cc.id})}
 
 function rHome(){
@@ -606,6 +614,44 @@ function rHome(){
 }
 
 function rJobs(){var j=mj().sort(function(a,b){return new Date(b.date)-new Date(a.date)});var el=document.getElementById('allList');if(!j.length){el.innerHTML='<div style="color:var(--fg-3);text-align:center;padding:48px 0">No jobs assigned yet</div>';return}el.innerHTML=j.map(jrow).join('')}
+
+// ─── QUOTE REQUESTS ───────────────────────────────────────────────────────
+var _ctQuotes=[];
+async function rQuotes(){
+  var el=document.getElementById('ctQuoteList');
+  var badge=document.getElementById('ctQuoteBadge');
+  if(!el||!cc)return;
+  // Load requests assigned to this contractor (acknowledged status)
+  var res=await _sb.from('job_requests').select('*').eq('contractor_id',cc.id).in('status',['acknowledged','pending']).order('id',{ascending:false});
+  _ctQuotes=(res.data||[]).filter(function(r){return !r.contractor_quote}); // only ones not yet quoted
+  var allAssigned=res.data||[];
+  if(badge){
+    if(_ctQuotes.length){badge.textContent=_ctQuotes.length;badge.classList.remove('hidden');}
+    else{badge.classList.add('hidden');}
+  }
+  if(!allAssigned.length){el.innerHTML='<div style="text-align:center;padding:48px;color:var(--fg-3)">No quote requests right now</div>';return;}
+  el.innerHTML=allAssigned.map(function(r){
+    var dstr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'No date';
+    var hasPhotos=r.photos&&r.photos.length;
+    var thumbs=hasPhotos?'<div style="display:flex;gap:6px;margin-top:8px">'+(r.photos||[]).map(function(p){return'<img src="'+p+'" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">';}).join('')+'</div>':'';
+    var estBadge=r.estimate_range?'<div style="display:inline-block;background:var(--orange-dim);color:var(--orange);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;margin-bottom:4px">Customer estimate: '+r.estimate_range+'</div><br>':'';
+    var notes=r.notes?'<div style="font-size:12px;color:var(--fg-3);margin-top:4px;font-style:italic">'+r.notes+'</div>':'';
+    var quoted=r.contractor_quote?
+      '<div style="background:#e6f7ee;color:#1a7a42;border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700;margin-top:8px">✓ Quoted: $'+Number(r.contractor_quote).toLocaleString()+'</div>':
+      '<div style="margin-top:10px"><div style="display:flex;gap:8px;align-items:center"><input type="number" id="qq_'+r.id+'" placeholder="Your price ($)" min="0" style="flex:1;font-family:DM Sans,sans-serif;font-size:15px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:10px;padding:11px 13px;outline:none"><button class="mbtn mbtn-primary" style="padding:11px 16px;white-space:nowrap" onclick="submitCtQuote(\''+r.id+'\')">Submit Quote</button></div></div>';
+    return'<div style="padding:16px;border-bottom:1px solid var(--border)"><div style="font-size:15px;font-weight:700;margin-bottom:4px">'+r.service+'</div>'+estBadge+'<div style="font-size:13px;color:var(--fg-2)"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:middle"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> '+dstr+' · '+r.address+'</div>'+notes+thumbs+quoted+'</div>';
+  }).join('');
+}
+
+async function submitCtQuote(reqId){
+  var inp=document.getElementById('qq_'+reqId);
+  if(!inp)return;
+  var price=Number(inp.value)||0;
+  if(!price){toast('Enter your price first');return;}
+  await _sb.from('job_requests').update({contractor_quote:price}).eq('id',reqId);
+  toast('Quote submitted ✓ — Nick will follow up');
+  rQuotes();
+}
 
 function jrow(j){
   var cfg=svcCfg(j.service);

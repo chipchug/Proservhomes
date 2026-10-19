@@ -467,25 +467,77 @@ textarea{resize:vertical;min-height:80px}
   </nav>
 </div>
 
-<!-- CONFIRM REQUEST MODAL -->
+<!-- REQUEST DETAIL MODAL -->
 <div class="overlay hidden" id="confirmReqModal">
-  <div class="modal">
+  <div class="modal" style="max-height:88vh;overflow-y:auto">
     <div class="modal-pill"></div>
-    <div class="modal-title">Confirm & Quote</div>
+    <div class="modal-title" id="crModalTitle">Request Details</div>
     <input type="hidden" id="crReqId">
+    <!-- Summary block -->
     <div id="crSummary" style="background:var(--surface-2);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--fg-2)"></div>
-    <div class="form-row">
-      <div class="field"><label>Job Price ($)</label><input type="number" id="crPrice" placeholder="0" min="0"></div>
-      <div class="field"><label>Contractor Pay ($)</label><input type="number" id="crPay" placeholder="0" min="0"></div>
+    <!-- Estimate range pill -->
+    <div id="crEstRow" style="display:none;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Estimate Range</div>
+      <div id="crEstimate" style="background:var(--orange-dim);color:var(--orange);border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700"></div>
     </div>
-    <div class="field"><label>Assign Contractor</label><select id="crContractor"></select></div>
-    <div class="field"><label>Stripe Payment Link (optional)</label><input type="url" id="crPayLink" placeholder="https://buy.stripe.com/…"></div>
-    <div class="field"><label>Notes to customer</label><textarea id="crNotes" rows="2" placeholder="e.g. We'll arrive between 8–10am"></textarea></div>
-    <div class="mbtn-row">
-      <button class="mbtn mbtn-primary" onclick="doConfirmRequest()">✓ Confirm &amp; Notify</button>
-      <button class="mbtn mbtn-sec" onclick="closeModal('confirmReqModal')">Cancel</button>
+    <!-- Photos -->
+    <div id="crPhotosRow" style="display:none;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:6px">Customer Photos</div>
+      <div id="crPhotos" style="display:flex;gap:8px"></div>
     </div>
-    <button class="mbtn mbtn-del" style="width:100%;margin-top:10px" onclick="dismissRequest()">Dismiss Request</button>
+    <!-- Contact preference -->
+    <div id="crContactRow" style="display:none;margin-bottom:12px;font-size:13px;color:var(--fg-2)"></div>
+    <!-- Contractor quote result (shown when available) -->
+    <div id="crCtQuoteRow" style="display:none;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Contractor Quote</div>
+      <div id="crCtQuote" style="background:#e6f7ee;color:#1a7a42;border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700"></div>
+    </div>
+    <!-- Action tabs -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:16px">
+      <button id="crTabAck" class="mbtn mbtn-primary" onclick="crSetMode('ack')" style="font-size:11px;padding:9px 4px">👋 Acknowledge</button>
+      <button id="crTabCt" class="mbtn mbtn-sec" onclick="crSetMode('ct')" style="font-size:11px;padding:9px 4px">👷 Get Quote</button>
+      <button id="crTabJob" class="mbtn mbtn-sec" onclick="crSetMode('job')" style="font-size:11px;padding:9px 4px">✓ Book Job</button>
+    </div>
+    <!-- Acknowledge panel -->
+    <div id="crPanelAck">
+      <div style="font-size:13px;color:var(--fg-2);margin-bottom:12px;line-height:1.5">Send the customer a quick <strong>"we've received your request and will be in touch"</strong> reply. Keeps the request open while you review photos.</div>
+      <div class="field"><label>Custom message (optional)</label><textarea id="crAckMsg" rows="2" placeholder="e.g. Thanks! We'll call you tomorrow morning to go over the details."></textarea></div>
+      <button class="mbtn mbtn-primary" style="width:100%;margin-top:10px" onclick="doAcknowledgeRequest()">Send Acknowledgement →</button>
+    </div>
+    <!-- Get Contractor Quote panel -->
+    <div id="crPanelCt" style="display:none">
+      <div style="font-size:13px;color:var(--fg-2);margin-bottom:12px;line-height:1.5">Send the job details + photos to your contractor. They'll submit their quote through the contractor portal.</div>
+      <div class="field"><label>Assign Contractor</label><select id="crContractorQuote"></select></div>
+      <div class="field"><label>Notes to contractor (optional)</label><textarea id="crCtNotes" rows="2" placeholder="e.g. 2-story home, tricky gutters on the back, bring extra equipment"></textarea></div>
+      <button class="mbtn mbtn-primary" style="width:100%;margin-top:10px" onclick="doSendToContractor()">Send to Contractor for Quote →</button>
+    </div>
+    <!-- Convert to Job panel (final step after quote received) -->
+    <div id="crPanelJob" style="display:none">
+      <div style="font-size:12px;color:var(--fg-3);margin-bottom:10px">Price agreed with customer? Lock it in — creates the job and sends confirmation.</div>
+      <!-- Send quote to customer subsection -->
+      <div style="background:var(--surface-2);border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Send Quote to Customer</div>
+        <div class="form-row">
+          <div class="field"><label>Your Price ($)</label><input type="number" id="crQuotePrice" placeholder="0" min="0" oninput="document.getElementById('crPrice').value=this.value"></div>
+          <div class="field"><label>Payment Link</label><input type="url" id="crQuotePayLink" placeholder="https://buy.stripe.com/…" oninput="document.getElementById('crPayLink').value=this.value"></div>
+        </div>
+        <div class="field"><label>Quote message to customer</label><textarea id="crQuoteMsg" rows="2" placeholder="e.g. Based on your photos, here's our quote. Payment link included."></textarea></div>
+        <button class="mbtn" style="width:100%;background:var(--surface);border:1px solid var(--border)" onclick="doSendQuoteToCustomer()">📤 Send Quote to Customer</button>
+      </div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Book the Job</div>
+      <div class="form-row">
+        <div class="field"><label>Job Price ($)</label><input type="number" id="crPrice" placeholder="0" min="0"></div>
+        <div class="field"><label>Contractor Pay ($)</label><input type="number" id="crPay" placeholder="0" min="0"></div>
+      </div>
+      <div class="field"><label>Assign Contractor</label><select id="crContractor"></select></div>
+      <div class="field"><label>Stripe Payment Link</label><input type="url" id="crPayLink" placeholder="https://buy.stripe.com/…"></div>
+      <div class="field"><label>Notes to customer</label><textarea id="crNotes" rows="2" placeholder="e.g. We'll arrive between 8–10am"></textarea></div>
+      <button class="mbtn mbtn-primary" style="width:100%;margin-top:10px" onclick="doConfirmRequest()">✓ Create Job &amp; Send Booking Confirmation</button>
+    </div>
+    <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button class="mbtn mbtn-sec" onclick="closeModal('confirmReqModal')">Close</button>
+      <button class="mbtn mbtn-del" onclick="dismissRequest()">Dismiss</button>
+    </div>
   </div>
 </div>
 
@@ -713,7 +765,7 @@ async function enterApp(){
   document.getElementById('ovGreeting').textContent=g2;
   document.getElementById('ovSub').textContent="Here's your business overview.";
   var rr=await _sb.from('job_requests').select('*').order('id',{ascending:false});
-  requests=(rr.data||[]).filter(function(r){return r.status==='pending'});
+  requests=(rr.data||[]).filter(function(r){return r.status==='pending'||r.status==='acknowledged'||r.status==='quoted'});
   populateBooksMonths();populateContractorSelect();renderDashboard();renderJobsTable();renderContractors();renderBooks();renderRequests();
   var _jp=new URLSearchParams(window.location.search).get('job');
   if(_jp)setTimeout(function(){openJobDetail(_jp);},300);
@@ -892,25 +944,152 @@ function renderRequests(){
   el.innerHTML=requests.map(function(r){
     var dstr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'No date';
     var svc=r.service||'Service Request';
-    return'<div class="jr" style="border-left:3px solid var(--orange)"><div class="jr-thumb" style="background:var(--orange-dim);font-size:20px;display:flex;align-items:center;justify-content:center">📋</div><div class="jr-body"><div class="jr-svc">'+esc(svc)+'</div><div class="jr-client">'+esc(r.homeowner_phone||'')+(r.homeowner_email?'<br><span style="font-size:11px;color:var(--fg-3)">'+esc(r.homeowner_email)+'</span>':'')+'</div><div class="jr-meta"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> '+dstr+'</div><div class="jr-meta" style="color:var(--fg-3);font-size:11px">'+esc(r.address||'')+'</div></div><div class="jr-chev"><button class="mbtn mbtn-primary" style="padding:8px 12px;font-size:12px" onclick="openConfirmRequest(\''+r.id+'\')">Confirm</button></div></div>';
+    var hasPhotos=r.photos&&r.photos.length;
+    var estRange=r.estimate_range||'';
+    // Build photo thumbs preview
+    var thumbs='';
+    if(hasPhotos){
+      thumbs='<div style="display:flex;gap:4px;margin-top:6px">'+(r.photos||[]).slice(0,3).map(function(p){return'<img src="'+p+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">';}).join('')+'</div>';
+    }
+    var estPill=estRange?'<div style="display:inline-block;background:var(--orange-dim);color:var(--orange);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:700;margin-top:5px">'+esc(estRange)+'</div>':'';
+    var statusBadge=r.status==='acknowledged'?'<span style="background:#e3f0ff;color:#1a6bc4;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;margin-left:6px">Acknowledged</span>':'';
+    return'<div class="jr" style="border-left:3px solid var(--orange)"><div class="jr-thumb" style="background:var(--orange-dim);font-size:20px;display:flex;align-items:center;justify-content:center">'+(hasPhotos?'📷':'📋')+'</div><div class="jr-body" style="flex:1;min-width:0"><div class="jr-svc">'+esc(svc)+statusBadge+'</div><div class="jr-client">'+esc(r.homeowner_phone||'')+(r.homeowner_email?'<span style="color:var(--fg-3);font-size:11px"> · '+esc(r.homeowner_email)+'</span>':'')+'</div><div class="jr-meta"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> '+dstr+' — '+esc(r.address||'')+' </div>'+estPill+thumbs+'</div><div class="jr-chev"><button class="mbtn mbtn-primary" style="padding:8px 12px;font-size:12px;white-space:nowrap" onclick="openConfirmRequest(\''+r.id+'\')">Review →</button></div></div>';
   }).join('');
 }
 
 var _confirmReqId=null;
+function crSetMode(mode){
+  ['ack','ct','job'].forEach(function(m){
+    document.getElementById('crPanel'+m.charAt(0).toUpperCase()+m.slice(1)).style.display=m===mode?'':'none';
+    var btn=document.getElementById('crTab'+m.charAt(0).toUpperCase()+m.slice(1));
+    if(btn)btn.className='mbtn '+(m===mode?'mbtn-primary':'mbtn-sec');
+  });
+}
 function openConfirmRequest(id){
   var r=requests.find(function(x){return x.id==id});if(!r)return;
   _confirmReqId=id;
   document.getElementById('crReqId').value=id;
   var dstr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'No date specified';
-  document.getElementById('crSummary').innerHTML='<strong>'+esc(r.service||'Service')+'</strong><br>'+esc(r.homeowner_phone||'')+(r.homeowner_email?' · '+esc(r.homeowner_email):'')+' <br>'+esc(r.address||'')+'<br>Preferred date: '+dstr+(r.notes?'<br><em>'+esc(r.notes)+'</em>':'');
+  // Summary
+  document.getElementById('crSummary').innerHTML=
+    '<strong>'+esc(r.service||'Service')+'</strong><br>'+
+    esc(r.homeowner_phone||'')+(r.homeowner_email?' · <span style="color:var(--fg-3)">'+esc(r.homeowner_email)+'</span>':'')+
+    '<br>'+esc(r.address||'')+'<br>Preferred: '+dstr+
+    (r.notes?'<br><em style="color:var(--fg-3)">'+esc(r.notes)+'</em>':'');
+  // Estimate range
+  var estRow=document.getElementById('crEstRow');
+  var estEl=document.getElementById('crEstimate');
+  if(r.estimate_range){estRow.style.display='';estEl.textContent=r.estimate_range;}
+  else{estRow.style.display='none';}
+  // Photos
+  var photosRow=document.getElementById('crPhotosRow');
+  var photosEl=document.getElementById('crPhotos');
+  if(r.photos&&r.photos.length){
+    photosRow.style.display='';
+    photosEl.innerHTML=(r.photos||[]).map(function(p,i){
+      return'<div style="position:relative;cursor:pointer" onclick="this.querySelector(\'img\').requestFullscreen&&this.querySelector(\'img\').requestFullscreen()"><img src="'+p+'" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--border)"></div>';
+    }).join('');
+  }else{photosRow.style.display='none';}
+  // Contact pref
+  var ctRow=document.getElementById('crContactRow');
+  var ctParts=[];
+  if(r.contact_pref&&r.contact_pref!=='call')ctParts.push('Prefers: '+({call:'Phone call',text:'Text message',email:'Email only'}[r.contact_pref]||r.contact_pref));
+  else ctParts.push('Prefers: Phone call');
+  if(r.best_time)ctParts.push('Best time: '+({morning:'Morning (8am–12pm)',afternoon:'Afternoon (12pm–4pm)',evening:'Evening (4pm–7pm)'}[r.best_time]||r.best_time));
+  ctRow.style.display='';ctRow.innerHTML='📞 '+ctParts.join(' · ');
+  // Reset fields
   document.getElementById('crPrice').value='';
   document.getElementById('crPay').value='';
   document.getElementById('crPayLink').value='';
   document.getElementById('crNotes').value='';
-  // populate contractor dropdown
-  var sel=document.getElementById('crContractor');
-  sel.innerHTML='<option value="">Unassigned</option>'+contractors.map(function(c){return'<option value="'+c.id+'">'+esc(c.name)+'</option>'}).join('');
+  document.getElementById('crAckMsg').value='';
+  // Populate contractor dropdowns
+  var ctOpts='<option value="">Unassigned</option>'+contractors.map(function(c){return'<option value="'+c.id+'">'+esc(c.name)+'</option>'}).join('');
+  document.getElementById('crContractor').innerHTML=ctOpts;
+  document.getElementById('crContractorQuote').innerHTML=ctOpts;
+  // Pre-fill assigned contractor if already set
+  if(r.contractor_id){document.getElementById('crContractor').value=r.contractor_id;document.getElementById('crContractorQuote').value=r.contractor_id;}
+  // Show contractor quote if returned
+  var ctQRow=document.getElementById('crCtQuoteRow');
+  var ctQEl=document.getElementById('crCtQuote');
+  if(r.contractor_quote){ctQRow.style.display='';ctQEl.textContent='Contractor quoted: $'+Number(r.contractor_quote).toLocaleString()+' — mark it up below';}
+  else{ctQRow.style.display='none';}
+  // Pre-fill prices if contractor quote exists
+  if(r.contractor_quote){document.getElementById('crPay').value=r.contractor_quote;document.getElementById('crPrice').value='';}
+  // Default to Acknowledge mode (or 'ct' if already acknowledged)
+  crSetMode(r.status==='acknowledged'?'ct':r.status==='quoted'?'job':'ack');
   document.getElementById('confirmReqModal').classList.remove('hidden');
+}
+
+async function doAcknowledgeRequest(){
+  var rid=document.getElementById('crReqId').value;
+  var r=requests.find(function(x){return x.id==rid});if(!r)return;
+  var msg=document.getElementById('crAckMsg').value.trim()||"Thanks for reaching out! We've received your request and will be in touch shortly to go over the details.";
+  // Mark as acknowledged (stays in inbox but flagged)
+  await _sb.from('job_requests').update({status:'acknowledged'}).eq('id',rid);
+  // Update local
+  var idx=requests.findIndex(function(x){return x.id==rid});
+  if(idx>=0)requests[idx]={...requests[idx],status:'acknowledged'};
+  // Send email if available
+  var email=r.homeowner_email||'';
+  if(email){
+    try{
+      await fetch(SURL+'/functions/v1/send-notification',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+        body:JSON.stringify({to:email,subject:"We've received your ProServ Homes request",body:msg+'\n\n— ProServ Homes'})
+      });
+    }catch(e){}
+    showToast('Acknowledged! Email sent to customer ✓');
+  }else{
+    showToast('Acknowledged ✓ — no email on file to notify');
+  }
+  closeModal('confirmReqModal');renderRequests();
+}
+
+async function doSendToContractor(){
+  var rid=document.getElementById('crReqId').value;
+  var r=requests.find(function(x){return x.id==rid});if(!r)return;
+  var ctId=document.getElementById('crContractorQuote').value;
+  var ctNotes=document.getElementById('crCtNotes').value.trim();
+  if(!ctId){showToast('Select a contractor first');return;}
+  var ct=contractors.find(function(c){return c.id==ctId});
+  var ctEmail=ct?ct.email:'';
+  // Save contractor assignment to request
+  await _sb.from('job_requests').update({status:'acknowledged',contractor_id:ctId}).eq('id',rid);
+  var idx=requests.findIndex(function(x){return x.id==rid});
+  if(idx>=0)requests[idx]={...requests[idx],status:'acknowledged',contractor_id:ctId};
+  if(ctEmail){
+    var dstr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'TBD';
+    var ctMsg='New quote request from ProServ Homes:\n\nService: '+r.service+'\nDate requested: '+dstr+'\nAddress: '+(r.address||'')+'\n'+(r.estimate_range?'Customer estimate range: '+r.estimate_range+'\n':'')+(ctNotes?'\nNotes from Nick: '+ctNotes+'\n':'')+'\nPlease log in to your contractor portal to submit your quote:\nhttps://proservhomes.co/contractor/\n\n— ProServ Homes';
+    try{
+      await fetch(SURL+'/functions/v1/send-notification',{method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify({to:ctEmail,subject:'Quote Request: '+r.service+' — ProServ Homes',body:ctMsg})});
+      showToast('Sent to '+ct.name+' for quote ✓');
+    }catch(e){showToast('Saved — could not send email');}
+  }else{
+    showToast('Assigned to '+ct.name+' — no email on file');
+  }
+  closeModal('confirmReqModal');renderRequests();
+}
+
+async function doSendQuoteToCustomer(){
+  var rid=document.getElementById('crReqId').value;
+  var r=requests.find(function(x){return x.id==rid});if(!r)return;
+  var price=Number(document.getElementById('crQuotePrice').value)||0;
+  var payLink=document.getElementById('crQuotePayLink').value.trim();
+  var msg=document.getElementById('crQuoteMsg').value.trim();
+  var email=r.homeowner_email||'';
+  if(!email){showToast('No customer email on file');return;}
+  if(!price&&!payLink){showToast('Enter a price or payment link first');return;}
+  var dstr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'TBD';
+  var body='Hi! Here\'s your quote for '+r.service+' on '+dstr+' at '+(r.address||'')+'.\n\n'+(price?'Total: $'+price+'\n':'')+(payLink?'Secure payment link: '+payLink+'\n':'')+(msg?'\n'+msg+'\n':'')+'\nLet us know if you have any questions!\n— ProServ Homes';
+  try{
+    await fetch(SURL+'/functions/v1/send-notification',{method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify({to:email,subject:'Your ProServ Homes Quote — '+r.service,body:body})});
+    // Mirror entered price/pay link into job panel
+    document.getElementById('crPrice').value=price||'';
+    document.getElementById('crPayLink').value=payLink||'';
+    showToast('Quote sent to customer ✓');
+  }catch(e){showToast('Could not send email — try again');}
 }
 
 async function doConfirmRequest(){
@@ -931,19 +1110,28 @@ async function doConfirmRequest(){
   // Mark request as confirmed
   await _sb.from('job_requests').update({status:'confirmed'}).eq('id',rid);
   requests=requests.filter(function(x){return x.id!=rid});
-  // Send email notification if we have an email
+  // Notify customer
   if(email){
     var dstr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'TBD';
-    var msg='Hi! Your '+esc(r.service)+' service has been confirmed for '+dstr+' at '+esc(r.address||'')+'. '+(price?'Price: $'+price+'. ':'')+( notes?notes+' ':'')+( payLink?'Pay here: '+payLink+' ':'')+'Questions? Reply to this email or call us. — ProServ Homes';
-    await _sb.auth.admin; // no-op; email goes via Supabase magic link workaround
-    // Supabase doesn't expose transactional email directly from frontend.
-    // We send via the edge function if available, otherwise show the message.
+    var msg='Hi! Your '+r.service+' has been booked for '+dstr+' at '+(r.address||'')+'. '+(price?'Total: $'+price+'. ':'')+( notes?notes+' ':'')+( payLink?'Pay here: '+payLink+' ':'')+'— ProServ Homes';
     try{
-      await fetch(SURL+'/functions/v1/send-notification',{method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify({to:email,subject:'Your ProServ Homes service is confirmed!',body:msg,jobId:jobId})});
+      await fetch(SURL+'/functions/v1/send-notification',{method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify({to:email,subject:'Your ProServ Homes job is booked!',body:msg,jobId:jobId})});
     }catch(e){}
-    showToast('Job confirmed! Customer notified at '+email+' ✓');
+    showToast('Job created! Customer notified ✓');
   } else {
-    showToast('Job confirmed and added ✓ — no email on file to notify');
+    showToast('Job created ✓ — no email on file');
+  }
+  // Notify contractor if assigned
+  if(ctId){
+    var ct=contractors.find(function(c){return c.id==ctId});
+    var ctEmail=ct?ct.email:'';
+    if(ctEmail){
+      var dstr2=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'TBD';
+      var ctMsg='New job assigned: '+r.service+'\nDate: '+dstr2+'\nAddress: '+(r.address||'')+'\nYour pay: $'+pay+(notes?'\nNotes: '+notes:'')+'\n\n— ProServ Homes';
+      try{
+        await fetch(SURL+'/functions/v1/send-notification',{method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify({to:ctEmail,subject:'New job assigned — '+r.service,body:ctMsg,jobId:jobId})});
+      }catch(e){}
+    }
   }
   closeModal('confirmReqModal');
   renderRequests();renderDashboard();renderJobsTable();
