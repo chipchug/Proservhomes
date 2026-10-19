@@ -55,8 +55,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--fg);font-
 .lform-card label{color:rgba(255,255,255,.5)}
 .lform-card input{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff}
 .lform-card input::placeholder{color:rgba(255,255,255,.35)}
-.lform-card input:focus{border-color:rgba(242,99,16,.8)}
+.lform-card input:focus{border-color:#F26310;outline:none;box-shadow:0 0 0 2px rgba(242,99,16,.25)}
+.lform-card input{border:1.5px solid rgba(255,255,255,.2)}
+.lform-card input:not(:focus){border-color:rgba(255,255,255,.2)}
 .lform-card a{color:rgba(255,255,255,.6)}
+.lform-card .bf.bfo,.lform-card button[type=submit],.lform-card .send-otp-btn{background:#F26310!important;border-color:#F26310!important;color:#fff!important}
+.lform-card .bf.bfo:hover,.lform-card button[type=submit]:hover,.lform-card .send-otp-btn:hover{background:#ff7a28!important;border-color:#ff7a28!important}
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
 label{font-size:11px;font-weight:700;color:var(--fg-2);letter-spacing:.06em;text-transform:uppercase}
 input{font-family:'DM Sans',sans-serif;font-size:16px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:11px;padding:13px 15px;width:100%;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none}
