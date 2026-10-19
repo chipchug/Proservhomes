@@ -764,6 +764,7 @@ function doLogout(){
 
 // ─── INIT ────────────────────────────────────────────────────────────────
 function initApp(){
+  try {
   // Greet
   var h = new Date().getHours();
   var g = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
@@ -778,14 +779,13 @@ function initApp(){
   // Stats
   var done = JOBS.filter(function(j){return j.status==='Complete';});
   var total = done.reduce(function(s,j){return s+j.price;},0);
-  document.getElementById('profTotal').textContent = done.length+' completed';
-  document.getElementById('profSpent').textContent = '$'+total.toLocaleString()+' lifetime';
-  renderHome();
-  renderHistory();
-  loadPropData();
-  // Initialize pricing panel with first service (Gutter Cleaning)
-  selectedSvc = 'Gutter Cleaning';
-  renderSvcPanel('Gutter Cleaning');
+  var pe=document.getElementById('profTotal'); if(pe) pe.textContent=done.length+' completed';
+  var ps=document.getElementById('profSpent'); if(ps) ps.textContent='$'+total.toLocaleString()+' lifetime';
+  try{renderHome();}catch(e){console.error('[PSH] renderHome',e);}
+  try{renderHistory();}catch(e){console.error('[PSH] renderHistory',e);}
+  try{loadPropData();}catch(e){console.error('[PSH] loadPropData',e);}
+  try{selectedSvc='Gutter Cleaning';renderSvcPanel('Gutter Cleaning');}catch(e){console.error('[PSH] renderSvcPanel',e);}
+  } catch(e){ console.error('[PSH] initApp crash:',e); }
 }
 
 // ─── HOME ────────────────────────────────────────────────────────────────
@@ -1551,7 +1551,7 @@ async function saveProfile(){
       console.warn('Safety net: restoring login screen');
       ls.classList.remove('hidden');
     }
-  }, 4000);
+  }, 2000);
 
   if(!_sb){ clearTimeout(_safetyTimer); return; }
   try{
