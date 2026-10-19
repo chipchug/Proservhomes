@@ -337,6 +337,7 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <!-- APP -->
 <!-- Profile Setup Screen -->
 <div id="profileSetup" class="hidden" style="min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;background:#121212;padding:24px;box-sizing:border-box">
+<div id="dbgBanner" onclick="var cx=window.innerWidth/2,cy=window.innerHeight/2,el=document.elementFromPoint(cx,cy),ls=document.getElementById('loginScreen'),ps=document.getElementById('profileSetup');document.getElementById('dbgOut').textContent='Center:'+el.id+'/'+el.className+' | LS:'+ls.style.display+' | PS:'+ps.style.display;" style="position:fixed;top:0;left:0;right:0;background:red;color:#fff;font-size:16px;font-weight:bold;padding:12px;z-index:99999;text-align:center;cursor:pointer">PROFILE SETUP — TAP THIS RED BAR<br><span id="dbgOut" style="font-size:12px;word-break:break-all"></span></div>
   <div style="background:#1e1e1e;border-radius:20px;padding:32px 28px;max-width:420px;width:100%;border:1px solid rgba(255,255,255,.1)">
     <div style="margin-bottom:24px">
       <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#F26310;margin-bottom:8px">Welcome to ProServ Homes</div>
