@@ -570,7 +570,7 @@ async function sendCodeUnified(){
   if(_isEmail(raw)){
     useEmailLogin=true;pp=raw.toLowerCase();
     btn.disabled=true;btn.textContent='Sending…';
-    var res=await _sb.auth.signInWithOtp({email:pp,options:{shouldCreateUser:false,emailRedirectTo:'https://proservhomes.co/contractor/'}});
+    var res=await _sb.auth.signInWithOtp({email:pp,options:{shouldCreateUser:true,emailRedirectTo:'https://proservhomes.co/contractor/'}});
     btn.disabled=false;btn.textContent='Send Code';
     if(res.error){toast('Error: '+res.error.message);return;}
     document.getElementById('phoneStep').style.display='none';
