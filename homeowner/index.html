@@ -1244,104 +1244,69 @@ function downloadInvoice(jobId){
   if(!j) return;
   var jsPDFLib = window.jspdf && window.jspdf.jsPDF;
   if(!jsPDFLib){showToast('PDF library loading… try again');return;}
-  var doc = new jsPDFLib({orientation:'portrait',unit:'mm',format:'a4'});
-  var W=210, M=18;
-  // Header bar
-  doc.setFillColor(242,99,16);
-  doc.rect(0,0,W,32,'F');
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(20);
-  doc.setTextColor(255,255,255);
-  doc.text('ProServ Homes',M,15);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(9);
-  doc.text('Professional Home Services · Ocean & Monmouth County, NJ',M,23);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(26);
-  doc.text('INVOICE',W-M,22,{align:'right'});
-  // Invoice meta (right)
-  var invNo='INV-'+j.date.replace(/-/g,'').slice(0,6)+'-'+j.id.replace('j','').padStart(4,'0');
-  doc.setTextColor(50,50,50);
-  doc.setFontSize(9);
-  doc.setFont('helvetica','bold');
-  doc.text('Invoice #',W-65,44);doc.text('Issued',W-65,51);doc.text('Status',W-65,58);
-  doc.setFont('helvetica','normal');
-  doc.text(invNo,W-M,44,{align:'right'});
-  doc.text(new Date().toLocaleDateString('en-US'),W-M,51,{align:'right'});
-  if(j.status==='Complete'){doc.setTextColor(31,155,42);}else{doc.setTextColor(242,99,16);}
-  doc.text(j.status,W-M,58,{align:'right'});
-  // Bill To (left)
-  doc.setTextColor(100,100,100);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(8);
-  doc.text('BILL TO',M,44);
-  doc.setFillColor(242,99,16);
-  doc.rect(M,45.5,18,0.4,'F');
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(11);
-  doc.setTextColor(20,20,20);
-  doc.text(USER.name,M,53);
-  doc.setFontSize(9);
-  doc.setTextColor(80,80,80);
-  doc.text(USER.addr,M,60);
-  doc.text(USER.phone,M,67);
-  // Divider
-  doc.setDrawColor(220,220,220);
-  doc.setLineWidth(0.4);
-  doc.line(M,74,W-M,74);
-  // Table header
-  doc.setFillColor(248,248,248);
-  doc.rect(M,76,W-2*M,9,'F');
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(8);
-  doc.setTextColor(120,120,120);
-  doc.text('SERVICE',M+3,82);
-  doc.text('DATE',90,82);
-  doc.text('TECHNICIAN',130,82);
-  doc.text('AMOUNT',W-M-2,82,{align:'right'});
-  // Row
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(10);
-  doc.setTextColor(20,20,20);
-  doc.text(j.svc,M+3,93);
-  var dd=new Date(j.date+'T12:00:00');
-  doc.setFontSize(9);
-  doc.setTextColor(60,60,60);
-  doc.text(dd.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),90,93);
-  doc.text(j.tech,130,93);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(11);
-  doc.setTextColor(20,20,20);
-  doc.text('$'+j.price.toFixed(2),W-M-2,93,{align:'right'});
-  // Notes
-  var ny=102;
-  if(j.notes){
-    doc.setFont('helvetica','italic');
-    doc.setFontSize(8);
-    doc.setTextColor(130,130,130);
-    doc.text('Notes: '+j.notes,M+3,ny);
-    ny+=10;
+  var doc = new jsPDFLib({unit:'pt',format:'letter'});
+  var W=612, mg=56, y=mg;
+  // Green top accent bar
+  doc.setFillColor(31,155,42);
+  doc.rect(0,0,W,6,'F');
+  // Logo (top-left)
+  try{
+    var logoEl=document.querySelector('.lbrand img');
+    if(logoEl&&logoEl.src){doc.addImage(logoEl.src,'PNG',mg,y+8,120,36);}
+    else{throw 'no logo';}
+  }catch(e){
+    doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(31,155,42);
+    doc.text('ProServ Homes',mg,y+28);
   }
-  // Total box
-  var ty=Math.max(ny+4,118);
-  doc.setFillColor(242,99,16);
-  doc.roundedRect(W-68,ty,50,18,2,2,'F');
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(8);
-  doc.setTextColor(255,200,150);
-  doc.text('TOTAL DUE',W-43,ty+7,{align:'center'});
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(15);
-  doc.setTextColor(255,255,255);
-  doc.text('$'+j.price.toFixed(2),W-43,ty+15,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(120,120,120);
+  doc.text('proservhomes.co',mg,y+54);
+  // INVOICE label (top-right)
+  doc.setFont('helvetica','bold');doc.setFontSize(28);doc.setTextColor(31,155,42);
+  doc.text('INVOICE',W-mg,y+30,{align:'right'});
+  var invNo='INV-'+j.id.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(-8);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(120,120,120);
+  doc.text(invNo,W-mg,y+44,{align:'right'});
+  y+=76;
+  // Divider
+  doc.setDrawColor(220,220,220);doc.line(mg,y,W-mg,y);y+=18;
+  // Bill To + Job Details columns
+  doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(120,120,120);
+  doc.text('BILL TO',mg,y);doc.text('JOB DETAILS',W/2,y);
+  y+=14;
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(20,20,20);
+  doc.text(USER.name||'—',mg,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(60,60,60);
+  if(USER.phone)doc.text(USER.phone,mg,y+14);
+  if(USER.addr)doc.text(USER.addr,mg,y+26);
+  var rd=j.date?new Date(j.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'}):'—';
+  doc.text('Service: '+j.svc,W/2,y);
+  doc.text('Date: '+rd,W/2,y+14);
+  if(j.tech)doc.text('Technician: '+j.tech,W/2,y+26);
+  var statusColor=j.status==='Complete'?[31,155,42]:[242,99,16];
+  doc.setTextColor(statusColor[0],statusColor[1],statusColor[2]);
+  doc.text('Status: '+j.status,W/2,y+38);
+  y+=62;
+  doc.setDrawColor(220,220,220);doc.line(mg,y,W-mg,y);y+=18;
+  // Table header
+  doc.setFillColor(245,247,245);doc.rect(mg,y-4,W-mg*2,20,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(80,80,80);
+  doc.text('Description',mg+6,y+10);doc.text('Amount',W-mg-6,y+10,{align:'right'});
+  y+=24;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(20,20,20);
+  doc.text(j.svc+(j.notes?' — '+j.notes:''),mg+6,y+10);
+  doc.text('$'+Number(j.price||0).toFixed(2),W-mg-6,y+10,{align:'right'});
+  y+=28;
+  doc.setDrawColor(220,220,220);doc.line(mg,y,W-mg,y);y+=14;
+  // Total
+  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(20,20,20);
+  doc.text('Total',mg+6,y+12);
+  doc.setFontSize(14);doc.setTextColor(31,155,42);
+  doc.text('$'+Number(j.price||0).toFixed(2),W-mg-6,y+12,{align:'right'});
   // Footer
-  doc.setDrawColor(220,220,220);
-  doc.line(M,262,W-M,262);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(8);
-  doc.setTextColor(160,160,160);
-  doc.text('Thank you for choosing ProServ Homes!',W/2,268,{align:'center'});
-  doc.text('proservhomes.com  ·  Ocean & Monmouth County, NJ',W/2,274,{align:'center'});
+  y=700;
+  doc.setDrawColor(220,220,220);doc.line(mg,y,W-mg,y);y+=12;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150,150,150);
+  doc.text('Thank you for choosing ProServ Homes! · proservhomes.co · Ocean & Monmouth County, NJ',W/2,y,{align:'center'});
   doc.save('ProServ-'+invNo+'.pdf');
 }
 
