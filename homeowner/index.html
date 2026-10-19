@@ -639,6 +639,10 @@ var SURL='https://chmicqvorgjqlthufgwt.supabase.co';
 var SKEY='sb_publishable_7W-vHGcu-U60LiTsG_7i5g_7ijIyTOJ';
 var _sb=null;try{_sb=supabase.createClient(SURL,SKEY);}catch(e){}
 
+// localStorage helpers
+function lsGet(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
 // Session check runs after all functions are defined — see bottom of script
 // ── Stripe Payment Links — replace each URL after creating links in your Stripe dashboard ──
 var STRIPE_LINKS = {
