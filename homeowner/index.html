@@ -1511,6 +1511,7 @@ function _goToProfileSetup(email){
   // Background: if profile already exists, skip to dashboard
   setTimeout(function(){
     _sb.from('homeowners').select('*').eq('email',email).limit(1).then(function(hr){
+      console.log('[PSH] homeowners query result:', JSON.stringify({data: hr.data, error: hr.error, status: hr.status}));
       if(hr.data && hr.data.length){
         var hw=hr.data[0]; var name=hw.name||'';
         USER={name:name||email,first:name?name.split(' ')[0]:email.split('@')[0],email:email,addr:hw.address||'',phone:hw.phone||'',init:(name||email)[0].toUpperCase()};
