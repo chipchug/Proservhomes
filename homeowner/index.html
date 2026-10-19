@@ -777,16 +777,9 @@ function backToPhone(){
   document.getElementById('otpIn').value='';
 }
 function doLogout(){
-  document.getElementById('appShell').classList.add('hidden');
-  document.getElementById('loginScreen').classList.remove('hidden');
-  document.getElementById('phoneStep').style.display='block';
-  document.getElementById('otpStep').style.display='none';
-  document.getElementById('loginIn').value='';
-  document.getElementById('emailIn').value='';
-  document.getElementById('otpIn').value='';
-  _useEmailLogin=false;
-  document.getElementById('hPhoneMethod').style.display='block';
-  document.getElementById('hEmailMethod').style.display='none';
+  _sb.auth.signOut().finally(function(){
+    window.location.href='https://proservhomes.co/homeowner/';
+  });
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────
