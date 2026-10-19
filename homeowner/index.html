@@ -488,6 +488,10 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
               <input type="text" id="schedAddr" placeholder="14 Oak Lane, Howell NJ 07731">
             </div>
             <div class="sched-field">
+              <label>Your Email (for confirmation)</label>
+              <input type="email" id="schedEmail" placeholder="you@email.com">
+            </div>
+            <div class="sched-field">
               <label>Notes (optional)</label>
               <textarea id="schedNotes" rows="3" placeholder="Any access notes, gate codes, or special instructions…"></textarea>
             </div>
@@ -1106,9 +1110,12 @@ async function submitRequest(){
   if(!date){showToast('Pick a preferred date');return;}
   if(!svc){showToast('Select a service type');return;}
   if(!addr){showToast('Enter the service address');return;}
-  var req={id:'req'+Date.now(),homeowner_phone:_homePhone||USER.phone,service:svc,date:date,address:addr,notes:notes,status:'pending'};
+  var emailEl=document.getElementById('schedEmail');
+  var reqEmail=(emailEl?emailEl.value.trim():'') || (_useEmailLogin?_homePhone:'') || USER.email || '';
+  var req={id:'req'+Date.now(),homeowner_phone:(!_useEmailLogin?_homePhone:null)||USER.phone||null,homeowner_email:reqEmail||null,service:svc,date:date,address:addr,notes:notes,status:'pending'};
   if(_sb){await _sb.from('job_requests').upsert([req]);}
   showToast('✓ Request sent — we\'ll confirm shortly!');
+  if(emailEl)emailEl.value='';
   switchTab('home');
 }
 
