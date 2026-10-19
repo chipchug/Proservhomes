@@ -1027,7 +1027,8 @@ function openConfirmRequest(id){
   if(r.photos&&r.photos.length){
     photosRow.style.display='';
     photosEl.innerHTML=(r.photos||[]).map(function(p,i){
-      return'<div style="position:relative;cursor:pointer" onclick="this.querySelector(\'img\').requestFullscreen&&this.querySelector(\'img\').requestFullscreen()"><img src="'+p+'" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--border)"></div>';
+      var src=typeof p==='string'?p:(p.url||p);
+      return'<div style="position:relative;cursor:pointer" onclick="_openPhotoViewer(\''+src+'\',\'Customer Photo \'+'+(i+1)+')"><img src="'+src+'" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--border)"></div>';
     }).join('');
   }else{photosRow.style.display='none';}
   // Contact pref

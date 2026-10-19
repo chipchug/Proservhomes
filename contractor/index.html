@@ -743,9 +743,10 @@ function renderPhGrid(label, arr, gridId){
   var h = '';
   arr.forEach(function(p, i){
     var pendCls = p.uploaded ? '' : (p.failed ? ' ph-failed' : ' ph-pending');
-    h += '<div class="ph-thumb'+pendCls+'">'
+    var clickable = p.uploaded && p.url ? ' onclick="_ctxViewPhoto(\''+p.url+'\',\'Photo\')"' : '';
+    h += '<div class="ph-thumb'+pendCls+'"'+clickable+'>'
       + '<img src="'+p.url+'" loading="lazy">'
-      + '<button class="ph-del" onclick="removePhoto(\''+label+'\','+i+')" title="Remove">✕</button>'
+      + '<button class="ph-del" onclick="event.stopPropagation();removePhoto(\''+label+'\','+i+')" title="Remove">✕</button>'
       + '</div>';
   });
   if(arr.length < 6){
@@ -981,7 +982,7 @@ function openQR(reqId){
     h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">';
     photos.forEach(function(p){
       var url=typeof p==='string'?p:(p.url||p);
-      h+='<a href="'+url+'" target="_blank" style="flex-shrink:0"><img src="'+url+'" style="width:90px;height:90px;object-fit:cover;border-radius:10px;border:1.5px solid var(--border);display:block"></a>';
+      h+='<div style="flex-shrink:0;cursor:pointer" onclick="_ctxViewPhoto(\''+url+'\',\'Customer Photo\')"><img src="'+url+'" style="width:90px;height:90px;object-fit:cover;border-radius:10px;border:1.5px solid var(--border);display:block"></div>';
     });
     h+='</div>';
   }
