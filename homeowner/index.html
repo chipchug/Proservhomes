@@ -1566,34 +1566,5 @@ async function saveProfile(){
   }
 })();
 
-// ── BODY-LEVEL DEBUG OVERLAY (remove once blank-screen bug fixed) ──
-(function(){
-  var d=document.createElement('div');
-  d.id='_dbg';
-  d.style.cssText='position:fixed;top:0;left:0;right:0;background:#c00;color:#fff;font-size:14px;font-weight:bold;padding:10px 12px;z-index:999999;text-align:left;cursor:pointer;word-break:break-all';
-  d.innerHTML='TAP: debug<br><span id="_dbgTxt" style="font-size:11px;font-weight:normal"></span>';
-  document.body.appendChild(d);
-  function _dbgInfo(){
-    var screens=['loginScreen','profileSetup','appShell'];
-    var vis=screens.map(function(s){
-      var el=document.getElementById(s);
-      if(!el) return s+'=missing';
-      var cs=window.getComputedStyle(el);
-      return s+'='+cs.display+'(cls:'+el.className+')';
-    }).join(' | ');
-    var cx=window.innerWidth/2, cy=window.innerHeight/2;
-    var top=document.elementFromPoint(cx,cy);
-    var topStr=top?(top.id||top.tagName+'.'+top.className.slice(0,20)):'null';
-    document.getElementById('_dbgTxt').textContent=vis+' || CENTER:'+topStr;
-  }
-  d.addEventListener('click',_dbgInfo);
-  // Auto-run every second so info stays fresh
-  setInterval(function(){
-    document.getElementById('_dbgTxt').textContent=(['loginScreen','profileSetup','appShell']).map(function(s){
-      var el=document.getElementById(s);if(!el)return s+'=?';
-      return s+'='+window.getComputedStyle(el).display;
-    }).join(' | ');
-  },1000);
-})();
 
 </script>
