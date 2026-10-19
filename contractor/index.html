@@ -48,10 +48,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--fg);font-
 .lhero-text h1{font-family:'Barlow Condensed',sans-serif;font-size:clamp(38px,10.5vw,56px);font-weight:900;text-transform:uppercase;letter-spacing:-.01em;line-height:.98;color:#fff;text-wrap:balance}
 .lhero-text h1 .hl-o{color:#F26310}
 .lhero-text h1 .hl-m{color:rgba(255,255,255,.45)}
-.lform-card{background:rgba(18,18,18,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:22px 20px 20px}
+.lform-card{background:rgba(18,18,18,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:22px 20px 20px;max-width:420px;width:100%}
 .lform-card .ley{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:14px}
-.lform-card h2{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
-.lform-card p{font-size:13px;color:var(--fg-2);margin-bottom:18px}
+.lform-card h2{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;color:#fff}
+.lform-card p{font-size:13px;color:rgba(255,255,255,.55);margin-bottom:18px}
+.lform-card label{color:rgba(255,255,255,.5)}
+.lform-card input{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff}
+.lform-card input::placeholder{color:rgba(255,255,255,.35)}
+.lform-card input:focus{border-color:rgba(242,99,16,.8)}
+.lform-card a{color:rgba(255,255,255,.6)}
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
 label{font-size:11px;font-weight:700;color:var(--fg-2);letter-spacing:.06em;text-transform:uppercase}
 input{font-family:'DM Sans',sans-serif;font-size:16px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:11px;padding:13px 15px;width:100%;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none}
