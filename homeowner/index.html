@@ -768,13 +768,14 @@ function initApp(){
   // Greet
   var h = new Date().getHours();
   var g = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
-  document.getElementById('greetName').textContent = g+', '+USER.first;
-  document.getElementById('hName').textContent = USER.first+' M.';
-  document.getElementById('hInit').textContent = USER.init;
-  document.getElementById('profAv').textContent = USER.init;
-  document.getElementById('profName').textContent = USER.name;
-  document.getElementById('profPhone').textContent = USER.phone;
-  document.getElementById('profAddr').textContent = USER.addr;
+  function _setText(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+  _setText('greetName', g+', '+USER.first);
+  _setText('hName', USER.first+' M.');
+  _setText('hInit', USER.init);
+  _setText('profAv', USER.init);
+  _setText('profName', USER.name);
+  _setText('profPhone', USER.phone||'');
+  _setText('profAddr', USER.addr||'');
   // Stats
   var done = JOBS.filter(function(j){return j.status==='Complete';});
   var total = done.reduce(function(s,j){return s+j.price;},0);
@@ -1496,7 +1497,14 @@ async function _loadAndLaunch(email){
   if(hr.data&&hr.data.length){
     var hw=hr.data[0];
     var name=hw.name||'';
-    USER={name:name||email,first:name?name.split(' ')[0]:email.split('@')[0],email:email,addr:hw.address||'',init:(name||email)[0].toUpperCase()};
+    USER={
+      name:name||email,
+      first:name?name.split(' ')[0]:email.split('@')[0],
+      email:email,
+      addr:hw.address||'',
+      phone:hw.phone||'',
+      init:(name||email)[0].toUpperCase()
+    };
     // Load jobs
     var jr=await _sb.from('jobs').select('*').eq('email',email).order('date',{ascending:false});
     if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
@@ -1531,7 +1539,17 @@ async function saveProfile(){
   if(!_sb) return;
   try{
     var {data:{session}}=await _sb.auth.getSession();
-    if(session&&session.user) await _loadAndLaunch(session.user.email);
+    if(session&&session.user){
+      try{
+        await _loadAndLaunch(session.user.email);
+      }catch(e){
+        console.warn('Launch failed',e);
+        // Restore login screen so user isn't left with blank page
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('profileSetup').classList.add('hidden');
+        document.getElementById('appShell').classList.add('hidden');
+      }
+    }
   }catch(e){console.warn('Session check failed',e);}
 })();
 
