@@ -890,13 +890,13 @@ function renderHome(){
     if(rjPhotos.length){
       photoThumbsHtml = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 6px">'
         + rjPhotos.map(function(p){
-            return '<div style="position:relative">'
-              +'<img src="'+p.url+'" style="width:58px;height:58px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border)">'
+            return '<a href="'+p.url+'" target="_blank" style="position:relative;display:block;text-decoration:none;flex-shrink:0">'
+              +'<img src="'+p.url+'" style="width:68px;height:68px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);display:block">'
               +(p.label?'<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:8px;font-weight:800;letter-spacing:.06em;text-align:center;padding:2px;border-radius:0 0 6px 6px;text-transform:uppercase">'+p.label+'</div>':'')
-            +'</div>';
+            +'</a>';
           }).join('')
         +'</div>'
-        +'<div style="font-size:11px;color:var(--fg-3);margin-bottom:8px">Tap the photos above to save them, then attach when leaving your review.</div>';
+        +'<div style="font-size:11px;color:var(--fg-3);margin-bottom:8px">Tap a photo to open it full-size → hold to save to your camera roll, then attach when leaving your review.</div>';
     }
     rb.innerHTML = '<div class="review-banner" style="flex-direction:column;align-items:flex-start">'
       +'<div style="display:flex;width:100%;align-items:flex-start;gap:10px">'

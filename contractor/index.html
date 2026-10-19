@@ -711,6 +711,7 @@ function openS(id){
   // ── Status actions ──
   var hasSavedBefore=(_photoBefore||[]).filter(function(p){return p.uploaded;}).length>0;
   var hasSavedAfter=(_photoAfter||[]).filter(function(p){return p.uploaded;}).length>0;
+  h+='<div id="phActButtons">';
   if(j.status==='Scheduled'||j.status==='New'){
     if(hasSavedBefore){
       h+='<button class="sact start" onclick="setSt(\''+j.id+'\',\'In Progress\')">🔧 Start Job</button>';
@@ -727,6 +728,7 @@ function openS(id){
       h+='<div style="text-align:center;font-size:11px;color:var(--fg-3);margin-top:6px">📷 Save an after photo to unlock</div>';
     }
   }
+  h+='</div>';
   if(j.status==='Complete'||j.status==='Invoiced') h+='<div style="text-align:center;padding:12px 0;font-family:Barlow Condensed,sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;color:var(--green)">✓ JOB COMPLETE</div>';
   h+='<button class="sclose" onclick="closeS()">Close</button>';
 
@@ -840,6 +842,33 @@ async function savePhotos(){
   }
   if(btn){ btn.disabled = false; btn.textContent = '✓ Saved'; }
   renderPhotoGrids();
+  // Re-render action buttons now that photos are saved
+  var actWrap = document.getElementById('phActButtons');
+  if(actWrap){
+    var j2=jobs.find(function(x){return x.id===jobId;});
+    if(j2){
+      var hasSB=(_photoBefore||[]).filter(function(p){return p.uploaded;}).length>0;
+      var hasSA=(_photoAfter||[]).filter(function(p){return p.uploaded;}).length>0;
+      var bh='';
+      if(j2.status==='Scheduled'||j2.status==='New'){
+        if(hasSB){
+          bh+='<button class="sact start" onclick="setSt(\''+j2.id+'\',\'In Progress\')">🔧 Start Job</button>';
+        } else {
+          bh+='<button class="sact start" style="opacity:.45;cursor:default" onclick="toast(\'📷 Save a Before photo first\')">🔧 Start Job</button>';
+          bh+='<div style="text-align:center;font-size:11px;color:var(--fg-3);margin-top:6px">📷 Save a before photo to unlock</div>';
+        }
+      }
+      if(j2.status==='In Progress'){
+        if(hasSA){
+          bh+='<button class="sact complete" onclick="setSt(\''+j2.id+'\',\'Complete\')">✅ Mark Complete</button>';
+        } else {
+          bh+='<button class="sact complete" style="opacity:.45;cursor:default" onclick="toast(\'📷 Save an After photo first\')">✅ Mark Complete</button>';
+          bh+='<div style="text-align:center;font-size:11px;color:var(--fg-3);margin-top:6px">📷 Save an after photo to unlock</div>';
+        }
+      }
+      actWrap.innerHTML=bh;
+    }
+  }
 }
 async function setSt(id,st){
   // Gate: before photo required to start, after photo required to complete
