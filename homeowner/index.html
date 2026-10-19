@@ -1495,9 +1495,11 @@ document.addEventListener('DOMContentLoaded', function(){
 
 // ── Session check (runs after all functions defined) ──────────────────────
 async function _loadAndLaunch(email){
+  console.log('[PSH] _loadAndLaunch', email);
   _homePhone=email;
   USER.email=email;
   var hr=await _sb.from('homeowners').select('*').eq('email',email).limit(1);
+  console.log('[PSH] homeowners query', hr);
   if(hr.data&&hr.data.length){
     var hw=hr.data[0];
     var name=hw.name||'';
@@ -1512,11 +1514,14 @@ async function _loadAndLaunch(email){
     // Load jobs
     var jr=await _sb.from('jobs').select('*').eq('email',email).order('date',{ascending:false});
     if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
+    console.log('[PSH] showing appShell, calling initApp');
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appShell').classList.remove('hidden');
     initApp();
+    console.log('[PSH] initApp done');
   } else {
     // New user — show profile setup
+    console.log('[PSH] new user, showing profileSetup');
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('profileSetup').classList.remove('hidden');
   }
@@ -1540,21 +1545,41 @@ async function saveProfile(){
 }
 
 (async function(){
-  if(!_sb) return;
+  // Safety net: if blank after 4s, show login screen
+  var _safetyTimer = setTimeout(function(){
+    var ls=document.getElementById('loginScreen');
+    var ap=document.getElementById('appShell');
+    var ps=document.getElementById('profileSetup');
+    var allHidden = ls&&ls.classList.contains('hidden') && ap&&ap.classList.contains('hidden') && ps&&ps.classList.contains('hidden');
+    if(allHidden){
+      console.warn('Safety net: restoring login screen');
+      ls.classList.remove('hidden');
+    }
+  }, 4000);
+
+  if(!_sb){ clearTimeout(_safetyTimer); return; }
   try{
-    var {data:{session}}=await _sb.auth.getSession();
-    if(session&&session.user){
+    var sess = await _sb.auth.getSession();
+    var session = sess && sess.data && sess.data.session;
+    if(session && session.user){
       try{
         await _loadAndLaunch(session.user.email);
+        clearTimeout(_safetyTimer);
       }catch(e){
-        console.warn('Launch failed',e);
-        // Restore login screen so user isn't left with blank page
+        console.error('Launch failed:',e);
+        clearTimeout(_safetyTimer);
         document.getElementById('loginScreen').classList.remove('hidden');
         document.getElementById('profileSetup').classList.add('hidden');
         document.getElementById('appShell').classList.add('hidden');
+        showToast('Error loading dashboard — please try again');
       }
+    } else {
+      clearTimeout(_safetyTimer);
     }
-  }catch(e){console.warn('Session check failed',e);}
+  }catch(e){
+    console.error('Session check failed:',e);
+    clearTimeout(_safetyTimer);
+  }
 })();
 
 </script>
