@@ -311,24 +311,12 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <div class="lbox">
     <div id="phoneStep">
       <h2>Welcome Back</h2>
-      <div id="hPhoneMethod">
-        <p>Enter your phone number to get a sign-in code.</p>
-        <div class="field">
-          <label>Phone Number</label>
-          <input type="tel" id="phoneIn" placeholder="(732) 555-0000" maxlength="14" autocomplete="tel" inputmode="tel">
-        </div>
-        <button class="bf bfo" id="sendOtpBtn" onclick="sendOtp()" style="margin-top:4px">Send Code</button>
-        <p style="text-align:center;margin-top:14px;font-size:14px;color:var(--fg-3)">No phone access? <a href="#" onclick="showHEmailLogin();return false;" style="color:var(--accent);text-decoration:none">Use email instead</a></p>
+      <p>Enter your phone number or email to get a sign-in code.</p>
+      <div class="field">
+        <label id="loginInputLabel">Phone or Email</label>
+        <input type="text" id="loginIn" placeholder="(732) 555-0000 or you@email.com" autocomplete="username" inputmode="text" oninput="detectLoginType(this)">
       </div>
-      <div id="hEmailMethod" style="display:none">
-        <p>Enter your email to receive a sign-in code.</p>
-        <div class="field">
-          <label>Email Address</label>
-          <input type="email" id="emailIn" placeholder="you@email.com" autocomplete="email" inputmode="email">
-        </div>
-        <button class="bf bfo" id="sendEmailOtpBtn" onclick="sendEmailOtp()" style="margin-top:4px">Send Code</button>
-        <p style="text-align:center;margin-top:14px;font-size:14px;color:var(--fg-3)"><a href="#" onclick="showHPhoneLogin();return false;" style="color:var(--accent);text-decoration:none">← Use phone instead</a></p>
-      </div>
+      <button class="bf bfo" id="sendOtpBtn" onclick="sendSmartOtp()" style="margin-top:4px">Send Code</button>
     </div>
     <div id="otpStep">
       <h2>Enter Code</h2>
@@ -700,31 +688,57 @@ var openJobId = null;
 
 // ─── LOGIN ───────────────────────────────────────────────────────────────
 var _useEmailLogin=false;
-function showHEmailLogin(){_useEmailLogin=true;document.getElementById('hPhoneMethod').style.display='none';document.getElementById('hEmailMethod').style.display='block';}
-function showHPhoneLogin(){_useEmailLogin=false;document.getElementById('hEmailMethod').style.display='none';document.getElementById('hPhoneMethod').style.display='block';}
-
-async function sendOtp(){
-  // Phone OTP — requires Twilio (pending A2P setup)
-  var phone = document.getElementById('phoneIn').value.trim();
-  if(!phone||phone.replace(/\D/g,'').length<10){showToast('Enter a valid phone number');return;}
-  _homePhone=phone;
-  showToast('SMS sign-in coming soon — use email instead');
-  showHEmailLogin();
+function detectLoginType(inp){
+  var v=inp.value;
+  var lbl=document.getElementById('loginInputLabel');
+  if(v.includes('@')){
+    inp.inputMode='email'; lbl.textContent='Email Address';
+  } else {
+    // Format as phone number while typing
+    var digits=v.replace(/\D/g,'');
+    if(digits.length>0){
+      inp.inputMode='tel'; lbl.textContent='Phone Number';
+      var fmt='';
+      if(digits.length<=3) fmt='('+digits;
+      else if(digits.length<=6) fmt='('+digits.slice(0,3)+') '+digits.slice(3);
+      else fmt='('+digits.slice(0,3)+') '+digits.slice(3,6)+'-'+digits.slice(6,10);
+      // only reformat if it changed (avoid cursor jump on @)
+      if(!v.includes('@')) inp.value=fmt;
+    } else {
+      inp.inputMode='text'; lbl.textContent='Phone or Email';
+    }
+  }
 }
 
-async function sendEmailOtp(){
-  var email = document.getElementById('emailIn').value.trim().toLowerCase();
-  if(!email||!email.includes('@')){showToast('Enter a valid email address');return;}
-  _homePhone=email;
-  var btn=document.getElementById('sendEmailOtpBtn');
-  btn.disabled=true; btn.textContent='Sending…';
-  var res=await _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true,emailRedirectTo:'https://proservhomes.co/homeowner/'}});
-  btn.disabled=false; btn.textContent='Send Code';
-  if(res.error){showToast('Error: '+res.error.message);return;}
-  document.getElementById('otpSub').textContent='We emailed a 6-digit code to '+email;
-  document.getElementById('phoneStep').style.display='none';
-  document.getElementById('otpStep').style.display='block';
+async function sendSmartOtp(){
+  var raw=document.getElementById('loginIn').value.trim();
+  if(!raw){showToast('Enter your phone number or email');return;}
+  if(raw.includes('@')){
+    // Email flow
+    var email=raw.toLowerCase();
+    if(!email.includes('.')){showToast('Enter a valid email address');return;}
+    _homePhone=email; _useEmailLogin=true;
+    var btn=document.getElementById('sendOtpBtn');
+    btn.disabled=true; btn.textContent='Sending…';
+    var res=await _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true,emailRedirectTo:'https://proservhomes.co/homeowner/'}});
+    btn.disabled=false; btn.textContent='Send Code';
+    if(res.error){showToast('Error: '+res.error.message);return;}
+    document.getElementById('otpSub').textContent='We emailed a 6-digit code to '+email;
+    document.getElementById('phoneStep').style.display='none';
+    document.getElementById('otpStep').style.display='block';
+  } else {
+    // Phone flow — SMS coming soon
+    var digits=raw.replace(/\D/g,'');
+    if(digits.length<10){showToast('Enter a valid phone number');return;}
+    _homePhone=raw; _useEmailLogin=false;
+    showToast('SMS sign-in coming soon — enter your email instead');
+    document.getElementById('loginIn').value='';
+    document.getElementById('loginInputLabel').textContent='Phone or Email';
+  }
 }
+
+// Legacy alias — keep in case anything calls these
+async function sendEmailOtp(){await sendSmartOtp();}
 async function verifyOtp(){
   var code = document.getElementById('otpIn').value.trim();
   if(code.length < 6){showToast('Enter a 6-digit code');return;}
@@ -761,15 +775,13 @@ function backToPhone(){
   document.getElementById('otpStep').style.display='none';
   document.getElementById('phoneStep').style.display='block';
   document.getElementById('otpIn').value='';
-  if(_useEmailLogin){document.getElementById('hPhoneMethod').style.display='none';document.getElementById('hEmailMethod').style.display='block';}
-  else{document.getElementById('hPhoneMethod').style.display='block';document.getElementById('hEmailMethod').style.display='none';}
 }
 function doLogout(){
   document.getElementById('appShell').classList.add('hidden');
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('phoneStep').style.display='block';
   document.getElementById('otpStep').style.display='none';
-  document.getElementById('phoneIn').value='';
+  document.getElementById('loginIn').value='';
   document.getElementById('emailIn').value='';
   document.getElementById('otpIn').value='';
   _useEmailLogin=false;
