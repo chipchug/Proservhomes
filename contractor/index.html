@@ -709,8 +709,24 @@ function openS(id){
   h+='<div style="height:12px"></div>';
 
   // ── Status actions ──
-  if(j.status==='Scheduled'||j.status==='New') h+='<button class="sact start" onclick="setSt(\''+j.id+'\',\'In Progress\')">🔧 Start Job</button>';
-  if(j.status==='In Progress') h+='<button class="sact complete" onclick="setSt(\''+j.id+'\',\'Complete\')">✅ Mark Complete</button>';
+  var hasSavedBefore=(_photoBefore||[]).filter(function(p){return p.uploaded;}).length>0;
+  var hasSavedAfter=(_photoAfter||[]).filter(function(p){return p.uploaded;}).length>0;
+  if(j.status==='Scheduled'||j.status==='New'){
+    if(hasSavedBefore){
+      h+='<button class="sact start" onclick="setSt(\''+j.id+'\',\'In Progress\')">🔧 Start Job</button>';
+    } else {
+      h+='<button class="sact start" style="opacity:.45;cursor:default" onclick="toast(\'📷 Save a Before photo first\')">🔧 Start Job</button>';
+      h+='<div style="text-align:center;font-size:11px;color:var(--fg-3);margin-top:6px">📷 Save a before photo to unlock</div>';
+    }
+  }
+  if(j.status==='In Progress'){
+    if(hasSavedAfter){
+      h+='<button class="sact complete" onclick="setSt(\''+j.id+'\',\'Complete\')">✅ Mark Complete</button>';
+    } else {
+      h+='<button class="sact complete" style="opacity:.45;cursor:default" onclick="toast(\'📷 Save an After photo first\')">✅ Mark Complete</button>';
+      h+='<div style="text-align:center;font-size:11px;color:var(--fg-3);margin-top:6px">📷 Save an after photo to unlock</div>';
+    }
+  }
   if(j.status==='Complete'||j.status==='Invoiced') h+='<div style="text-align:center;padding:12px 0;font-family:Barlow Condensed,sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;color:var(--green)">✓ JOB COMPLETE</div>';
   h+='<button class="sclose" onclick="closeS()">Close</button>';
 
@@ -825,7 +841,28 @@ async function savePhotos(){
   if(btn){ btn.disabled = false; btn.textContent = '✓ Saved'; }
   renderPhotoGrids();
 }
-async function setSt(id,st){var i=jobs.findIndex(function(x){return x.id===id});if(i<0)return;jobs[i].status=st;await _sb.from('jobs').update({status:st}).eq('id',id);closeS();rHome();rJobs();rEarn();rMs();toast(st==='In Progress'?'Job started 🔧':'Job complete ✅')}
+async function setSt(id,st){
+  // Gate: before photo required to start, after photo required to complete
+  if(st==='In Progress'){
+    var savedBefore=_photoBefore.filter(function(p){return p.uploaded;});
+    if(!savedBefore.length){
+      toast('📷 Upload & save at least one Before photo first');
+      return;
+    }
+  }
+  if(st==='Complete'){
+    var savedAfter=_photoAfter.filter(function(p){return p.uploaded;});
+    if(!savedAfter.length){
+      toast('📷 Upload & save at least one After photo first');
+      return;
+    }
+  }
+  var i=jobs.findIndex(function(x){return x.id===id});if(i<0)return;
+  jobs[i].status=st;
+  await _sb.from('jobs').update({status:st}).eq('id',id);
+  closeS();rHome();rJobs();rEarn();rMs();
+  toast(st==='In Progress'?'Job started 🔧':'Job complete ✅');
+}
 
 function rEarn(){var j=mj();var allPay=j.filter(function(x){return x.contractorPay>0});var ctPaid=allPay.filter(function(x){return x.contractorPaid});var ctOwed=allPay.filter(function(x){return !x.contractorPaid});var paidAmt=ctPaid.reduce(function(s,x){return s+Number(x.contractorPay||0)},0);var owedAmt=ctOwed.reduce(function(s,x){return s+Number(x.contractorPay||0)},0);var tot=paidAmt+owedAmt;document.getElementById('eTotal').textContent='$'+tot.toLocaleString();document.getElementById('eSub').textContent=allPay.length+' job'+(allPay.length!==1?'s':'')+' with pay';document.getElementById('ePaid').textContent='$'+paidAmt.toLocaleString();document.getElementById('eOwed').textContent='$'+owedAmt.toLocaleString();var hist=allPay.sort(function(a,b){return new Date(b.date)-new Date(a.date)});var el=document.getElementById('eHist');if(!hist.length){el.innerHTML='<div style="padding:32px;text-align:center;color:var(--fg-3)">No earnings yet</div>';return}el.innerHTML=hist.map(function(x){var isPaid=!!x.contractorPaid;return'<div class="er"><div><div class="er-svc">'+esc(x.service)+'</div><div class="er-det">'+esc(x.client)+' · '+fd(x.date)+'</div></div><div style="text-align:right"><div class="er-amt" style="color:'+(isPaid?'var(--green)':'var(--orange)')+'">$'+Number(x.contractorPay).toLocaleString()+'</div><div style="font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:'+(isPaid?'var(--green)':'var(--orange)')+'">'+( isPaid?'Paid':'Owed')+'</div></div></div>'}).join('')}
 

@@ -882,14 +882,32 @@ function renderHome(){
   try{dismissed = localStorage.getItem('ps_review_dismissed')==='1';}catch(e){}
   var rb = document.getElementById('reviewBanner');
   if(reviewJob && !dismissed){
-    rb.innerHTML = '<div class="review-banner">'
+    // Gather before/after photos for this job
+    var rjPhotos = reviewJob.photos || [];
+    if(reviewJob.beforePhoto && !rjPhotos.some(function(p){return p.label==='Before';})) rjPhotos=[{url:reviewJob.beforePhoto,label:'Before'}].concat(rjPhotos);
+    if(reviewJob.afterPhoto && !rjPhotos.some(function(p){return p.label==='After';})) rjPhotos=rjPhotos.concat([{url:reviewJob.afterPhoto,label:'After'}]);
+    var photoThumbsHtml = '';
+    if(rjPhotos.length){
+      photoThumbsHtml = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 6px">'
+        + rjPhotos.map(function(p){
+            return '<div style="position:relative">'
+              +'<img src="'+p.url+'" style="width:58px;height:58px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border)">'
+              +(p.label?'<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:8px;font-weight:800;letter-spacing:.06em;text-align:center;padding:2px;border-radius:0 0 6px 6px;text-transform:uppercase">'+p.label+'</div>':'')
+            +'</div>';
+          }).join('')
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--fg-3);margin-bottom:8px">Tap the photos above to save them, then attach when leaving your review.</div>';
+    }
+    rb.innerHTML = '<div class="review-banner" style="flex-direction:column;align-items:flex-start">'
+      +'<div style="display:flex;width:100%;align-items:flex-start;gap:10px">'
       +'<div class="review-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#FBBC04" stroke="#FBBC04" stroke-width="1.5" stroke-linejoin="round"/></svg></div>'
-      +'<div class="review-body"><div class="review-title">How did we do?</div>'
-      +'<div class="review-sub">Your '+reviewJob.svc+' is complete! A quick Google review goes a long way.</div></div>'
-      +'<div class="review-actions">'
-      +'<a href="https://g.page/r/REPLACE_WITH_YOUR_GOOGLE_REVIEW_LINK/review" target="_blank" class="review-cta">Leave a Review ⭐</a>'
+      +'<div class="review-body" style="flex:1"><div class="review-title">How did we do?</div>'
+      +'<div class="review-sub">Your '+esc(reviewJob.service||reviewJob.svc||'service')+' is complete! A quick Google review goes a long way.</div></div>'
       +'<button class="review-dismiss" onclick="dismissReview()">✕</button>'
-      +'</div></div>';
+      +'</div>'
+      + photoThumbsHtml
+      +'<a href="https://g.page/r/CR63MKkDSs8GEBM/review" target="_blank" class="review-cta" style="display:block;text-align:center;width:100%;box-sizing:border-box">Leave a Review ⭐</a>'
+      +'</div>';
     rb.style.display = 'block';
   } else {
     rb.style.display = 'none';
