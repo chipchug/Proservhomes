@@ -612,6 +612,31 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
 var SURL='https://chmicqvorgjqlthufgwt.supabase.co';
 var SKEY='sb_publishable_7W-vHGcu-U60LiTsG_7i5g_7ijIyTOJ';
 var _sb=null;try{_sb=supabase.createClient(SURL,SKEY);}catch(e){}
+
+// On load: check for existing session (handles magic link redirect + returning users)
+(async function(){
+  if(!_sb) return;
+  var {data:{session}} = await _sb.auth.getSession();
+  if(session&&session.user){
+    var email=session.user.email;
+    _homePhone=email;
+    USER.email=email;
+    // Load profile
+    var hr=await _sb.from('homeowners').select('*').eq('email',email).limit(1);
+    if(hr.data&&hr.data.length){
+      var hw=hr.data[0];
+      USER={name:hw.name||email,first:(hw.name||email).split(' ')[0],email:email,addr:hw.address||USER.addr,init:(hw.name||email)[0]};
+    } else {
+      USER.first=email.split('@')[0];
+      USER.init=email[0].toUpperCase();
+    }
+    var jr=await _sb.from('jobs').select('*').eq('email',email).order('date',{ascending:false});
+    if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('appShell').classList.remove('hidden');
+    initApp();
+  }
+})();
 // ── Stripe Payment Links — replace each URL after creating links in your Stripe dashboard ──
 var STRIPE_LINKS = {
   'Gutter Cleaning':     'https://buy.stripe.com/REPLACE_GUTTER',
@@ -1431,17 +1456,7 @@ function _hwPickDate(iso){
   _hwRenderCal();
 }
 
-// Immediate event wiring (script is at end of body, DOM is ready)
-(function(){
-  var btn = document.getElementById('sendOtpBtn');
-  if(btn) btn.addEventListener('click', sendOtp);
-  var btnE = document.getElementById('sendEmailOtpBtn');
-  if(btnE) btnE.addEventListener('click', sendEmailOtp);
-  var btn2 = document.getElementById('verifyOtpBtn');
-  if(btn2) btn2.addEventListener('click', verifyOtp);
-  var btn3 = document.getElementById('backBtn');
-  if(btn3) btn3.addEventListener('click', backToPhone);
-})();
+// Immediate event wiring — buttons already have onclick attrs, no duplicate listeners needed
   // init theme
   var _t = JSON.parse(localStorage.getItem('ps_theme')||'"dark"');
   document.documentElement.setAttribute('data-theme',_t);
