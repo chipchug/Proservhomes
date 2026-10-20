@@ -722,9 +722,9 @@ function openS(id){
   var j=jobs.find(function(x){return x.id===id});
   if(!j) return;
   _photoJobId = id;
-  // Load existing photos from job record if present
-  _photoBefore = (j.photos||[]).filter(function(p){return p.label==='before';}).map(function(p){return {file:null,url:p.url,uploaded:true,storagePath:p.path||''};});
-  _photoAfter  = (j.photos||[]).filter(function(p){return p.label==='after';}).map(function(p){return {file:null,url:p.url,uploaded:true,storagePath:p.path||''};});
+  // Load existing saved photos from before_photo / after_photo columns
+  _photoBefore = j.beforePhoto ? [{file:null,url:j.beforePhoto,uploaded:true,storagePath:''}] : [];
+  _photoAfter  = j.afterPhoto  ? [{file:null,url:j.afterPhoto, uploaded:true,storagePath:''}] : [];
 
   var mu='https://www.google.com/maps/search/'+encodeURIComponent(j.address);
   var _cat=svcCat(j.service);var _cfg=svcCfg(_cat);
@@ -891,20 +891,26 @@ async function savePhotos(){
     return;
   }
 
-  var dbUpdate={};
-  if(bUrl)dbUpdate.before_photo=bUrl;
-  if(aUrl)dbUpdate.after_photo=aUrl;
-  var upd=await _sb.from('jobs').update(dbUpdate).eq('id',jobId);
-  if(upd.error){
-    toast('⚠️ '+upd.error.message);
+  try{
+    var dbUpdate={};
+    if(bUrl)dbUpdate.before_photo=bUrl;
+    if(aUrl)dbUpdate.after_photo=aUrl;
+    var upd=await _sb.from('jobs').update(dbUpdate).eq('id',jobId);
+    if(upd.error){
+      toast('⚠️ '+upd.error.message);
+      if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
+      return;
+    }
+    var j=jobs.find(function(x){return x.id===jobId;});
+    if(j){ if(bUrl)j.beforePhoto=bUrl; if(aUrl)j.afterPhoto=aUrl; }
+    toast('Photos saved ✓');
+    if(btn){btn.disabled=false;btn.innerHTML='✓ Saved';}
+    renderPhotoGrids();
+  }catch(err){
+    toast('⚠️ Save failed — log out and back in, then try again');
     if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
     return;
   }
-  var j=jobs.find(function(x){return x.id===jobId;});
-  if(j){ if(bUrl)j.beforePhoto=bUrl; if(aUrl)j.afterPhoto=aUrl; }
-  toast('Photos saved ✓');
-  if(btn){btn.disabled=false;btn.innerHTML='✓ Saved';}
-  renderPhotoGrids();
   // Re-render action buttons now that photos are saved
   var actWrap = document.getElementById('phActButtons');
   if(actWrap){
