@@ -1248,10 +1248,36 @@ async function submitRequest(){
     photos:photos.length?photos:null
   };
   if(_sb){await _sb.from('job_requests').upsert([req]);}
+  // SMS notification — fire and forget, don't block UX
+  sendSmsNotification({
+    event:'job_booked',
+    job:{id:req.id,service:req.service,address:req.address,scheduled_date:req.date},
+    homeowner:{
+      name:USER.name||'Homeowner',
+      phone:req.homeowner_phone||USER.phone||null,
+      email:req.homeowner_email||USER.email||null
+    }
+  });
   showToast('✓ Quote request sent — we\'ll be in touch!');
   if(emailEl)emailEl.value='';
   resetReqPhotos();
   switchTab('home');
+}
+
+// ─── SMS NOTIFICATION HELPER ─────────────────────────────────────────────
+// Calls the send-sms Supabase edge function. Fire-and-forget — errors are
+// logged to console only so they never break the user-facing flow.
+function sendSmsNotification(payload){
+  if(!_sb) return;
+  fetch(SURL+'/functions/v1/send-sms',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+    body:JSON.stringify(payload)
+  }).then(function(r){return r.json();}).then(function(d){
+    console.log('[SMS]',payload.event,'sent:',d.sent,'failed:',d.failed);
+  }).catch(function(e){
+    console.warn('[SMS] notification error:',e);
+  });
 }
 
 // ─── OPEN NEXT JOB ───────────────────────────────────────────────────────
