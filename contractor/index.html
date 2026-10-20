@@ -892,17 +892,8 @@ async function savePhotos(){
   }
 
   try{
-    // Ensure we have a live Supabase auth session — required for jobs UPDATE RLS
-    var sess = await _sb.auth.getSession();
-    if(!sess.data || !sess.data.session){
-      // Try to refresh
-      var ref = await _sb.auth.refreshSession();
-      if(!ref.data || !ref.data.session){
-        toast('⚠️ Session expired — please log out and back in');
-        if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
-        return;
-      }
-    }
+    // Try to refresh session (best effort — RLS is open so anon works too)
+    try{ await _sb.auth.refreshSession(); }catch(e){}
     var dbUpdate={};
     if(bUrl)dbUpdate.before_photo=bUrl;
     if(aUrl)dbUpdate.after_photo=aUrl;
