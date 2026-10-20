@@ -329,10 +329,6 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
       <div id="tabHome" class="tab-pane active">
         <div class="home-date" id="homeDateLine"></div>
         <div class="home-hl">LET'S GET TO WORK.</div>
-        <div id="heroWrap" class="hero-wrap">
-          <div class="hero-icon" id="heroIcon">🔧</div>
-          <div class="hero-badge" id="heroBadge">NEXT JOB</div>
-        </div>
         <div id="nextJobCard"></div>
         <div class="stat-pills">
           <div class="sp">
@@ -427,8 +423,7 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 
   <nav class="bnav">
     <button class="nb active" onclick="swTab('Home',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
-    <button class="nb" onclick="swTab('Quotes',this)" id="ctQuoteNavBtn" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Quotes<span id="ctQuoteBadge" class="hidden" style="position:absolute;top:4px;right:4px;background:#e55;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px"></span></button>
-    <button class="nb" onclick="swTab('Jobs',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Jobs</button>
+    <button class="nb" onclick="swTab('Jobs',this)" id="ctJobsNavBtn" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Jobs<span id="ctJobsBadge" class="hidden" style="position:absolute;top:4px;right:4px;background:#F26310;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px"></span></button>
     <button class="nb" onclick="swTab('Earnings',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Earnings</button>
     <button class="nb" onclick="swTab('Profile',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </nav>
@@ -663,35 +658,37 @@ async function enterApp(){
     document.getElementById('hInit').textContent=cc.name[0];document.getElementById('hName').textContent=cc.name;
   }
   var now=new Date();document.getElementById('homeDateLine').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  rHome();rJobs();rEarn();rMs();rQuotes();
+  rHome();rJobs();rEarn();rMs();
   var _jp=new URLSearchParams(window.location.search).get('job');
   if(_jp)setTimeout(function(){openS(_jp);},300);
   // Show onboarding overlay for first-time contractors
   if(typeof cobShowIfNew==='function') cobShowIfNew();
 }
 
-function swTab(n,el){['Home','Quotes','Jobs','Earnings','Profile'].forEach(function(t){document.getElementById('tab'+t).classList.remove('active')});document.getElementById('tab'+n).classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;if(n==='Quotes')rQuotes();}
+function swTab(n,el){['Home','Jobs','Earnings','Profile'].forEach(function(t){var el2=document.getElementById('tab'+t);if(el2)el2.classList.remove('active')});var tp=document.getElementById('tab'+n);if(tp)tp.classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;if(n==='Jobs'){var jb=document.getElementById('ctJobsBadge');if(jb){jb.classList.add('hidden');jb.textContent='';}}}
+function _updateJobsBadge(){var newJ=mj().filter(function(j){return j.status==='New'||j.status==='Scheduled'});var badge=document.getElementById('ctJobsBadge');if(!badge)return;if(newJ.length){badge.textContent=newJ.length;badge.classList.remove('hidden');}else{badge.classList.add('hidden');}}
 function mj(){return jobs.filter(function(j){return cc&&j.contractorId===cc.id})}
 
+function svcCat(svc){var cats=['Gutter Cleaning','Pressure Washing','Christmas Lights','Dryer Vent Cleaning','Window Cleaning','Roof Cleaning','Gutter Guard Installation'];for(var i=0;i<cats.length;i++){var c=cats[i];if(svc&&(svc===c||svc.indexOf(c)===0))return c;}return svc;}
 function rHome(){
   var j=mj();var act=j.filter(function(x){return x.status!=='Complete'&&x.status!=='Invoiced'});var dn=j.filter(function(x){return x.status==='Complete'||x.status==='Invoiced'});var ea=j.reduce(function(s,x){return s+Number(x.contractorPay||0)},0);
   document.getElementById('spTotal').textContent=j.length;document.getElementById('spDone').textContent=dn.length;document.getElementById('spEarned').textContent='$'+ea.toLocaleString();
   var nx=act.sort(function(a,b){return new Date(a.date)-new Date(b.date)})[0];
-  var hw=document.getElementById('heroWrap');
-  if(nx){var cfg=svcCfg(nx.service);hw.style.background=cfg.bg;document.getElementById('heroIcon').textContent=cfg.icon;document.getElementById('heroBadge').textContent='NEXT JOB'}
-  else{hw.style.background='linear-gradient(150deg,#1a1a20 0%,#222 100%)';document.getElementById('heroIcon').textContent='✅';document.getElementById('heroBadge').textContent='ALL CAUGHT UP'}
   var njEl=document.getElementById('nextJobCard');
   if(nx){
     var dt=nx.date?new Date(nx.date+'T12:00:00'):null;
     var dstr=dt?dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'—';
-    njEl.innerHTML='<div class="next-job"><div class="nj-eye">Next Job</div><div class="nj-svc">'+esc(nx.service)+'</div><div class="nj-row"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+esc(nx.client)+'</div><div class="nj-row"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'+esc(nx.address)+'</div><div class="nj-row"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+dstr+'</div><div class="nj-foot"><div class="nj-price">$'+Number(nx.contractorPay||0).toLocaleString()+'</div><button class="view-btn" onclick="openS(\''+nx.id+'\')">View job <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button></div></div>'
+    var cat=svcCat(nx.service);var cfg=svcCfg(cat);
+    var imgHtml=cfg.img?'<div style="width:100%;height:140px;border-radius:12px;overflow:hidden;margin-bottom:14px;position:relative"><img src="'+cfg.img+'" style="width:100%;height:100%;object-fit:cover"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.55) 100%)"></div><div style="position:absolute;bottom:10px;left:12px;font-size:10px;font-weight:800;letter-spacing:.08em;color:#fff;text-transform:uppercase">Next Job</div></div>':'';
+    njEl.innerHTML='<div class="next-job">'+imgHtml+'<div class="nj-eye">'+esc(cat)+'</div><div class="nj-svc">'+esc(nx.service)+'</div><div class="nj-row"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+esc(nx.client)+'</div><div class="nj-row"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'+esc(nx.address)+'</div><div class="nj-row"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+dstr+'</div><div class="nj-foot"><div class="nj-price">$'+Number(nx.contractorPay||0).toLocaleString()+'</div><button class="view-btn" onclick="openS(\''+nx.id+'\')">View job <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button></div></div>'
   }else{njEl.innerHTML='<div style="padding:0 16px 16px"><div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center"><div style="font-family:Barlow Condensed,sans-serif;font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.04em">No Active Jobs</div><div style="font-size:13px;color:var(--fg-2);margin-top:6px">Check back when Nick assigns a job</div></div></div>'}
+  _updateJobsBadge();
   var ll=document.getElementById('homeList');
   if(!act.length){ll.innerHTML='<div style="color:var(--fg-3);font-size:13px;padding:8px 0 20px">No active jobs right now</div>';return}
   ll.innerHTML=act.slice(0,5).map(jrow).join('')
 }
 
-function rJobs(){var j=mj().sort(function(a,b){return new Date(b.date)-new Date(a.date)});var el=document.getElementById('allList');if(!j.length){el.innerHTML='<div style="color:var(--fg-3);text-align:center;padding:48px 0">No jobs assigned yet</div>';return}el.innerHTML=j.map(jrow).join('')}
+function rJobs(){var j=mj().sort(function(a,b){return new Date(b.date)-new Date(a.date)});var el=document.getElementById('allList');if(!j.length){el.innerHTML='<div style="color:var(--fg-3);text-align:center;padding:48px 0">No jobs assigned yet</div>';return}el.innerHTML=j.map(jrow).join('');_updateJobsBadge();}
 
 // ─── QUOTE REQUESTS ───────────────────────────────────────────────────────
 
@@ -715,7 +712,11 @@ function openS(id){
   _photoAfter  = (j.photos||[]).filter(function(p){return p.label==='after';}).map(function(p){return {file:null,url:p.url,uploaded:true,storagePath:p.path||''};});
 
   var mu='https://www.google.com/maps/search/'+encodeURIComponent(j.address);
-  var h='<div style="display:inline-flex;margin-bottom:12px">'+sbadge(j.status)+'</div>';
+  var _cat=svcCat(j.service);var _cfg=svcCfg(_cat);
+  var h='';
+  if(_cfg.img){h+='<div style="width:100%;height:150px;border-radius:14px;overflow:hidden;margin-bottom:14px;position:relative"><img src="'+_cfg.img+'" style="width:100%;height:100%;object-fit:cover"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.6) 100%)"></div></div>';}
+  h+='<div style="display:inline-flex;margin-bottom:8px">'+sbadge(j.status)+'</div>';
+  h+='<div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin-bottom:4px">'+esc(_cat)+'</div>';
   h+='<div class="sb-svc">'+esc(j.service)+'</div>';
   h+='<div class="sb-f"><div class="sb-l">Client</div><div class="sb-v">'+esc(j.client)+'</div></div>';
   h+='<div class="sb-f"><div class="sb-l">Date</div><div class="sb-v">'+fd(j.date)+'</div></div>';
@@ -833,6 +834,24 @@ function removePhoto(label, idx){
   renderPhotoGrids();
 }
 
+// Compress image to max 1200px wide, 0.82 JPEG quality — reduces 4-10MB phone photos to ~300-600KB
+function compressImage(file){
+  return new Promise(function(resolve){
+    var MAX=1200,Q=0.82;
+    var url=URL.createObjectURL(file);
+    var img=new Image();
+    img.onload=function(){
+      var w=img.naturalWidth,h=img.naturalHeight;
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      var ctx=cv.getContext('2d');ctx.drawImage(img,0,0,w,h);
+      cv.toBlob(function(blob){URL.revokeObjectURL(url);resolve(blob||file);},'image/jpeg',Q);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);resolve(file);};
+    img.src=url;
+  });
+}
+
 async function savePhotos(){
   var btn = document.getElementById('phSaveBtn');
   if(btn){ btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:ph-spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Uploading…'; }
@@ -847,7 +866,8 @@ async function savePhotos(){
     var p = _photoBefore[i];
     if(!p.uploaded && p.file){
       var path = 'jobs/'+jobId+'/before_'+Date.now()+'_'+i+'.jpg';
-      var res = await _sb.storage.from('job-photos').upload(path, p.file, {upsert:true});
+      var fileToUpload = await compressImage(p.file);
+      var res = await _sb.storage.from('job-photos').upload(path, fileToUpload, {upsert:true, contentType:'image/jpeg'});
       if(res.error){ showT('Upload failed: '+res.error.message); p.failed=true; continue; }
       var pub = _sb.storage.from('job-photos').getPublicUrl(path);
       p.url = pub.data.publicUrl;
@@ -864,7 +884,8 @@ async function savePhotos(){
     var p = _photoAfter[i];
     if(!p.uploaded && p.file){
       var path = 'jobs/'+jobId+'/after_'+Date.now()+'_'+i+'.jpg';
-      var res = await _sb.storage.from('job-photos').upload(path, p.file, {upsert:true});
+      var fileToUpload = await compressImage(p.file);
+      var res = await _sb.storage.from('job-photos').upload(path, fileToUpload, {upsert:true, contentType:'image/jpeg'});
       if(res.error){ showT('Upload failed: '+res.error.message); p.failed=true; continue; }
       var pub = _sb.storage.from('job-photos').getPublicUrl(path);
       p.url = pub.data.publicUrl;
