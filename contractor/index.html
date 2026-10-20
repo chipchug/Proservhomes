@@ -591,7 +591,7 @@ async function sendCodeUnified(){
   }
 }
 function fp(v){var d=v.replace(/\D/g,'');if(d.length<=3)return d;if(d.length<=6)return'('+d.slice(0,3)+') '+d.slice(3);return'('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6,10)}
-document.getElementById('phoneInput').addEventListener('input',function(){this.value=fp(this.value)});
+var _pi=document.getElementById('phoneInput');if(_pi)_pi.addEventListener('input',function(){this.value=fp(this.value)});
 
 function showEmailLogin(){useEmailLogin=true;document.getElementById('phoneMethod').style.display='none';document.getElementById('emailMethod').style.display='block';}
 function showPhoneLogin(){useEmailLogin=false;document.getElementById('emailMethod').style.display='none';document.getElementById('phoneMethod').style.display='block';}
