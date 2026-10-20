@@ -537,10 +537,22 @@ function _admRenderCal(containerId){
 function _admCalPrev(cid){ _admCalM--; if(_admCalM<0){_admCalM=11;_admCalY--;} _admRenderCal(cid); }
 function _admCalNext(cid){ _admCalM++; if(_admCalM>11){_admCalM=0;_admCalY++;} _admRenderCal(cid); }
 function _admPickDate(iso, cid){ _admCalSelDate=iso; _admRenderCal(cid); }
-function _reqPayout(){
+async function _reqPayout(){
   var owed = parseFloat((document.getElementById('eOwed')||{}).textContent||'0')||0;
   if(owed<=0){ showToast('No earnings owed at this time'); return; }
+  var ctName = (typeof cc !== 'undefined' && cc && cc.name) ? cc.name : 'Contractor';
   showToast('Payout request submitted — you\'ll receive payment within 2–3 business days');
+  try {
+    await fetch(SURL+'/functions/v1/send-sms', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      body: JSON.stringify({
+        event: 'payout_request',
+        contractor: {name: ctName},
+        amount: owed
+      })
+    });
+  } catch(e) { console.warn('[payout] sms error', e); }
 }
 function _cSwView(v){
   var listEl = document.getElementById('allList');

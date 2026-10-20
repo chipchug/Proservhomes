@@ -56,10 +56,11 @@ interface PersonInfo {
 }
 
 interface SmsPayload {
-  event: "job_booked" | "job_accepted" | "job_completed" | "job_cancelled" | "otp";
+  event: "job_booked" | "job_accepted" | "job_completed" | "job_cancelled" | "otp" | "payout_request";
   job?: JobInfo;
   homeowner?: PersonInfo;
   contractor?: PersonInfo;
+  amount?: number;
   otp_code?: string;
   recipient_phone?: string;
 }
@@ -187,6 +188,11 @@ function buildMessages(payload: SmsPayload): Array<{ to: string; body: string; r
     return msgs;
   }
 
+  if (event === "payout_request") {
+    // → Admin only (handled below via ADMIN_PHONE)
+    return msgs;
+  }
+
   if (event === "job_cancelled") {
     // → Homeowner: cancelled
     if (homeowner?.phone) {
@@ -244,15 +250,25 @@ Deno.serve(async (req) => {
         job_accepted: "✅ JOB ACCEPTED",
         job_completed: "🎉 JOB COMPLETED",
         job_cancelled: "❌ JOB CANCELLED",
+        payout_request: "💰 PAYOUT REQUEST",
       };
       const label = eventLabel[event] ?? event.toUpperCase();
-      const jobLine = job
-        ? `Job #${job.id} · ${job.service}${job.address ? ` @ ${job.address}` : ""}${job.scheduled_date ? ` on ${job.scheduled_date}` : ""}${job.amount ? ` · ${formatCurrency(job.amount)}` : ""}`
-        : "";
+
+      let adminBody: string;
+      if (event === "payout_request") {
+        const amount = payload.amount ? formatCurrency(payload.amount) : "unknown amount";
+        adminBody = `ProServ Admin — ${label}\n\n${contractor?.name ?? "A contractor"} has requested a payout of ${amount}.\n\nLog in to admin portal to process: https://proservhomes.co/admin/`;
+      } else {
+        const jobLine = job
+          ? `Job #${job.id} · ${job.service}${job.address ? ` @ ${job.address}` : ""}${job.scheduled_date ? ` on ${job.scheduled_date}` : ""}${job.amount ? ` · ${formatCurrency(job.amount)}` : ""}`
+          : "";
+        adminBody = `ProServ Admin — ${label}\n\n${jobLine}${homeowner?.name ? `\nHomeowner: ${homeowner.name}${homeowner.phone ? ` (${homeowner.phone})` : ""}` : ""}${contractor?.name ? `\nContractor: ${contractor.name}${contractor.phone ? ` (${contractor.phone})` : ""}` : ""}`;
+      }
+
       messages.push({
         to: adminPhone,
         recipient: "admin",
-        body: `ProServ Admin — ${label}\n\n${jobLine}${homeowner?.name ? `\nHomeowner: ${homeowner.name}${homeowner.phone ? ` (${homeowner.phone})` : ""}` : ""}${contractor?.name ? `\nContractor: ${contractor.name}${contractor.phone ? ` (${contractor.phone})` : ""}` : ""}`,
+        body: adminBody,
       });
     }
 
