@@ -1006,7 +1006,27 @@ function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
 
 document.getElementById('sheet').addEventListener('click',function(e){if(e.target===this)closeS()});
-if(cSess){enterApp()}
+if(cSess){
+  // Restore Supabase auth session (required for storage uploads)
+  _sb.auth.getSession().then(function(r){
+    if(r.data && r.data.session){
+      enterApp();
+    } else {
+      // Supabase session expired — try refreshing with stored refresh token
+      _sb.auth.refreshSession().then(function(rr){
+        if(rr.data && rr.data.session){
+          enterApp();
+        } else {
+          // Fully expired — clear session and require re-login
+          console.warn('[PSC] Supabase session expired, re-login required');
+          try{localStorage.removeItem('ps_c_session');}catch(e){}
+          cSess=null;
+          // Login screen is already visible by default
+        }
+      }).catch(function(){ enterApp(); }); // fallback: enter anyway
+    }
+  }).catch(function(){ enterApp(); }); // network issue: enter anyway
+}
 
 (function(){
   var _t=JSON.parse(localStorage.getItem('ps_theme')||'"dark"');

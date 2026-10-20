@@ -1232,9 +1232,9 @@ function openConfirmRequest(id){
   document.getElementById('crContractor').innerHTML=ctOpts;
   // Pre-fill assigned contractor if already set
   if(r.contractor_id){document.getElementById('crContractor').value=r.contractor_id;}
-  // Populate service tier select filtered to request's service category
-  buildSvcSelect('crSvcTier', r.service||null);
-  document.getElementById('crSvcTier').value='';
+  // Populate service tier select (all services) then restore current value
+  buildSvcSelect('crSvcTier');
+  if(r.service) document.getElementById('crSvcTier').value = r.service;
   crAutoCalcPay();
   // Show contractor quote if returned
   var ctQRow=document.getElementById('crCtQuoteRow');
