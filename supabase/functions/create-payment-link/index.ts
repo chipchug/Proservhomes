@@ -37,9 +37,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const stripeKey = Deno.env.get("APP_STRIPE_SECRET_KEY");
     if (!stripeKey) {
-      throw new Error("STRIPE_SECRET_KEY secret is not set");
+      throw new Error("APP_STRIPE_SECRET_KEY secret is not set");
     }
 
     const payload: CreateLinkPayload = await req.json();
