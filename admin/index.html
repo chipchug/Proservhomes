@@ -739,15 +739,17 @@ async function genPaymentLink(priceId,linkId,svcId,btn){
       headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
       body:JSON.stringify({amount:price,description:svc||'ProServ Homes Service',currency:'usd'})
     });
-    var data=await resp.json();
+    var rawText=await resp.text();
+    console.log('[genPaymentLink] status:',resp.status,'body:',rawText);
+    var data={};try{data=JSON.parse(rawText);}catch(pe){showToast('Bad response ('+resp.status+'): '+rawText.slice(0,80));return;}
     if(data.url){
       document.getElementById(linkId).value=data.url;
       showToast('Payment link generated ✓');
     } else {
-      showToast('Error: '+(data.error||'Could not generate link'));
+      showToast('Stripe error: '+(data.error||JSON.stringify(data).slice(0,80)));
     }
   }catch(e){
-    showToast('Network error generating link');
+    showToast('Network error: '+e.message);
     console.error('[genPaymentLink]',e);
   }finally{
     if(btn){btn.textContent='⚡ Gen';btn.disabled=false;}
