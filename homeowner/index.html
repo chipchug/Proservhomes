@@ -1671,12 +1671,15 @@ function _goToProfileSetup(email){
         try{initApp();}catch(e){console.error('[PSH] initApp',e);}
       });
     } else {
-      // New user — show profile setup form
-      _showScreen('profileSetup');
+      // New user — go straight to app (profile setup is part of onboarding walkthrough)
+      _showScreen('appShell');
+      try{initApp();}catch(e){console.error('[PSH] initApp',e);}
+      if(typeof obShowForNewUser==='function')obShowForNewUser();
     }
   }).catch(function(e){
-    console.warn('[PSH] profile check failed, showing setup:', e);
-    _showScreen('profileSetup');
+    console.warn('[PSH] profile check failed, going to app:', e);
+    _showScreen('appShell');
+    try{initApp();}catch(e){console.error('[PSH] initApp',e);}
   });
 }
 
