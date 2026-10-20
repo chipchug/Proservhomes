@@ -515,7 +515,7 @@ textarea{resize:vertical;min-height:80px}
       </div>
       <div class="field"><label>Assign Contractor</label><select id="crContractor" onchange="crAutoCalcPay()"></select></div>
       <div id="crPayNote" style="font-size:11px;color:var(--fg-3);margin-top:-8px;margin-bottom:10px"></div>
-      <div class="field"><label>Stripe Payment Link</label><div style="display:flex;gap:6px"><input type="url" id="crPayLink" placeholder="https://buy.stripe.com/…" style="flex:1"><button type="button" onclick="genPaymentLink('crPrice','crPayLink','crSvcTier')" style="white-space:nowrap;padding:0 12px;border-radius:9px;border:1.5px solid var(--green);background:transparent;color:var(--green);font-size:12px;font-weight:700;cursor:pointer">⚡ Gen</button></div></div>
+      <div class="field"><label>Stripe Payment Link</label><div style="display:flex;gap:6px"><input type="url" id="crPayLink" placeholder="https://buy.stripe.com/…" style="flex:1"><button type="button" onclick="genPaymentLink('crPrice','crPayLink','crSvcTier',this)" style="white-space:nowrap;padding:0 12px;border-radius:9px;border:1.5px solid var(--green);background:transparent;color:var(--green);font-size:12px;font-weight:700;cursor:pointer">⚡ Gen</button></div></div>
       <div class="field"><label>Notes to customer</label><textarea id="crNotes" rows="2" placeholder="e.g. We'll arrive between 8–10am"></textarea></div>
       <button class="mbtn mbtn-primary" style="width:100%;margin-top:10px" onclick="doConfirmRequest()">✓ Create Job &amp; Send Booking Confirmation</button>
     </div>
@@ -549,7 +549,7 @@ textarea{resize:vertical;min-height:80px}
     </div>
     <div class="field"><label>Contractor</label><select id="jContractor" onchange="jAutoCalcPay()"></select></div>
     <div id="jPayNote" style="font-size:11px;color:var(--fg-3);margin-top:-8px;margin-bottom:10px"></div>
-    <div class="field"><label>Stripe Payment Link</label><div style="display:flex;gap:6px"><input type="url" id="jPayLink" placeholder="https://buy.stripe.com/…" style="flex:1"><button type="button" onclick="genPaymentLink('jPrice','jPayLink','jSvc')" style="white-space:nowrap;padding:0 12px;border-radius:9px;border:1.5px solid var(--green);background:transparent;color:var(--green);font-size:12px;font-weight:700;cursor:pointer">⚡ Gen</button></div></div>
+    <div class="field"><label>Stripe Payment Link</label><div style="display:flex;gap:6px"><input type="url" id="jPayLink" placeholder="https://buy.stripe.com/…" style="flex:1"><button type="button" onclick="genPaymentLink('jPrice','jPayLink','jSvc',this)" style="white-space:nowrap;padding:0 12px;border-radius:9px;border:1.5px solid var(--green);background:transparent;color:var(--green);font-size:12px;font-weight:700;cursor:pointer">⚡ Gen</button></div></div>
     <div class="field" style="flex-direction:row;align-items:center;gap:10px"><input type="checkbox" id="jCtPaid" style="width:auto;margin:0"><label style="margin:0;text-transform:none;font-size:13px;color:var(--fg)">Contractor has been paid</label></div>
     <div class="field"><label>Notes</label><textarea id="jNotes" placeholder="Job notes…"></textarea></div>
     <div class="field"><label>SMS Preview</label><div class="sms-prev" id="smsPreview"></div></div>
@@ -727,12 +727,11 @@ function crSvcFill(){
 }
 
 // Generate Stripe payment link via edge function
-async function genPaymentLink(priceId,linkId,svcId){
+async function genPaymentLink(priceId,linkId,svcId,btn){
   var price=Number(document.getElementById(priceId).value)||0;
   var svcSel=document.getElementById(svcId);
   var svc=svcSel?svcSel.value:'';
   if(!price||price<=0){showToast('Enter a job price first');return;}
-  var btn=event&&event.target;
   if(btn){btn.textContent='…';btn.disabled=true;}
   try{
     var resp=await fetch(SURL+'/functions/v1/create-payment-link',{
