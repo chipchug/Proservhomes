@@ -323,10 +323,10 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <div class="lbox">
     <div id="phoneStep">
       <h2>Welcome Back</h2>
-      <p>Enter your phone number or email to get a sign-in code.</p>
+      <p>Enter your email to get a sign-in code.</p>
       <div class="field">
-        <label id="loginInputLabel">Phone or Email</label>
-        <input type="text" id="loginIn" placeholder="(732) 555-0000 or you@email.com" autocomplete="username" inputmode="text" oninput="detectLoginType(this)">
+        <label id="loginInputLabel">Email Address</label>
+        <input type="email" id="loginIn" placeholder="you@email.com" autocomplete="email" inputmode="email">
       </div>
       <button class="bf bfo" id="sendOtpBtn" onclick="sendSmartOtp()" style="margin-top:4px">Send Code</button>
     </div>
@@ -750,7 +750,7 @@ function detectLoginType(inp){
 
 async function sendSmartOtp(){
   var raw=document.getElementById('loginIn').value.trim();
-  if(!raw){showToast('Enter your phone number or email');return;}
+  if(!raw){showToast('Enter your email address');return;}
   if(raw.includes('@')){
     // Email flow
     var email=raw.toLowerCase();
@@ -771,7 +771,7 @@ async function sendSmartOtp(){
     _homePhone=raw; _useEmailLogin=false;
     showToast('SMS sign-in coming soon — enter your email instead');
     document.getElementById('loginIn').value='';
-    document.getElementById('loginInputLabel').textContent='Phone or Email';
+    document.getElementById('loginInputLabel').textContent='Email Address';
   }
 }
 
