@@ -809,7 +809,14 @@ function renderPhGrid(label, arr, gridId){
   if(!g) return;
   var h = '';
   arr.forEach(function(p, i){
-    var pendCls = p.uploaded ? '' : (p.failed ? ' ph-failed' : ' ph-pending');
+    if(!p.url && !p.uploaded){
+      // Still loading — show spinner placeholder
+      h += '<div class="ph-thumb ph-pending">'
+        + '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px">⏳</div>'
+        + '</div>';
+      return;
+    }
+    var pendCls = p.uploaded ? '' : ' ph-pending';
     var clickable = p.uploaded && p.url ? ' onclick="_ctxViewPhoto(\''+p.url+'\',\'Photo\')"' : '';
     h += '<div class="ph-thumb'+pendCls+'"'+clickable+'>'
       + '<img src="'+p.url+'" loading="lazy">'
@@ -837,10 +844,30 @@ function handlePhotoFiles(e){
   var arr = _phTarget === 'before' ? _photoBefore : _photoAfter;
   files.forEach(function(file){
     if(arr.length >= 6) return;
-    var url = URL.createObjectURL(file);
-    arr.push({file:file, url:url, uploaded:false, storagePath:''});
+    // Add placeholder slot immediately so user sees something
+    var idx = arr.length;
+    arr.push({file:null, url:'', uploaded:false, storagePath:''});
+    renderPhotoGrids();
+    // Use FileReader (same as homeowner/admin) — avoids tainted canvas issues on iOS Safari
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var img = new Image();
+      img.onload = function(){
+        var MAX=900, Q=0.72;
+        var w=img.width, h=img.height;
+        if(w>MAX||h>MAX){var s=Math.min(MAX/w,MAX/h);w=Math.round(w*s);h=Math.round(h*s);}
+        var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        arr[idx].url = cv.toDataURL('image/jpeg',Q);
+        arr[idx].uploaded = true;
+        renderPhotoGrids();
+      };
+      img.onerror = function(){ arr[idx].url = ev.target.result; arr[idx].uploaded = true; renderPhotoGrids(); };
+      img.src = ev.target.result; // base64 data URL — canvas never tainted
+    };
+    reader.onerror = function(){ arr.splice(idx,1); renderPhotoGrids(); };
+    reader.readAsDataURL(file);
   });
-  renderPhotoGrids();
 }
 
 function removePhoto(label, idx){
@@ -849,75 +876,14 @@ function removePhoto(label, idx){
   renderPhotoGrids();
 }
 
-// Compress image and return as base64 data URL (~100-200KB) — no storage bucket needed
-function compressImage(file){
-  return new Promise(function(resolve){
-    var MAX=900,Q=0.72;
-    var objUrl=URL.createObjectURL(file);
-    var img=new Image();
-    img.onload=function(){
-      var w=img.naturalWidth,h=img.naturalHeight;
-      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
-      // Also cap height
-      if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
-      var cv=document.createElement('canvas');cv.width=w;cv.height=h;
-      var ctx=cv.getContext('2d');ctx.drawImage(img,0,0,w,h);
-      URL.revokeObjectURL(objUrl);
-      resolve(cv.toDataURL('image/jpeg',Q));
-    };
-    img.onerror=function(){
-      URL.revokeObjectURL(objUrl);
-      // Fallback: read as base64 directly
-      var fr=new FileReader();
-      fr.onload=function(e){resolve(e.target.result);};
-      fr.onerror=function(){resolve(null);};
-      fr.readAsDataURL(file);
-    };
-    img.src=objUrl;
-  });
-}
-
 async function savePhotos(){
   var btn = document.getElementById('phSaveBtn');
   if(btn){ btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:ph-spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Saving…'; }
   var jobId = _photoJobId;
-  var allPhotos = [];
 
-  // Compress before photos and convert to base64 data URLs (no Supabase Storage needed)
-  var bProg = document.getElementById('phBeforeProgress');
-  var aProg = document.getElementById('phAfterProgress');
-  if(bProg) bProg.textContent = 'Processing before photos…';
-  for(var i=0; i<_photoBefore.length; i++){
-    var p = _photoBefore[i];
-    if(!p.uploaded && p.file){
-      var dataUrl = await compressImage(p.file);
-      if(!dataUrl){ toast('Failed to process photo '+(i+1)); p.failed=true; continue; }
-      p.url = dataUrl;
-      p.uploaded = true;
-      p.failed = false;
-    }
-    if(p.url) allPhotos.push({url:p.url, label:'before'});
-  }
-  if(bProg) bProg.textContent = '';
-
-  if(aProg) aProg.textContent = 'Processing after photos…';
-  for(var i=0; i<_photoAfter.length; i++){
-    var p = _photoAfter[i];
-    if(!p.uploaded && p.file){
-      var dataUrl = await compressImage(p.file);
-      if(!dataUrl){ toast('Failed to process photo '+(i+1)); p.failed=true; continue; }
-      p.url = dataUrl;
-      p.uploaded = true;
-      p.failed = false;
-    }
-    if(p.url) allPhotos.push({url:p.url, label:'after'});
-  }
-  if(aProg) aProg.textContent = '';
-
-  // Store base64 data URLs directly in DB columns — no storage bucket required
+  // Photos are already compressed base64 from handlePhotoFiles — just read them
   var bUrl=(_photoBefore.filter(function(p){return p.uploaded&&p.url;})[0]||{}).url||null;
   var aUrl=(_photoAfter.filter(function(p){return p.uploaded&&p.url;})[0]||{}).url||null;
-  console.log('[PSC] savePhotos jobId=',jobId,'bUrl bytes=',bUrl?bUrl.length:0,'aUrl bytes=',aUrl?aUrl.length:0);
 
   if(!bUrl && !aUrl){
     toast('No photos to save');
@@ -925,35 +891,19 @@ async function savePhotos(){
     return;
   }
 
-  // Confirm the job exists in DB before updating
-  var jobCheck = await _sb.from('jobs').select('id').eq('id',jobId).limit(1);
-  console.log('[PSC] job existence check:', jobCheck);
-  if(jobCheck.error || !(jobCheck.data&&jobCheck.data.length)){
-    console.error('[PSC] job not found or DB error:', jobCheck.error);
-    toast('⚠️ Could not find job record — try logging out and back in');
+  var dbUpdate={};
+  if(bUrl)dbUpdate.before_photo=bUrl;
+  if(aUrl)dbUpdate.after_photo=aUrl;
+  var upd=await _sb.from('jobs').update(dbUpdate).eq('id',jobId);
+  if(upd.error){
+    toast('⚠️ '+upd.error.message);
     if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
     return;
   }
-
-  var dbUpdate={};
-  if(bUrl!==null)dbUpdate.before_photo=bUrl;
-  if(aUrl!==null)dbUpdate.after_photo=aUrl;
-  // Use .select() so RLS errors surface instead of silently returning 0 rows
-  var upd=await _sb.from('jobs').update(dbUpdate).eq('id',jobId).select('id');
-  console.log('[PSC] savePhotos update result:', upd);
-  if(upd.error){
-    console.error('[PSC] savePhotos DB error:', upd.error);
-    toast('⚠️ DB error: '+upd.error.message);
-  } else if(!upd.data||!upd.data.length){
-    console.error('[PSC] savePhotos: update matched 0 rows — possible RLS block');
-    toast('⚠️ Photos processed but not saved — permission denied. Ask Nick to check jobs table RLS.');
-  } else {
-    // Also update local jobs array
-    var j = jobs.find(function(x){return x.id===jobId;});
-    if(j){ j.photos = allPhotos; if(bUrl)j.beforePhoto=bUrl; if(aUrl)j.afterPhoto=aUrl; }
-    toast('Photos saved ✓');
-  }
-  if(btn){ btn.disabled = false; btn.innerHTML = '✓ Saved'; }
+  var j=jobs.find(function(x){return x.id===jobId;});
+  if(j){ if(bUrl)j.beforePhoto=bUrl; if(aUrl)j.afterPhoto=aUrl; }
+  toast('Photos saved ✓');
+  if(btn){btn.disabled=false;btn.innerHTML='✓ Saved';}
   renderPhotoGrids();
   // Re-render action buttons now that photos are saved
   var actWrap = document.getElementById('phActButtons');
