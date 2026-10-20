@@ -1686,13 +1686,10 @@ function _goToProfileSetup(email){
           try{initApp();}catch(e){console.error('[PSH] initApp',e);}
         });
       } else {
-        // New user — show onboarding overlay if not yet seen
-        if (typeof obShowForNewUser === 'function' && obShowForNewUser()) {
-          // Overlay is running; obOpenPortal() will call _showScreen('appShell') + initApp()
-        } else {
-          var nf=document.getElementById('psName');
-          if(nf) nf.focus();
-        }
+        // New user — go straight to onboarding walkthrough
+        _showScreen('appShell');
+        try{initApp();}catch(e){console.error('[PSH] initApp',e);}
+        if (typeof obShowForNewUser === 'function') obShowForNewUser();
       }
     }).catch(function(e){
       console.warn('[PSH] profile check failed, staying on setup:', e);
