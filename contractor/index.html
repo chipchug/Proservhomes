@@ -1189,7 +1189,8 @@ function _ctxViewPhoto(src,lbl){
 </div>
 <script>
 // ── ProServ Contractor Onboarding ──
-var COB_KEY = 'ps_c_flow_v1';
+var COB_KEY = 'ps_c_flow_v1'; // overridden per-email below
+function _cobKey() { try { return 'ps_c_flow_v1_' + btoa(pp || (cc && cc.email) || ''); } catch(e) { return COB_KEY; } }
 var _cobCur = 0;
 var _cobScrs, _cobDots, _cobCols, _cobTotal;
 
@@ -1255,7 +1256,7 @@ function cobUI(i) {
 }
 
 function cobOpenPortal() {
-  try { localStorage.setItem(COB_KEY, '1'); } catch(e) {}
+  try { localStorage.setItem(_cobKey(), '1'); } catch(e) {}
   document.getElementById('cob').classList.remove('cob-on');
   // enterApp should already have run; just ensure app shell is visible
   document.getElementById('loginScreen').classList.add('hidden');
@@ -1264,7 +1265,7 @@ function cobOpenPortal() {
 
 // Call this from enterApp for first-time contractors
 function cobShowIfNew() {
-  try { if (localStorage.getItem(COB_KEY)) return false; } catch(e) {}
+  try { if (localStorage.getItem(_cobKey())) return false; } catch(e) {}
   cobShow();
   return true;
 }

@@ -1844,7 +1844,8 @@ async function saveProfile(){
 </div>
 <script>
 // ── ProServ Onboarding Overlay ──
-var OB_KEY = 'proserv_flow_v1';
+var OB_KEY = 'proserv_flow_v1'; // overridden per-email below
+function _obKey() { try { return 'proserv_flow_v1_' + btoa(_homePhone||''); } catch(e) { return OB_KEY; } }
 var OB_NAME_KEY = 'proserv_user_name';
 var _obCur = 0;
 var _obScreens, _obDots, _obColors, _obTotal;
@@ -1936,7 +1937,7 @@ async function obSaveProfile(skip) {
 }
 
 function obOpenPortal() {
-  try { localStorage.setItem(OB_KEY, '1'); } catch(e) {}
+  try { localStorage.setItem(_obKey(), '1'); } catch(e) {}
   document.getElementById('psv-ob').classList.remove('ob-active');
   if (!USER.name) {
     var n = ''; try { n = localStorage.getItem(OB_NAME_KEY) || ''; } catch(e) {}
@@ -1948,7 +1949,7 @@ function obOpenPortal() {
 
 // Called by _goToProfileSetup for new users — returns true if overlay was shown
 function obShowForNewUser() {
-  try { if (localStorage.getItem(OB_KEY)) return false; } catch(e) {}
+  try { if (localStorage.getItem(_obKey())) return false; } catch(e) {}
   obShow();
   return true;
 }
