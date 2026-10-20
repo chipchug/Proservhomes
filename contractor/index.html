@@ -293,15 +293,15 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
     <div class="lbox">
     <div id="phoneStep">
       <h2>Sign In</h2>
-      <p>Enter your phone number or email to get a code.</p>
-      <div class="field"><label id="uniLabel">Phone or Email</label><input type="text" id="uniInput" placeholder="(732) 555-0000 or email" autocomplete="username" inputmode="text"></div>
+      <p>Enter your email address to receive a sign-in code.</p>
+      <div class="field"><label id="uniLabel">Email Address</label><input type="email" id="uniInput" placeholder="your@email.com" autocomplete="email" inputmode="email"></div>
       <button class="bf bfo" id="sendCodeBtn" onclick="sendCodeUnified()" style="margin-top:4px">Send Code</button>
     </div>
     <div id="otpStep">
       <h2>Enter Code</h2>
       <p id="otpSub" style="margin-bottom:20px">Enter the 6-digit code.</p>
       <div class="field"><label>Verification Code</label><input class="otpi" type="text" id="codeInput" placeholder="123456" maxlength="6" inputmode="numeric"></div>
-      <div class="otp-hint" id="demoHint">Demo: use <strong>123456</strong></div>
+      <div class="otp-hint" id="demoHint" style="display:none">Demo: use <strong>123456</strong></div>
       <button class="bf bfo" id="verifyCodeBtn" onclick="verifyCode()">Verify &amp; Sign In</button>
       <button class="bf" style="margin-top:10px;background:transparent;color:var(--fg-2);border:1px solid var(--border)" onclick="goBack()" id="backBtn">&#8592; Change Number</button>
     </div>
@@ -446,7 +446,7 @@ var _sb=supabase.createClient(SURL,SKEY);
 
 function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,status:r.status||'New',notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}}
 function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,status:j.status||'New',notes:j.notes||''}}
-function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,specialty:r.specialty||'',spec:r.specialty||''}}
+function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||''}}
 
 var SEED_CONTRACTORS=[{id:'c1',name:'Jake R.',phone:'(732) 555-1234',specialty:'General'}];
 var SEED_JOBS=[
@@ -579,30 +579,19 @@ var useEmailLogin=false;
 function _isEmail(v){return v.includes('@');}
 async function sendCodeUnified(){
   var raw=document.getElementById('uniInput').value.trim();
-  if(!raw){toast('Enter your phone number or email');return;}
+  if(!raw){toast('Enter your email address');return;}
+  if(!_isEmail(raw)){toast('Enter a valid email address');return;}
+  useEmailLogin=true;pp=raw.toLowerCase();
   var btn=document.getElementById('sendCodeBtn');
-  if(_isEmail(raw)){
-    useEmailLogin=true;pp=raw.toLowerCase();
-    btn.disabled=true;btn.textContent='Sending…';
-    var res=await _sb.auth.signInWithOtp({email:pp,options:{shouldCreateUser:true,emailRedirectTo:'https://proservhomes.co/contractor/'}});
-    btn.disabled=false;btn.textContent='Send Code';
-    if(res.error){toast('Error: '+res.error.message);return;}
-    document.getElementById('phoneStep').style.display='none';
-    document.getElementById('otpStep').style.display='block';
-    document.getElementById('otpSub').textContent='We emailed a 6-digit code to '+pp;
-    document.getElementById('demoHint').style.display='none';
-    document.getElementById('backBtn').textContent='← Change Email';
-  } else {
-    useEmailLogin=false;
-    var digits=raw.replace(/\D/g,'');
-    if(digits.length<10){toast('Enter a valid phone number');return;}
-    pp=digits;
-    document.getElementById('phoneStep').style.display='none';
-    document.getElementById('otpStep').style.display='block';
-    document.getElementById('otpSub').textContent='Sent to '+raw;
-    document.getElementById('demoHint').style.display='';
-    document.getElementById('backBtn').textContent='← Change Number';
-  }
+  btn.disabled=true;btn.textContent='Sending…';
+  var res=await _sb.auth.signInWithOtp({email:pp,options:{shouldCreateUser:true,emailRedirectTo:'https://proservhomes.co/contractor/'}});
+  btn.disabled=false;btn.textContent='Send Code';
+  if(res.error){toast('Error: '+res.error.message);return;}
+  document.getElementById('phoneStep').style.display='none';
+  document.getElementById('otpStep').style.display='block';
+  document.getElementById('otpSub').textContent='We emailed a 6-digit code to '+pp;
+  document.getElementById('demoHint').style.display='none';
+  document.getElementById('backBtn').textContent='← Change Email';
 }
 function fp(v){var d=v.replace(/\D/g,'');if(d.length<=3)return d;if(d.length<=6)return'('+d.slice(0,3)+') '+d.slice(3);return'('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6,10)}
 var _pi=document.getElementById('phoneInput');if(_pi)_pi.addEventListener('input',function(){this.value=fp(this.value)});
@@ -621,25 +610,29 @@ async function verifyCode(){
   var btn=document.getElementById('verifyCodeBtn');
   btn.disabled=true;btn.textContent='Verifying…';
   try {
-    if(useEmailLogin){
-      var res=await _sb.auth.verifyOtp({email:pp,token:c,type:'email'});
-      console.log('[PSC] verifyOtp result',res);
-      btn.disabled=false;btn.textContent='Verify & Sign In';
-      if(res.error){toast('Invalid code — '+res.error.message);return;}
-      var cr=await _sb.from('contractors').select('*').eq('email',pp).limit(1);
-      console.log('[PSC] contractor lookup',cr);
-      var rows=cr.data||[];
-      if(!rows.length){toast('Verified! But no contractor account found for '+pp+'. Contact your admin.');return;}
-      var x=cr2l(rows[0]);cc=x;contractors=[x];cSess={contractorId:x.id};lsSet('ps_c_session',cSess);enterApp();
-    } else {
-      if(c!=='123456'){btn.disabled=false;btn.textContent='Verify & Sign In';toast('Demo mode — use code 123456');return;}
-      btn.disabled=false;btn.textContent='Verify & Sign In';
-      var cr=await _sb.from('contractors').select('*').eq('phone',pp.replace(/\D/g,''));
-      var rows=cr.data||[];
-      if(!rows.length){var fb=await _sb.from('contractors').select('*').limit(1);rows=fb.data||[];}
-      if(!rows.length){rows=SEED_CONTRACTORS;}
-      var x=cr2l(rows[0]);cc=x;contractors=[x];cSess={contractorId:x.id};lsSet('ps_c_session',cSess);enterApp();
+    var res=await _sb.auth.verifyOtp({email:pp,token:c,type:'email'});
+    console.log('[PSC] verifyOtp result',res);
+    btn.disabled=false;btn.textContent='Verify & Sign In';
+    if(res.error){toast('Invalid code — '+res.error.message);return;}
+    // Use verified email from auth session (most reliable)
+    var verifiedEmail=(res.data&&res.data.user&&res.data.user.email)?res.data.user.email.toLowerCase():pp;
+    console.log('[PSC] looking up contractor by email:',verifiedEmail);
+    var cr=await _sb.from('contractors').select('*').eq('email',verifiedEmail).limit(1);
+    console.log('[PSC] contractor lookup result',cr);
+    var rows=cr.data||[];
+    if(!rows.length){
+      // Try the original pp in case of case mismatch
+      if(verifiedEmail!==pp){
+        var cr2=await _sb.from('contractors').select('*').eq('email',pp).limit(1);
+        rows=cr2.data||[];
+      }
     }
+    if(!rows.length){
+      toast('Signed in as '+verifiedEmail+' — no contractor account found. Ask Nick to add you with this email.');
+      console.error('[PSC] no contractor found for',verifiedEmail);
+      return;
+    }
+    var x=cr2l(rows[0]);cc=x;contractors=[x];cSess={contractorId:x.id};lsSet('ps_c_session',cSess);enterApp();
   } catch(err) {
     console.error('[PSC] verifyCode error',err);
     btn.disabled=false;btn.textContent='Verify & Sign In';
@@ -654,8 +647,8 @@ async function enterApp(){
   if(cSess&&!cc){var cr=await _sb.from('contractors').select('*').eq('id',cSess.contractorId).limit(1);if(cr.data&&cr.data.length)cc=cr2l(cr.data[0]);}
   if(cc){
     var jr=await _sb.from('jobs').select('*').eq('contractor_id',cc.id).order('date',{ascending:false});
-    jobs=jr.data&&jr.data.length?jr.data.map(jr2l):SEED_JOBS;
-    document.getElementById('hInit').textContent=cc.name[0];document.getElementById('hName').textContent=cc.name;
+    jobs=jr.data?jr.data.map(jr2l):[];
+    document.getElementById('hInit').textContent=(cc.name||'?')[0].toUpperCase();document.getElementById('hName').textContent=cc.name||'Contractor';
   }
   var now=new Date();document.getElementById('homeDateLine').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   rHome();rJobs();rEarn();rMs();
@@ -1125,7 +1118,7 @@ async function submitCtQuote(reqId){
   await _sb.from('job_requests').update({contractor_quote:total,contractor_quote_detail:{material:mat,labor:lab}}).eq('id',reqId);
   toast('Quote submitted ✓ — Nick will follow up');
   closeQR();
-  rQuotes();
+  if(typeof rQuotes==='function')rQuotes();
 }
 
 function jrow(j){
