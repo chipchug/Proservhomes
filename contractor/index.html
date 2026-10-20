@@ -849,72 +849,72 @@ function removePhoto(label, idx){
   renderPhotoGrids();
 }
 
-// Compress image to max 1200px wide, 0.82 JPEG quality — reduces 4-10MB phone photos to ~300-600KB
+// Compress image and return as base64 data URL (~100-200KB) — no storage bucket needed
 function compressImage(file){
   return new Promise(function(resolve){
-    var MAX=1200,Q=0.82;
-    var url=URL.createObjectURL(file);
+    var MAX=900,Q=0.72;
+    var objUrl=URL.createObjectURL(file);
     var img=new Image();
     img.onload=function(){
       var w=img.naturalWidth,h=img.naturalHeight;
       if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      // Also cap height
+      if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
       var cv=document.createElement('canvas');cv.width=w;cv.height=h;
       var ctx=cv.getContext('2d');ctx.drawImage(img,0,0,w,h);
-      cv.toBlob(function(blob){URL.revokeObjectURL(url);resolve(blob||file);},'image/jpeg',Q);
+      URL.revokeObjectURL(objUrl);
+      resolve(cv.toDataURL('image/jpeg',Q));
     };
-    img.onerror=function(){URL.revokeObjectURL(url);resolve(file);};
-    img.src=url;
+    img.onerror=function(){
+      URL.revokeObjectURL(objUrl);
+      // Fallback: read as base64 directly
+      var fr=new FileReader();
+      fr.onload=function(e){resolve(e.target.result);};
+      fr.onerror=function(){resolve(null);};
+      fr.readAsDataURL(file);
+    };
+    img.src=objUrl;
   });
 }
 
 async function savePhotos(){
   var btn = document.getElementById('phSaveBtn');
-  if(btn){ btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:ph-spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Uploading…'; }
+  if(btn){ btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:ph-spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Saving…'; }
   var jobId = _photoJobId;
   var allPhotos = [];
 
-  // Upload before photos
+  // Compress before photos and convert to base64 data URLs (no Supabase Storage needed)
   var bProg = document.getElementById('phBeforeProgress');
   var aProg = document.getElementById('phAfterProgress');
-  if(bProg) bProg.textContent = 'Uploading before photos…';
+  if(bProg) bProg.textContent = 'Processing before photos…';
   for(var i=0; i<_photoBefore.length; i++){
     var p = _photoBefore[i];
     if(!p.uploaded && p.file){
-      var path = 'jobs/'+jobId+'/before_'+Date.now()+'_'+i+'.jpg';
-      var fileToUpload = await compressImage(p.file);
-      var res = await _sb.storage.from('job-photos').upload(path, fileToUpload, {upsert:true, contentType:'image/jpeg'});
-      console.log('[PSC] before upload result', res);
-      if(res.error){ console.error('[PSC] before upload error', res.error); toast('Upload failed: '+res.error.message+' ('+res.error.statusCode+')'); p.failed=true; continue; }
-      var pub = _sb.storage.from('job-photos').getPublicUrl(path);
-      p.url = pub.data.publicUrl;
-      p.storagePath = path;
+      var dataUrl = await compressImage(p.file);
+      if(!dataUrl){ toast('Failed to process photo '+(i+1)); p.failed=true; continue; }
+      p.url = dataUrl;
       p.uploaded = true;
       p.failed = false;
     }
-    if(p.url) allPhotos.push({url:p.url, path:p.storagePath, label:'before'});
+    if(p.url) allPhotos.push({url:p.url, label:'before'});
   }
   if(bProg) bProg.textContent = '';
 
-  if(aProg) aProg.textContent = 'Uploading after photos…';
+  if(aProg) aProg.textContent = 'Processing after photos…';
   for(var i=0; i<_photoAfter.length; i++){
     var p = _photoAfter[i];
     if(!p.uploaded && p.file){
-      var path = 'jobs/'+jobId+'/after_'+Date.now()+'_'+i+'.jpg';
-      var fileToUpload = await compressImage(p.file);
-      var res = await _sb.storage.from('job-photos').upload(path, fileToUpload, {upsert:true, contentType:'image/jpeg'});
-      console.log('[PSC] after upload result', res);
-      if(res.error){ console.error('[PSC] after upload error', res.error); toast('Upload failed: '+res.error.message+' ('+res.error.statusCode+')'); p.failed=true; continue; }
-      var pub = _sb.storage.from('job-photos').getPublicUrl(path);
-      p.url = pub.data.publicUrl;
-      p.storagePath = path;
+      var dataUrl = await compressImage(p.file);
+      if(!dataUrl){ toast('Failed to process photo '+(i+1)); p.failed=true; continue; }
+      p.url = dataUrl;
       p.uploaded = true;
       p.failed = false;
     }
-    if(p.url) allPhotos.push({url:p.url, path:p.storagePath, label:'after'});
+    if(p.url) allPhotos.push({url:p.url, label:'after'});
   }
   if(aProg) aProg.textContent = '';
 
-  // Save photo URLs to Supabase job record (use before_photo / after_photo columns)
+  // Store base64 data URLs directly in DB columns — no storage bucket required
   var bUrl=(_photoBefore.filter(function(p){return p.uploaded&&p.url;})[0]||{}).url||null;
   var aUrl=(_photoAfter.filter(function(p){return p.uploaded&&p.url;})[0]||{}).url||null;
   var dbUpdate={};
