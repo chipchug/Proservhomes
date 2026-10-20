@@ -726,6 +726,11 @@ function detectLoginType(inp){
   // Treat as email if: contains @, OR contains any letter (a-z), since phone numbers are digits-only
   var hasLetter=/[a-zA-Z]/.test(v);
   if(v.includes('@') || hasLetter){
+    // If we were previously in phone mode, strip phone formatting so the email isn't corrupted
+    if(inp.inputMode==='tel'){
+      // Remove phone formatting characters (parens, spaces, dashes) but keep @ and letters
+      inp.value=v.replace(/[() \-]/g,'');
+    }
     inp.inputMode='email'; lbl.textContent='Email Address';
   } else {
     // Only format as phone if the value is purely digits/phone characters

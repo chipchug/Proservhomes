@@ -507,14 +507,15 @@ textarea{resize:vertical;min-height:80px}
     </div>
     <!-- Book Job panel (fixed-price) -->
     <div id="crPanelJob" style="display:none">
-      <div style="font-size:12px;color:var(--fg-3);margin-bottom:12px">Set the job price — contractor pay is calculated automatically from their margin.</div>
+      <div style="font-size:12px;color:var(--fg-3);margin-bottom:12px">Select the specific service tier — price auto-fills. Contractor pay is calculated from their margin.</div>
+      <div class="field"><label>Service Tier</label><select id="crSvcTier" onchange="crSvcFill()"><option value="">— Select service tier —</option></select></div>
       <div class="form-row">
         <div class="field"><label>Job Price ($)</label><input type="number" id="crPrice" placeholder="0" min="0" oninput="crAutoCalcPay()"></div>
         <div class="field"><label>Contractor Pay ($)</label><input type="number" id="crPay" placeholder="auto" min="0"></div>
       </div>
       <div class="field"><label>Assign Contractor</label><select id="crContractor" onchange="crAutoCalcPay()"></select></div>
       <div id="crPayNote" style="font-size:11px;color:var(--fg-3);margin-top:-8px;margin-bottom:10px"></div>
-      <div class="field"><label>Stripe Payment Link</label><input type="url" id="crPayLink" placeholder="https://buy.stripe.com/…"></div>
+      <div class="field"><label>Stripe Payment Link</label><div style="display:flex;gap:6px"><input type="url" id="crPayLink" placeholder="https://buy.stripe.com/…" style="flex:1"><button type="button" onclick="genPaymentLink('crPrice','crPayLink','crSvcTier')" style="white-space:nowrap;padding:0 12px;border-radius:9px;border:1.5px solid var(--green);background:transparent;color:var(--green);font-size:12px;font-weight:700;cursor:pointer">⚡ Gen</button></div></div>
       <div class="field"><label>Notes to customer</label><textarea id="crNotes" rows="2" placeholder="e.g. We'll arrive between 8–10am"></textarea></div>
       <button class="mbtn mbtn-primary" style="width:100%;margin-top:10px" onclick="doConfirmRequest()">✓ Create Job &amp; Send Booking Confirmation</button>
     </div>
@@ -539,15 +540,16 @@ textarea{resize:vertical;min-height:80px}
     <div class="field"><label>Email (for notifications)</label><input type="email" id="jEmail" placeholder="customer@email.com"></div>
     <div class="field"><label>Address</label><input id="jAddr" placeholder="Street, City ST"></div>
     <div class="form-row">
-      <div class="field"><label>Service</label><select id="jSvc"><option>Gutter Cleaning</option><option>Pressure Washing</option><option>Dryer Vent Cleaning</option><option>Fence Installation</option><option>Christmas Lights</option><option>Concrete Work</option><option>Paver Patio</option></select></div>
+      <div class="field"><label>Service</label><select id="jSvc" onchange="jSvcFill()"></select></div>
       <div class="field"><label>Status</label><select id="jStatus"><option>New</option><option>Scheduled</option><option>In Progress</option><option>Complete</option><option>Invoiced</option></select></div>
     </div>
     <div class="form-row">
-      <div class="field"><label>Job Price ($)</label><input type="number" id="jPrice" placeholder="0" min="0"></div>
-      <div class="field"><label>Contractor Pay ($)</label><input type="number" id="jPay" placeholder="0" min="0"></div>
+      <div class="field"><label>Job Price ($)</label><input type="number" id="jPrice" placeholder="0" min="0" oninput="jAutoCalcPay()"></div>
+      <div class="field"><label>Contractor Pay ($)</label><input type="number" id="jPay" placeholder="auto" min="0"></div>
     </div>
-    <div class="field"><label>Contractor</label><select id="jContractor"></select></div>
-    <div class="field"><label>Stripe Payment Link</label><input type="url" id="jPayLink" placeholder="https://buy.stripe.com/…"></div>
+    <div class="field"><label>Contractor</label><select id="jContractor" onchange="jAutoCalcPay()"></select></div>
+    <div id="jPayNote" style="font-size:11px;color:var(--fg-3);margin-top:-8px;margin-bottom:10px"></div>
+    <div class="field"><label>Stripe Payment Link</label><div style="display:flex;gap:6px"><input type="url" id="jPayLink" placeholder="https://buy.stripe.com/…" style="flex:1"><button type="button" onclick="genPaymentLink('jPrice','jPayLink','jSvc')" style="white-space:nowrap;padding:0 12px;border-radius:9px;border:1.5px solid var(--green);background:transparent;color:var(--green);font-size:12px;font-weight:700;cursor:pointer">⚡ Gen</button></div></div>
     <div class="field" style="flex-direction:row;align-items:center;gap:10px"><input type="checkbox" id="jCtPaid" style="width:auto;margin:0"><label style="margin:0;text-transform:none;font-size:13px;color:var(--fg)">Contractor has been paid</label></div>
     <div class="field"><label>Notes</label><textarea id="jNotes" placeholder="Job notes…"></textarea></div>
     <div class="field"><label>SMS Preview</label><div class="sms-prev" id="smsPreview"></div></div>
@@ -597,6 +599,161 @@ var SKEY='sb_publishable_7W-vHGcu-U60LiTsG_7i5g_7ijIyTOJ';
 var _sb=null;try{_sb=supabase.createClient(SURL,SKEY);}catch(e){}
 
 var STATUSES=['New','Scheduled','In Progress','Complete','Invoiced','Paid'];
+
+// ── Service price map ─────────────────────────────────────────────────────────
+// Retail prices derived from contractor rate cards (30% margin basis)
+var SERVICES=[
+  // Gutter Cleaning
+  {cat:'Gutter Cleaning',name:'Ranch / Single-Story (≤150 ft)',price:165},
+  {cat:'Gutter Cleaning',name:'Standard 2-Story',price:250},
+  {cat:'Gutter Cleaning',name:'Large 2-Story (200–250 ft)',price:315},
+  {cat:'Gutter Cleaning',name:'Estate / 3+ Story (250+ ft)',price:415},
+  {cat:'Gutter Cleaning',name:'Add-on: Downspout Unclog (per)',price:50},
+  {cat:'Gutter Cleaning',name:'Add-on: Gutter Guard Remove & Reinstall',price:100},
+  {cat:'Gutter Cleaning',name:'Add-on: Minor Repair or Reseal',price:85},
+  // Pressure Washing
+  {cat:'Pressure Washing',name:'House Exterior – Single-Story',price:300},
+  {cat:'Pressure Washing',name:'House Exterior – Two-Story',price:400},
+  {cat:'Pressure Washing',name:'House Exterior – Large (3,000+ sq ft)',price:500},
+  {cat:'Pressure Washing',name:'Driveway Only',price:165},
+  {cat:'Pressure Washing',name:'Add-on: Driveway (2-car)',price:100},
+  {cat:'Pressure Washing',name:'Add-on: Driveway (4-car)',price:150},
+  {cat:'Pressure Washing',name:'Add-on: Porch or Patio',price:100},
+  {cat:'Pressure Washing',name:'Add-on: Shed or Pool House',price:85},
+  {cat:'Pressure Washing',name:'Add-on: Walkway',price:85},
+  // Christmas Lights
+  {cat:'Christmas Lights',name:'Ranch / Cape Cod',price:300},
+  {cat:'Christmas Lights',name:'Standard 2-Story',price:415},
+  {cat:'Christmas Lights',name:'Large Home',price:585},
+  {cat:'Christmas Lights',name:'Estate',price:785},
+  {cat:'Christmas Lights',name:'Add-on: Wreath Hanging (per)',price:65},
+  {cat:'Christmas Lights',name:'Add-on: Garland Wrapping',price:100},
+  {cat:'Christmas Lights',name:'Add-on: Shrub or Tree Lighting',price:100},
+  // Dryer Vent Cleaning
+  {cat:'Dryer Vent Cleaning',name:'Standard Run (up to 25 ft)',price:150},
+  {cat:'Dryer Vent Cleaning',name:'Long Run (25–50 ft)',price:200},
+  {cat:'Dryer Vent Cleaning',name:'Add-on: Roof Vent',price:85},
+  {cat:'Dryer Vent Cleaning',name:'Add-on: Bird Guard Install',price:65},
+  {cat:'Dryer Vent Cleaning',name:'Add-on: Exterior Vent Cap Replacement',price:85},
+  {cat:'Dryer Vent Cleaning',name:'Add-on: Airflow Test',price:50},
+  // Fence Installation
+  {cat:'Fence Installation',name:'Wood Privacy (per 150 lin ft)',price:4200},
+  {cat:'Fence Installation',name:'Vinyl Privacy (per 150 lin ft)',price:5400},
+  {cat:'Fence Installation',name:'Aluminum Pool Code 4 ft (per 150 lin ft)',price:3200},
+  {cat:'Fence Installation',name:'Chain Link (per 150 lin ft)',price:2200},
+  {cat:'Fence Installation',name:'Add-on: Single Walk Gate',price:385},
+  {cat:'Fence Installation',name:'Add-on: Double Drive Gate',price:650},
+  {cat:'Fence Installation',name:'Add-on: Old Fence Demo & Haul-Away',price:550},
+  {cat:'Fence Installation',name:'Add-on: Post Caps & Lattice',price:285},
+  // Concrete Work
+  {cat:'Concrete Work',name:'Patio / Walkway Broom Finish (≤400 sq ft)',price:3200},
+  {cat:'Concrete Work',name:'Driveway Standard 2-Car',price:5500},
+  {cat:'Concrete Work',name:'Stamped Concrete',price:5800},
+  {cat:'Concrete Work',name:'Steps & Apron',price:2200},
+  {cat:'Concrete Work',name:'Upgrade: Integral Color',price:550},
+  {cat:'Concrete Work',name:'Upgrade: Exposed Aggregate',price:550},
+  {cat:'Concrete Work',name:'Upgrade: Sealer Coat',price:350},
+  // Paver Patio
+  {cat:'Paver Patio',name:'Patio – Concrete Pavers',price:4500},
+  {cat:'Paver Patio',name:'Pool Surround',price:6500},
+  {cat:'Paver Patio',name:'Driveway 2-Car',price:10500},
+  {cat:'Paver Patio',name:'Walkway (≤200 sq ft)',price:3200},
+  {cat:'Paver Patio',name:'Upgrade: Natural Stone',price:2000},
+  {cat:'Paver Patio',name:'Upgrade: In-Ground LED Lighting',price:1200},
+  {cat:'Paver Patio',name:'Upgrade: Retaining Wall Section',price:3500},
+  {cat:'Paver Patio',name:'Upgrade: Polymeric Sand & Sealer',price:450}
+];
+
+// Build a grouped <select> from SERVICES, optionally filtered to one category
+function buildSvcSelect(selId, filterCat){
+  var sel=document.getElementById(selId);
+  if(!sel)return;
+  var prev=sel.value;
+  sel.innerHTML='<option value="">— Select service —</option>';
+  var cats=filterCat?[filterCat]:[...new Set(SERVICES.map(function(s){return s.cat}))];
+  cats.forEach(function(cat){
+    var items=SERVICES.filter(function(s){return s.cat===cat});
+    if(!items.length)return;
+    var og=document.createElement('optgroup');
+    og.label=cat;
+    items.forEach(function(svc){
+      var o=document.createElement('option');
+      o.value=svc.name;
+      o.textContent=svc.name+' — $'+svc.price.toLocaleString();
+      o.dataset.price=svc.price;
+      o.dataset.cat=svc.cat;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+  // Restore previous selection if still present
+  if(prev)sel.value=prev;
+}
+
+// Auto-fill retail price when service selected in Job modal
+function jSvcFill(){
+  var sel=document.getElementById('jSvc');
+  var opt=sel&&sel.options[sel.selectedIndex];
+  if(opt&&opt.dataset.price){
+    document.getElementById('jPrice').value=opt.dataset.price;
+    jAutoCalcPay();
+  }
+}
+
+// Auto-calc contractor pay in Job modal
+function jAutoCalcPay(){
+  var price=Number(document.getElementById('jPrice').value)||0;
+  var ctId=document.getElementById('jContractor').value;
+  var ct=contractors.find(function(c){return c.id===ctId});
+  var margin=ct?Number(ct.margin||30):30;
+  var note=document.getElementById('jPayNote');
+  if(price&&ct){
+    var pay=Math.round(price*(margin/100)*100)/100;
+    document.getElementById('jPay').value=pay;
+    if(note)note.textContent=ct.name+' earns '+margin+'% → $'+pay.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  } else {
+    if(note)note.textContent='';
+  }
+}
+
+// Auto-fill retail price when service selected in Request → Book Job panel
+function crSvcFill(){
+  var sel=document.getElementById('crSvcTier');
+  var opt=sel&&sel.options[sel.selectedIndex];
+  if(opt&&opt.dataset.price){
+    document.getElementById('crPrice').value=opt.dataset.price;
+    crAutoCalcPay();
+  }
+}
+
+// Generate Stripe payment link via edge function
+async function genPaymentLink(priceId,linkId,svcId){
+  var price=Number(document.getElementById(priceId).value)||0;
+  var svcSel=document.getElementById(svcId);
+  var svc=svcSel?svcSel.value:'';
+  if(!price||price<=0){showToast('Enter a job price first');return;}
+  var btn=event&&event.target;
+  if(btn){btn.textContent='…';btn.disabled=true;}
+  try{
+    var resp=await fetch(SURL+'/functions/v1/create-payment-link',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({amount:price,description:svc||'ProServ Homes Service',currency:'usd'})
+    });
+    var data=await resp.json();
+    if(data.url){
+      document.getElementById(linkId).value=data.url;
+      showToast('Payment link generated ✓');
+    } else {
+      showToast('Error: '+(data.error||'Could not generate link'));
+    }
+  }catch(e){
+    showToast('Network error generating link');
+    console.error('[genPaymentLink]',e);
+  }finally{
+    if(btn){btn.textContent='⚡ Gen';btn.disabled=false;}
+  }
+}
 
 // Field mapping: local camelCase <-> DB snake_case
 function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,paymentLink:r.payment_link||'',status:r.status||'New',notes:r.notes||''}}
@@ -772,7 +929,7 @@ async function enterApp(){
   document.getElementById('ovSub').textContent="Here's your business overview.";
   var rr=await _sb.from('job_requests').select('*').order('id',{ascending:false});
   requests=(rr.data||[]).filter(function(r){return r.status==='pending'||r.status==='acknowledged'||r.status==='quoted'});
-  populateBooksMonths();populateContractorSelect();renderDashboard();renderJobsTable();renderContractors();renderBooks();renderRequests();
+  populateBooksMonths();populateContractorSelect();buildSvcSelect('jSvc');renderDashboard();renderJobsTable();renderContractors();renderBooks();renderRequests();
   var _jp=new URLSearchParams(window.location.search).get('job');
   if(_jp)setTimeout(function(){openJobDetail(_jp);},300);
 }
@@ -871,8 +1028,8 @@ async function updateStatus(id,st){var i=jobs.findIndex(function(x){return x.id=
 var evtMap={Scheduled:'job_accepted',Complete:'job_completed',Cancelled:'job_cancelled'};
 if(evtMap[st]&&evtMap[st]!==evtMap[prev]){var jj=jobs[i];var ct=contractors.find(function(c){return c.id===jj.contractorId});sendSmsNotification({event:evtMap[st],job:{id:jj.id,service:jj.service,address:jj.address,scheduled_date:jj.date,amount:jj.price},homeowner:{name:jj.client,phone:jj.phone||null,email:jj.email||null},contractor:ct?{name:ct.name,phone:ct.phone||null}:null});}}
 
-function openNewJob(){_editJobId=null;document.getElementById('jEditId').value='';document.getElementById('jClient').value='';document.getElementById('jPhone').value='';document.getElementById('jEmail').value='';document.getElementById('jAddr').value='';document.getElementById('jDate').value='';document.getElementById('jSvc').value='Gutter Cleaning';document.getElementById('jStatus').value='New';document.getElementById('jPrice').value='';document.getElementById('jPay').value='';document.getElementById('jPayLink').value='';document.getElementById('jCtPaid').checked=false;document.getElementById('jNotes').value='';document.getElementById('jobModalTitle').textContent='New Job';document.getElementById('delJobBtn').classList.add('hidden');updateSmsPreview();document.getElementById('jobModal').classList.remove('hidden')}
-function openEditJob(id){var j=jobs.find(function(x){return x.id===id});if(!j)return;closeModal('detModal');_editJobId=id;document.getElementById('jEditId').value=id;document.getElementById('jClient').value=j.client||'';document.getElementById('jPhone').value=j.phone||'';document.getElementById('jEmail').value=j.email||'';document.getElementById('jAddr').value=j.address||'';document.getElementById('jDate').value=j.date||'';document.getElementById('jSvc').value=j.service||'Gutter Cleaning';document.getElementById('jStatus').value=j.status||'New';document.getElementById('jPrice').value=j.price||'';document.getElementById('jPay').value=j.contractorPay||'';document.getElementById('jPayLink').value=j.paymentLink||'';document.getElementById('jCtPaid').checked=!!j.contractorPaid;document.getElementById('jNotes').value=j.notes||'';document.getElementById('jContractor').value=j.contractorId||'';document.getElementById('jobModalTitle').textContent='Edit Job';document.getElementById('delJobBtn').classList.remove('hidden');updateSmsPreview();document.getElementById('jobModal').classList.remove('hidden')}
+function openNewJob(){_editJobId=null;buildSvcSelect('jSvc');document.getElementById('jEditId').value='';document.getElementById('jClient').value='';document.getElementById('jPhone').value='';document.getElementById('jEmail').value='';document.getElementById('jAddr').value='';document.getElementById('jDate').value='';document.getElementById('jStatus').value='New';document.getElementById('jPrice').value='';document.getElementById('jPay').value='';document.getElementById('jPayNote').textContent='';document.getElementById('jPayLink').value='';document.getElementById('jCtPaid').checked=false;document.getElementById('jNotes').value='';document.getElementById('jobModalTitle').textContent='New Job';document.getElementById('delJobBtn').classList.add('hidden');updateSmsPreview();document.getElementById('jobModal').classList.remove('hidden')}
+function openEditJob(id){var j=jobs.find(function(x){return x.id===id});if(!j)return;closeModal('detModal');_editJobId=id;buildSvcSelect('jSvc');document.getElementById('jEditId').value=id;document.getElementById('jClient').value=j.client||'';document.getElementById('jPhone').value=j.phone||'';document.getElementById('jEmail').value=j.email||'';document.getElementById('jAddr').value=j.address||'';document.getElementById('jDate').value=j.date||'';document.getElementById('jSvc').value=j.service||'';document.getElementById('jStatus').value=j.status||'New';document.getElementById('jPrice').value=j.price||'';document.getElementById('jPay').value=j.contractorPay||'';document.getElementById('jPayNote').textContent='';document.getElementById('jPayLink').value=j.paymentLink||'';document.getElementById('jCtPaid').checked=!!j.contractorPaid;document.getElementById('jNotes').value=j.notes||'';document.getElementById('jContractor').value=j.contractorId||'';document.getElementById('jobModalTitle').textContent='Edit Job';document.getElementById('delJobBtn').classList.remove('hidden');updateSmsPreview();document.getElementById('jobModal').classList.remove('hidden')}
 function updateSmsPreview(){var s=document.getElementById('jSvc').value;var d=document.getElementById('jDate').value;var a=document.getElementById('jAddr').value;var p=document.getElementById('jPrice').value;var dstr=d?new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'{date}';document.getElementById('smsPreview').textContent='ProServ Homes: Your '+s+' is confirmed for '+dstr+(a?' at '+a:'')+(p?' — $'+p:'')+'. Questions? Reply here.'}
 document.getElementById('jSvc').addEventListener('change',updateSmsPreview);document.getElementById('jDate').addEventListener('change',updateSmsPreview);document.getElementById('jAddr').addEventListener('input',updateSmsPreview);document.getElementById('jPrice').addEventListener('input',updateSmsPreview);
 async function saveJob(){var client=document.getElementById('jClient').value.trim();if(!client){showToast('Client name required');return}var isNew=!_editJobId;var id=_editJobId||('j'+Date.now());var i=jobs.findIndex(function(x){return x.id===id});var j={id:id,client:client,phone:document.getElementById('jPhone').value,email:document.getElementById('jEmail').value.trim(),address:document.getElementById('jAddr').value,service:document.getElementById('jSvc').value,date:document.getElementById('jDate').value,price:Number(document.getElementById('jPrice').value)||0,contractorId:document.getElementById('jContractor').value,contractorPay:Number(document.getElementById('jPay').value)||0,contractorPaid:document.getElementById('jCtPaid').checked,paymentLink:document.getElementById('jPayLink').value.trim(),status:document.getElementById('jStatus').value,notes:document.getElementById('jNotes').value};if(i>=0)jobs[i]=j;else jobs.unshift(j);var res=await _sb.from('jobs').upsert([jl2r(j)]);if(res.error)console.warn('Supabase:',res.error.message);closeModal('jobModal');renderDashboard();renderJobsTable();renderBooks();showToast(isNew?'Job created ✓':'Job updated');
@@ -1033,6 +1190,9 @@ function openConfirmRequest(id){
   document.getElementById('crContractor').innerHTML=ctOpts;
   // Pre-fill assigned contractor if already set
   if(r.contractor_id){document.getElementById('crContractor').value=r.contractor_id;}
+  // Populate service tier select filtered to request's service category
+  buildSvcSelect('crSvcTier', r.service||null);
+  document.getElementById('crSvcTier').value='';
   crAutoCalcPay();
   // Show contractor quote if returned
   var ctQRow=document.getElementById('crCtQuoteRow');
