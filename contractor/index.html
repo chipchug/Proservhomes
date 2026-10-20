@@ -539,9 +539,9 @@ function _admCalNext(cid){ _admCalM++; if(_admCalM>11){_admCalM=0;_admCalY++;} _
 function _admPickDate(iso, cid){ _admCalSelDate=iso; _admRenderCal(cid); }
 async function _reqPayout(){
   var owed = parseFloat((document.getElementById('eOwed')||{}).textContent||'0')||0;
-  if(owed<=0){ showToast('No earnings owed at this time'); return; }
+  if(owed<=0){ toast('No earnings owed at this time'); return; }
   var ctName = (typeof cc !== 'undefined' && cc && cc.name) ? cc.name : 'Contractor';
-  showToast('Payout request submitted — you\'ll receive payment within 2–3 business days');
+  toast('Payout request submitted — you\'ll receive payment within 2–3 business days');
   try {
     await fetch(SURL+'/functions/v1/send-sms', {
       method: 'POST',
@@ -883,7 +883,8 @@ async function savePhotos(){
       var path = 'jobs/'+jobId+'/before_'+Date.now()+'_'+i+'.jpg';
       var fileToUpload = await compressImage(p.file);
       var res = await _sb.storage.from('job-photos').upload(path, fileToUpload, {upsert:true, contentType:'image/jpeg'});
-      if(res.error){ toast('Upload failed: '+res.error.message); p.failed=true; continue; }
+      console.log('[PSC] before upload result', res);
+      if(res.error){ console.error('[PSC] before upload error', res.error); toast('Upload failed: '+res.error.message+' ('+res.error.statusCode+')'); p.failed=true; continue; }
       var pub = _sb.storage.from('job-photos').getPublicUrl(path);
       p.url = pub.data.publicUrl;
       p.storagePath = path;
@@ -901,7 +902,8 @@ async function savePhotos(){
       var path = 'jobs/'+jobId+'/after_'+Date.now()+'_'+i+'.jpg';
       var fileToUpload = await compressImage(p.file);
       var res = await _sb.storage.from('job-photos').upload(path, fileToUpload, {upsert:true, contentType:'image/jpeg'});
-      if(res.error){ toast('Upload failed: '+res.error.message); p.failed=true; continue; }
+      console.log('[PSC] after upload result', res);
+      if(res.error){ console.error('[PSC] after upload error', res.error); toast('Upload failed: '+res.error.message+' ('+res.error.statusCode+')'); p.failed=true; continue; }
       var pub = _sb.storage.from('job-photos').getPublicUrl(path);
       p.url = pub.data.publicUrl;
       p.storagePath = path;
@@ -926,7 +928,7 @@ async function savePhotos(){
     // Also update local jobs array
     var j = jobs.find(function(x){return x.id===jobId;});
     if(j){ j.photos = allPhotos; if(bUrl)j.beforePhoto=bUrl; if(aUrl)j.afterPhoto=aUrl; }
-    showT('Photos saved ✓');
+    toast('Photos saved ✓');
   }
   if(btn){ btn.disabled = false; btn.innerHTML = '✓ Saved'; }
   renderPhotoGrids();
