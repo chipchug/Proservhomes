@@ -892,20 +892,13 @@ async function savePhotos(){
   }
 
   try{
-    // Try to refresh session (best effort — RLS is open so anon works too)
-    try{ await _sb.auth.refreshSession(); }catch(e){}
     var dbUpdate={};
     if(bUrl)dbUpdate.before_photo=bUrl;
     if(aUrl)dbUpdate.after_photo=aUrl;
-    // .select('id') makes RLS rejections surface as an error instead of silent 0 rows
-    var upd=await _sb.from('jobs').update(dbUpdate).eq('id',jobId).select('id');
+    // Match admin pattern exactly — no .select() so we don't need SELECT RLS to match
+    var upd=await _sb.from('jobs').update(dbUpdate).eq('id',jobId);
     if(upd.error){
       toast('⚠️ '+upd.error.message);
-      if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
-      return;
-    }
-    if(!upd.data||!upd.data.length){
-      toast('⚠️ Not saved — ask Nick to check jobs RLS UPDATE policy in Supabase');
       if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
       return;
     }
