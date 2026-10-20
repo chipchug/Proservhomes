@@ -892,12 +892,29 @@ async function savePhotos(){
   }
 
   try{
+    // Ensure we have a live Supabase auth session — required for jobs UPDATE RLS
+    var sess = await _sb.auth.getSession();
+    if(!sess.data || !sess.data.session){
+      // Try to refresh
+      var ref = await _sb.auth.refreshSession();
+      if(!ref.data || !ref.data.session){
+        toast('⚠️ Session expired — please log out and back in');
+        if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
+        return;
+      }
+    }
     var dbUpdate={};
     if(bUrl)dbUpdate.before_photo=bUrl;
     if(aUrl)dbUpdate.after_photo=aUrl;
-    var upd=await _sb.from('jobs').update(dbUpdate).eq('id',jobId);
+    // .select('id') makes RLS rejections surface as an error instead of silent 0 rows
+    var upd=await _sb.from('jobs').update(dbUpdate).eq('id',jobId).select('id');
     if(upd.error){
       toast('⚠️ '+upd.error.message);
+      if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
+      return;
+    }
+    if(!upd.data||!upd.data.length){
+      toast('⚠️ Not saved — ask Nick to check jobs RLS UPDATE policy in Supabase');
       if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
       return;
     }
@@ -907,7 +924,7 @@ async function savePhotos(){
     if(btn){btn.disabled=false;btn.innerHTML='✓ Saved';}
     renderPhotoGrids();
   }catch(err){
-    toast('⚠️ Save failed — log out and back in, then try again');
+    toast('⚠️ Save error: '+(err&&err.message?err.message:'unknown'));
     if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
     return;
   }
