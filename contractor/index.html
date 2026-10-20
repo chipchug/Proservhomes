@@ -646,7 +646,7 @@ async function verifyCode(){
     toast('Something went wrong — try again');
   }
 }
-function doLogout(){_sb.auth.signOut().finally(function(){window.location.href='https://proservhomes.co/contractor/';});}
+function doLogout(){try{localStorage.removeItem('ps_c_session');}catch(e){}cSess=null;cc=null;_sb.auth.signOut().finally(function(){window.location.href='https://proservhomes.co/contractor/';});}
 
 async function enterApp(){
   document.getElementById('loginScreen').classList.add('hidden');

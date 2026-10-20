@@ -1652,37 +1652,32 @@ function _showScreen(id){
   console.log('[PSH] _showScreen:', id);
 }
 
-// Show profile setup and check DB in background
+// Check DB first, then route — no flash of profileSetup for returning users
 function _goToProfileSetup(email){
   _homePhone = email;
   USER = {name:'',first:email.split('@')[0],email:email,addr:'',phone:'',init:email[0].toUpperCase()};
-  _showScreen('profileSetup');
-  // Background: if profile already exists, skip to dashboard
-  setTimeout(function(){
-    _sb.from('homeowners').select('*').eq('email',email).limit(1).then(function(hr){
-      console.log('[PSH] homeowners query result:', JSON.stringify({data: hr.data, error: hr.error, status: hr.status}));
-      if(hr.data && hr.data.length){
-        var hw=hr.data[0]; var name=hw.name||'';
-        USER={name:name||email,first:name?name.split(' ')[0]:email.split('@')[0],email:email,addr:hw.address||'',phone:hw.phone||'',init:(name||email)[0].toUpperCase()};
-        _sb.from('jobs').select('*').eq('email',email).order('date',{ascending:false}).then(function(jr){
-          if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
-          _showScreen('appShell');
-          try{initApp();}catch(e){console.error('[PSH] initApp',e);}
-        }).catch(function(){
-          // No jobs is fine — still go to dashboard
-          _showScreen('appShell');
-          try{initApp();}catch(e){console.error('[PSH] initApp',e);}
-        });
-      } else {
-        // New user — go straight to onboarding walkthrough
+  // Keep loginScreen visible as a loading state until the DB responds
+  _sb.from('homeowners').select('*').eq('email',email).limit(1).then(function(hr){
+    if(hr.data && hr.data.length){
+      // Returning user — go straight to dashboard, skip profileSetup entirely
+      var hw=hr.data[0]; var name=hw.name||'';
+      USER={name:name||email,first:name?name.split(' ')[0]:email.split('@')[0],email:email,addr:hw.address||'',phone:hw.phone||'',init:(name||email)[0].toUpperCase()};
+      _sb.from('jobs').select('*').eq('email',email).order('date',{ascending:false}).then(function(jr){
+        if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
         _showScreen('appShell');
         try{initApp();}catch(e){console.error('[PSH] initApp',e);}
-        if (typeof obShowForNewUser === 'function') obShowForNewUser();
-      }
-    }).catch(function(e){
-      console.warn('[PSH] profile check failed, staying on setup:', e);
-    });
-  }, 50);
+      }).catch(function(){
+        _showScreen('appShell');
+        try{initApp();}catch(e){console.error('[PSH] initApp',e);}
+      });
+    } else {
+      // New user — show profile setup form
+      _showScreen('profileSetup');
+    }
+  }).catch(function(e){
+    console.warn('[PSH] profile check failed, showing setup:', e);
+    _showScreen('profileSetup');
+  });
 }
 
 async function saveProfile(){
@@ -1699,6 +1694,7 @@ async function saveProfile(){
   USER={name:name,first:name.split(' ')[0],email:email,addr:addr,phone:phone,init:name[0].toUpperCase()};
   _showScreen('appShell');
   try{initApp();}catch(e){console.error('[PSH] initApp',e);}
+  if(typeof obShowForNewUser==='function')obShowForNewUser();
 }
 
 (async function(){
