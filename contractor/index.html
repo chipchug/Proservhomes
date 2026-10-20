@@ -300,7 +300,7 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
     <div id="otpStep">
       <h2>Enter Code</h2>
       <p id="otpSub" style="margin-bottom:20px">Enter the 6-digit code.</p>
-      <div class="field"><label>Verification Code</label><input class="otpi" type="text" id="codeInput" placeholder="123456" maxlength="6" inputmode="numeric"></div>
+      <div class="field"><label>Verification Code</label><input class="otpi" type="text" id="codeInput" placeholder="123456" maxlength="6" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*"></div>
       <div class="otp-hint" id="demoHint" style="display:none">Demo: use <strong>123456</strong></div>
       <button class="bf bfo" id="verifyCodeBtn" onclick="verifyCode()">Verify &amp; Sign In</button>
       <button class="bf" style="margin-top:10px;background:transparent;color:var(--fg-2);border:1px solid var(--border)" onclick="goBack()" id="backBtn">&#8592; Change Number</button>
@@ -600,6 +600,23 @@ async function sendCodeUnified(){
 }
 function fp(v){var d=v.replace(/\D/g,'');if(d.length<=3)return d;if(d.length<=6)return'('+d.slice(0,3)+') '+d.slice(3);return'('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6,10)}
 var _pi=document.getElementById('phoneInput');if(_pi)_pi.addEventListener('input',function(){this.value=fp(this.value)});
+// OTP input: strip non-digits, auto-submit on paste of 6 digits
+(function(){
+  var ci=document.getElementById('codeInput');
+  if(!ci)return;
+  ci.addEventListener('input',function(){
+    var v=this.value.replace(/\D/g,'').slice(0,6);
+    this.value=v;
+    if(v.length===6)verifyCode();
+  });
+  ci.addEventListener('paste',function(e){
+    e.preventDefault();
+    var text=(e.clipboardData||window.clipboardData).getData('text');
+    var digits=text.replace(/\D/g,'').slice(0,6);
+    this.value=digits;
+    if(digits.length===6)setTimeout(verifyCode,50);
+  });
+})();
 
 function showEmailLogin(){useEmailLogin=true;document.getElementById('phoneMethod').style.display='none';document.getElementById('emailMethod').style.display='block';}
 function showPhoneLogin(){useEmailLogin=false;document.getElementById('emailMethod').style.display='none';document.getElementById('phoneMethod').style.display='block';}
@@ -625,16 +642,15 @@ async function verifyCode(){
     var cr=await _sb.from('contractors').select('*').eq('email',verifiedEmail).limit(1);
     console.log('[PSC] contractor lookup result',cr);
     var rows=cr.data||[];
-    if(!rows.length){
-      // Try the original pp in case of case mismatch
-      if(verifiedEmail!==pp){
-        var cr2=await _sb.from('contractors').select('*').eq('email',pp).limit(1);
-        rows=cr2.data||[];
-      }
+    if(!rows.length && verifiedEmail!==pp){
+      // Try the original entered email in case of case mismatch
+      var cr2=await _sb.from('contractors').select('*').eq('email',pp).limit(1);
+      rows=cr2.data||[];
     }
     if(!rows.length){
       toast('Signed in as '+verifiedEmail+' — no contractor account found. Ask Nick to add you with this email.');
-      console.error('[PSC] no contractor found for',verifiedEmail);
+      console.error('[PSC] no contractor found for',verifiedEmail,'or',pp);
+      btn.disabled=false;btn.textContent='Verify & Sign In';
       return;
     }
     var x=cr2l(rows[0]);cc=x;contractors=[x];cSess={contractorId:x.id};lsSet('ps_c_session',cSess);enterApp();
