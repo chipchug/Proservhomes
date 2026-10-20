@@ -736,10 +736,12 @@ var _useEmailLogin=false;
 function detectLoginType(inp){
   var v=inp.value;
   var lbl=document.getElementById('loginInputLabel');
-  if(v.includes('@')){
+  // Treat as email if: contains @, OR contains any letter (a-z), since phone numbers are digits-only
+  var hasLetter=/[a-zA-Z]/.test(v);
+  if(v.includes('@') || hasLetter){
     inp.inputMode='email'; lbl.textContent='Email Address';
   } else {
-    // Format as phone number while typing
+    // Only format as phone if the value is purely digits/phone characters
     var digits=v.replace(/\D/g,'');
     if(digits.length>0){
       inp.inputMode='tel'; lbl.textContent='Phone Number';
@@ -747,8 +749,7 @@ function detectLoginType(inp){
       if(digits.length<=3) fmt='('+digits;
       else if(digits.length<=6) fmt='('+digits.slice(0,3)+') '+digits.slice(3);
       else fmt='('+digits.slice(0,3)+') '+digits.slice(3,6)+'-'+digits.slice(6,10);
-      // only reformat if it changed (avoid cursor jump on @)
-      if(!v.includes('@')) inp.value=fmt;
+      inp.value=fmt;
     } else {
       inp.inputMode='text'; lbl.textContent='Phone or Email';
     }
