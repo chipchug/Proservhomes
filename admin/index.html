@@ -495,9 +495,8 @@ textarea{resize:vertical;min-height:80px}
       <div id="crCtQuote" style="background:#e6f7ee;border:1.5px solid #a3d9b8;border-radius:10px;padding:12px 14px"></div>
     </div>
     <!-- Action tabs -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px">
       <button id="crTabAck" class="mbtn mbtn-primary" onclick="crSetMode('ack')" style="font-size:11px;padding:9px 4px">👋 Acknowledge</button>
-      <button id="crTabCt" class="mbtn mbtn-sec" onclick="crSetMode('ct')" style="font-size:11px;padding:9px 4px">👷 Get Quote</button>
       <button id="crTabJob" class="mbtn mbtn-sec" onclick="crSetMode('job')" style="font-size:11px;padding:9px 4px">✓ Book Job</button>
     </div>
     <!-- Acknowledge panel -->
@@ -506,50 +505,15 @@ textarea{resize:vertical;min-height:80px}
       <div class="field"><label>Custom message (optional)</label><textarea id="crAckMsg" rows="2" placeholder="e.g. Thanks! We'll call you tomorrow morning to go over the details."></textarea></div>
       <button class="mbtn mbtn-primary" style="width:100%;margin-top:10px" onclick="doAcknowledgeRequest()">Send Acknowledgement →</button>
     </div>
-    <!-- Get Contractor Quote panel -->
-    <div id="crPanelCt" style="display:none">
-      <div style="font-size:13px;color:var(--fg-2);margin-bottom:12px;line-height:1.5">Send the job details + photos to your contractor. They'll submit their quote through the contractor portal.</div>
-      <div class="field"><label>Assign Contractor</label><select id="crContractorQuote"></select></div>
-      <div class="field"><label>Notes to contractor (optional)</label><textarea id="crCtNotes" rows="2" placeholder="e.g. 2-story home, tricky gutters on the back, bring extra equipment"></textarea></div>
-      <button class="mbtn mbtn-primary" style="width:100%;margin-top:10px" onclick="doSendToContractor()">Send to Contractor for Quote →</button>
-    </div>
-    <!-- Convert to Job panel (final step after quote received) -->
+    <!-- Book Job panel (fixed-price) -->
     <div id="crPanelJob" style="display:none">
-      <div style="font-size:12px;color:var(--fg-3);margin-bottom:12px">Price agreed with customer? Lock it in — creates the job and sends confirmation.</div>
-      <!-- Markup calculator -->
-      <div style="background:var(--surface-2);border-radius:10px;padding:12px;margin-bottom:12px">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Mark Up Contractor Quote</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
-          <button class="markup-btn" onclick="applyMarkup(30)" data-pct="30" style="padding:9px 4px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:700;cursor:pointer;color:var(--fg)">30%</button>
-          <button class="markup-btn" onclick="applyMarkup(40)" data-pct="40" style="padding:9px 4px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:700;cursor:pointer;color:var(--fg)">40%</button>
-          <button class="markup-btn" onclick="applyMarkup(50)" data-pct="50" style="padding:9px 4px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:700;cursor:pointer;color:var(--fg)">50%</button>
-          <button class="markup-btn" onclick="applyMarkup(65)" data-pct="65" style="padding:9px 4px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:700;cursor:pointer;color:var(--fg)">65%</button>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="flex:1;display:flex;align-items:center;background:var(--surface);border:1.5px solid var(--border);border-radius:9px;overflow:hidden">
-            <span style="padding:0 9px;font-size:14px;color:var(--fg-3);font-weight:600">$</span>
-            <input type="number" id="crMarkupCustom" placeholder="Custom price" min="0" oninput="applyCustomMarkup()" style="flex:1;border:none;background:transparent;padding:10px 10px 10px 0;font-size:14px;font-weight:700;color:var(--fg);outline:none">
-          </div>
-          <div id="crMarkupResult" style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--green);min-width:70px;text-align:right"></div>
-        </div>
-        <div id="crMarkupNote" style="font-size:11px;color:var(--fg-3);margin-top:6px;text-align:center"></div>
-      </div>
-      <!-- Send quote to customer subsection -->
-      <div style="background:var(--surface-2);border-radius:10px;padding:12px;margin-bottom:12px">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Send Quote to Customer</div>
-        <div class="form-row">
-          <div class="field"><label>Your Price ($)</label><input type="number" id="crQuotePrice" placeholder="0" min="0" oninput="syncMarkupPrice(this.value)"></div>
-          <div class="field"><label>Payment Link</label><input type="url" id="crQuotePayLink" placeholder="https://buy.stripe.com/…" oninput="document.getElementById('crPayLink').value=this.value"></div>
-        </div>
-        <div class="field"><label>Quote message to customer</label><textarea id="crQuoteMsg" rows="2" placeholder="e.g. Based on your photos, here's our quote. Payment link included."></textarea></div>
-        <button class="mbtn" style="width:100%;background:var(--surface);border:1px solid var(--border)" onclick="doSendQuoteToCustomer()">📤 Send Quote to Customer</button>
-      </div>
-      <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Book the Job</div>
+      <div style="font-size:12px;color:var(--fg-3);margin-bottom:12px">Set the job price — contractor pay is calculated automatically from their margin.</div>
       <div class="form-row">
-        <div class="field"><label>Job Price ($)</label><input type="number" id="crPrice" placeholder="0" min="0"></div>
-        <div class="field"><label>Contractor Pay ($)</label><input type="number" id="crPay" placeholder="0" min="0"></div>
+        <div class="field"><label>Job Price ($)</label><input type="number" id="crPrice" placeholder="0" min="0" oninput="crAutoCalcPay()"></div>
+        <div class="field"><label>Contractor Pay ($)</label><input type="number" id="crPay" placeholder="auto" min="0"></div>
       </div>
-      <div class="field"><label>Assign Contractor</label><select id="crContractor"></select></div>
+      <div class="field"><label>Assign Contractor</label><select id="crContractor" onchange="crAutoCalcPay()"></select></div>
+      <div id="crPayNote" style="font-size:11px;color:var(--fg-3);margin-top:-8px;margin-bottom:10px"></div>
       <div class="field"><label>Stripe Payment Link</label><input type="url" id="crPayLink" placeholder="https://buy.stripe.com/…"></div>
       <div class="field"><label>Notes to customer</label><textarea id="crNotes" rows="2" placeholder="e.g. We'll arrive between 8–10am"></textarea></div>
       <button class="mbtn mbtn-primary" style="width:100%;margin-top:10px" onclick="doConfirmRequest()">✓ Create Job &amp; Send Booking Confirmation</button>
@@ -614,6 +578,7 @@ textarea{resize:vertical;min-height:80px}
     <div class="field"><label>Phone</label><input type="tel" id="ctPhone" placeholder="(732) 555-0000" maxlength="14"></div>
     <div class="field"><label>Email</label><input type="email" id="ctEmail" placeholder="contractor@email.com"></div>
     <div class="field"><label>Specialty / Services</label><input id="ctSpec" placeholder="Fence · Concrete · Pavers"></div>
+    <div class="field"><label>Pay Margin</label><select id="ctMargin"><option value="30">30% (Standard)</option><option value="20">20% (Reduced)</option><option value="25">25%</option><option value="35">35%</option></select></div>
     <div class="mbtn-row">
       <button class="mbtn mbtn-primary" onclick="saveContractor()">Save</button>
       <button class="mbtn mbtn-sec" onclick="closeModal('ctModal')">Cancel</button>
@@ -636,8 +601,8 @@ var STATUSES=['New','Scheduled','In Progress','Complete','Invoiced','Paid'];
 // Field mapping: local camelCase <-> DB snake_case
 function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,paymentLink:r.payment_link||'',status:r.status||'New',notes:r.notes||''}}
 function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,email:j.email||'',address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,contractor_paid:!!j.contractorPaid,payment_link:j.paymentLink||'',status:j.status||'New',notes:j.notes||''}}
-function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||''}}
-function cl2r(c){return{id:c.id,name:c.name,phone:c.phone,email:c.email||'',specialty:c.specialty||c.spec||''}}
+function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',margin:Number(r.margin)||30}}
+function cl2r(c){return{id:c.id,name:c.name,phone:c.phone,email:c.email||'',specialty:c.specialty||c.spec||'',margin:c.margin||30}}
 
 var SEED_JOBS=[
   {id:'j1',client:'Robert French',phone:'(732) 555-0101',address:'14 Bayview Ln, Toms River NJ',service:'Gutter Cleaning',date:'2026-10-15',price:175,contractorId:'c1',contractorPay:65,status:'Complete',notes:'Second story on left side only'},
@@ -917,9 +882,9 @@ async function deleteJob(){var id=document.getElementById('jEditId').value;if(!i
 
 function populateContractorSelect(){var s=document.getElementById('jContractor');s.innerHTML=contractors.map(function(c){return'<option value="'+c.id+'">'+esc(c.name)+'</option>'}).join('')}
 function renderContractors(){var el=document.getElementById('contractorList');if(!contractors.length){el.innerHTML='<div style="text-align:center;padding:48px;color:var(--fg-3)">No contractors yet</div>';return}el.innerHTML=contractors.map(function(c){var jc=jobs.filter(function(j){return j.contractorId===c.id}).length;return'<div class="ct-card" onclick="openEditCtx(\''+c.id+'\')"><div class="ct-av">'+c.name[0]+'</div><div class="ct-body"><div class="ct-name">'+esc(c.name)+'</div><div class="ct-spec">'+esc(c.spec||c.specialty||'')+'</div></div><div class="ct-jobs">'+jc+'<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left:3px"><polyline points="9 18 15 12 9 6"/></svg></div></div>'}).join('')}
-function openAddContractor(){_editCtId=null;document.getElementById('ctEditId').value='';document.getElementById('ctName').value='';document.getElementById('ctPhone').value='';document.getElementById('ctEmail').value='';document.getElementById('ctSpec').value='';document.getElementById('ctModalTitle').textContent='Add Contractor';document.getElementById('delCtBtn').classList.add('hidden');document.getElementById('ctModal').classList.remove('hidden')}
-function openEditCtx(id){var c=contractors.find(function(x){return x.id===id});if(!c)return;_editCtId=id;document.getElementById('ctEditId').value=id;document.getElementById('ctName').value=c.name||'';document.getElementById('ctPhone').value=c.phone||'';document.getElementById('ctEmail').value=c.email||'';document.getElementById('ctSpec').value=c.spec||c.specialty||'';document.getElementById('ctModalTitle').textContent='Edit Contractor';document.getElementById('delCtBtn').classList.remove('hidden');document.getElementById('ctModal').classList.remove('hidden')}
-async function saveContractor(){var name=document.getElementById('ctName').value.trim();if(!name){showToast('Name required');return}var id=_editCtId||('c'+Date.now());var i=contractors.findIndex(function(x){return x.id===id});var c={id:id,name:name,phone:document.getElementById('ctPhone').value,email:document.getElementById('ctEmail').value.trim().toLowerCase(),specialty:document.getElementById('ctSpec').value,spec:document.getElementById('ctSpec').value,jobs:0};if(i>=0)contractors[i]=c;else contractors.push(c);await _sb.from('contractors').upsert([cl2r(c)]);populateContractorSelect();renderContractors();closeModal('ctModal');showToast(name+' saved')}
+function openAddContractor(){_editCtId=null;document.getElementById('ctEditId').value='';document.getElementById('ctName').value='';document.getElementById('ctPhone').value='';document.getElementById('ctEmail').value='';document.getElementById('ctSpec').value='';document.getElementById('ctMargin').value='30';document.getElementById('ctModalTitle').textContent='Add Contractor';document.getElementById('delCtBtn').classList.add('hidden');document.getElementById('ctModal').classList.remove('hidden')}
+function openEditCtx(id){var c=contractors.find(function(x){return x.id===id});if(!c)return;_editCtId=id;document.getElementById('ctEditId').value=id;document.getElementById('ctName').value=c.name||'';document.getElementById('ctPhone').value=c.phone||'';document.getElementById('ctEmail').value=c.email||'';document.getElementById('ctSpec').value=c.spec||c.specialty||'';document.getElementById('ctMargin').value=String(c.margin||30);document.getElementById('ctModalTitle').textContent='Edit Contractor';document.getElementById('delCtBtn').classList.remove('hidden');document.getElementById('ctModal').classList.remove('hidden')}
+async function saveContractor(){var name=document.getElementById('ctName').value.trim();if(!name){showToast('Name required');return}var id=_editCtId||('c'+Date.now());var i=contractors.findIndex(function(x){return x.id===id});var margin=Number(document.getElementById('ctMargin').value)||30;var c={id:id,name:name,phone:document.getElementById('ctPhone').value,email:document.getElementById('ctEmail').value.trim().toLowerCase(),specialty:document.getElementById('ctSpec').value,spec:document.getElementById('ctSpec').value,margin:margin,jobs:0};if(i>=0)contractors[i]=c;else contractors.push(c);await _sb.from('contractors').upsert([cl2r(c)]);populateContractorSelect();renderContractors();closeModal('ctModal');showToast(name+' saved')}
 async function deleteContractor(){var id=document.getElementById('ctEditId').value;if(!id)return;contractors=contractors.filter(function(c){return c.id!==id});await _sb.from('contractors').delete().eq('id',id);populateContractorSelect();renderContractors();closeModal('ctModal');showToast('Contractor removed')}
 
 function populateBooksMonths(){var months={};jobs.forEach(function(j){if(j.date){var d=new Date(j.date+'T12:00:00');var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(!months[k]){var lbl=d.toLocaleDateString('en-US',{month:'long',year:'numeric'});months[k]=lbl}}});var sel=document.getElementById('booksMonth');var now=new Date();var ck=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');if(!months[ck])months[ck]=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});sel.innerHTML=Object.keys(months).sort().reverse().map(function(k){return'<option value="'+k+'"'+(k===ck?' selected':'')+'>'+months[k]+'</option>'}).join('')}
@@ -1016,7 +981,9 @@ function renderRequests(){
 
 var _confirmReqId=null;
 function crSetMode(mode){
-  ['ack','ct','job'].forEach(function(m){
+  // Fixed-price system: only 'ack' and 'job' modes
+  if(mode==='ct')mode='job';
+  ['ack','job'].forEach(function(m){
     document.getElementById('crPanel'+m.charAt(0).toUpperCase()+m.slice(1)).style.display=m===mode?'':'none';
     var btn=document.getElementById('crTab'+m.charAt(0).toUpperCase()+m.slice(1));
     if(btn)btn.className='mbtn '+(m===mode?'mbtn-primary':'mbtn-sec');
@@ -1064,9 +1031,9 @@ function openConfirmRequest(id){
   // Populate contractor dropdowns
   var ctOpts='<option value="">Unassigned</option>'+contractors.map(function(c){return'<option value="'+c.id+'">'+esc(c.name)+'</option>'}).join('');
   document.getElementById('crContractor').innerHTML=ctOpts;
-  document.getElementById('crContractorQuote').innerHTML=ctOpts;
   // Pre-fill assigned contractor if already set
-  if(r.contractor_id){document.getElementById('crContractor').value=r.contractor_id;document.getElementById('crContractorQuote').value=r.contractor_id;}
+  if(r.contractor_id){document.getElementById('crContractor').value=r.contractor_id;}
+  crAutoCalcPay();
   // Show contractor quote if returned
   var ctQRow=document.getElementById('crCtQuoteRow');
   var ctQEl=document.getElementById('crCtQuote');
@@ -1085,57 +1052,32 @@ function openConfirmRequest(id){
       +'<div style="font-size:13px;font-weight:700;color:#1a7a42">Contractor Total</div>'
       +'<div style="font-family:Barlow Condensed,sans-serif;font-size:22px;font-weight:900;color:#1a7a42">$'+ctq.toLocaleString()+'</div>'
       +'</div>'+breakdownHtml;
-    _crCtBase=ctq;
-    document.getElementById('crPay').value=ctq;
-    document.getElementById('crMarkupCustom').value='';
-    document.getElementById('crMarkupResult').textContent='';
-    document.getElementById('crMarkupNote').textContent='';
-    document.querySelectorAll('.markup-btn').forEach(function(b){b.style.background='var(--surface)';b.style.borderColor='var(--border)';b.style.color='var(--fg)';});
   } else {
     ctQRow.style.display='none';
-    _crCtBase=0;
   }
   // Default to Acknowledge mode (or 'ct' if already acknowledged)
-  crSetMode(r.status==='acknowledged'?'ct':r.status==='quoted'?'job':'ack');
+  crSetMode(r.status==='acknowledged'||r.status==='quoted'?'job':'ack');
   document.getElementById('confirmReqModal').classList.remove('hidden');
 }
 
-// ── Markup calculator ─────────────────────────────────────────────────────
-var _crCtBase=0;
-function applyMarkup(pct){
-  if(!_crCtBase){toast('No contractor quote to mark up yet');return;}
-  var price=Math.ceil(_crCtBase*(1+pct/100));
-  document.querySelectorAll('.markup-btn').forEach(function(b){
-    var active=Number(b.dataset.pct)===pct;
-    b.style.background=active?'var(--green)':'var(--surface)';
-    b.style.color=active?'#fff':'var(--fg)';
-    b.style.borderColor=active?'var(--green)':'var(--border)';
-  });
-  document.getElementById('crMarkupCustom').value='';
-  document.getElementById('crMarkupResult').textContent='→ $'+price.toLocaleString();
-  document.getElementById('crMarkupNote').textContent=pct+'% markup on $'+_crCtBase.toLocaleString()+' = $'+price.toLocaleString();
-  setMarkupPrice(price);
-}
-function applyCustomMarkup(){
-  var val=Number(document.getElementById('crMarkupCustom').value)||0;
-  document.querySelectorAll('.markup-btn').forEach(function(b){b.style.background='var(--surface)';b.style.borderColor='var(--border)';b.style.color='var(--fg)';});
-  if(val&&_crCtBase){
-    var pct=Math.round((val/_crCtBase-1)*100);
-    document.getElementById('crMarkupResult').textContent='→ $'+val.toLocaleString();
-    document.getElementById('crMarkupNote').textContent=pct>0?pct+'% markup over contractor quote':'Custom price';
+// ── Fixed-price auto-calc ──────────────────────────────────────────────────
+function crAutoCalcPay(){
+  var price=Number(document.getElementById('crPrice').value)||0;
+  var ctId=document.getElementById('crContractor').value;
+  var ct=contractors.find(function(c){return c.id===ctId});
+  var margin=ct?Number(ct.margin||30):30;
+  var note=document.getElementById('crPayNote');
+  if(price&&ct){
+    var pay=Math.round(price*(margin/100)*100)/100;
+    document.getElementById('crPay').value=pay;
+    note.textContent=ct.name+' earns '+margin+'% → $'+pay.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   } else {
-    document.getElementById('crMarkupResult').textContent='';
-    document.getElementById('crMarkupNote').textContent='';
+    if(note)note.textContent='';
   }
-  if(val) setMarkupPrice(val);
-}
-function setMarkupPrice(price){
-  document.getElementById('crQuotePrice').value=price;
-  document.getElementById('crPrice').value=price;
 }
 function syncMarkupPrice(val){
   document.getElementById('crPrice').value=val||'';
-  document.getElementById('crMarkupResult').textContent=val?'→ $'+Number(val).toLocaleString():'';
+  document.getElementById('crMarkupResult')&&(document.getElementById('crMarkupResult').textContent=val?'→ $'+Number(val).toLocaleString():'');
 }
 
 async function doAcknowledgeRequest(){
@@ -1164,50 +1106,6 @@ async function doAcknowledgeRequest(){
   closeModal('confirmReqModal');renderRequests();
 }
 
-async function doSendToContractor(){
-  var rid=document.getElementById('crReqId').value;
-  var r=requests.find(function(x){return x.id==rid});if(!r)return;
-  var ctId=document.getElementById('crContractorQuote').value;
-  var ctNotes=document.getElementById('crCtNotes').value.trim();
-  if(!ctId){showToast('Select a contractor first');return;}
-  var ct=contractors.find(function(c){return c.id==ctId});
-  var ctEmail=ct?ct.email:'';
-  // Save contractor assignment to request
-  await _sb.from('job_requests').update({status:'acknowledged',contractor_id:ctId}).eq('id',rid);
-  var idx=requests.findIndex(function(x){return x.id==rid});
-  if(idx>=0)requests[idx]={...requests[idx],status:'acknowledged',contractor_id:ctId};
-  if(ctEmail){
-    var dstr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'TBD';
-    var ctMsg='New quote request from ProServ Homes:\n\nService: '+r.service+'\nDate requested: '+dstr+'\nAddress: '+(r.address||'')+'\n'+(r.estimate_range?'Customer estimate range: '+r.estimate_range+'\n':'')+(ctNotes?'\nNotes from Nick: '+ctNotes+'\n':'')+'\nPlease log in to your contractor portal to submit your quote:\nhttps://proservhomes.co/contractor/\n\n— ProServ Homes';
-    try{
-      await fetch(SURL+'/functions/v1/send-notification',{method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify({to:ctEmail,subject:'Quote Request: '+r.service+' — ProServ Homes',body:ctMsg})});
-      showToast('Sent to '+ct.name+' for quote ✓');
-    }catch(e){showToast('Saved — could not send email');}
-  }else{
-    showToast('Assigned to '+ct.name+' — no email on file');
-  }
-  closeModal('confirmReqModal');renderRequests();
-}
-
-async function doSendQuoteToCustomer(){
-  var rid=document.getElementById('crReqId').value;
-  var r=requests.find(function(x){return x.id==rid});if(!r)return;
-  var price=Number(document.getElementById('crQuotePrice').value)||0;
-  var payLink=document.getElementById('crQuotePayLink').value.trim();
-  var msg=document.getElementById('crQuoteMsg').value.trim();
-  var email=r.homeowner_email||'';
-  if(!email){showToast('No customer email on file');return;}
-  if(!price&&!payLink){showToast('Enter a price or payment link first');return;}
-  var dstr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'TBD';
-  var body='Hi! Here\'s your quote for '+r.service+' on '+dstr+' at '+(r.address||'')+'.\n\n'+(price?'Total: $'+price+'\n':'')+(payLink?'Secure payment link: '+payLink+'\n':'')+(msg?'\n'+msg+'\n':'')+'\nLet us know if you have any questions!\n— ProServ Homes';
-  try{
-    await fetch(SURL+'/functions/v1/send-notification',{method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify({to:email,subject:'Your ProServ Homes Quote — '+r.service,body:body})});
-    // Mirror entered price/pay link into job panel
-    document.getElementById('crPrice').value=price||'';
-    document.getElementById('crPayLink').value=payLink||'';
-    showToast('Quote sent to customer ✓');
-  }catch(e){showToast('Could not send email — try again');}
-}
 
 async function doConfirmRequest(){
   var rid=document.getElementById('crReqId').value;
