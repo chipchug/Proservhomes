@@ -1,5 +1,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ProServ Homes · Contractor</title>
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ProServ Homes">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#080808">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,900;1,900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -1269,4 +1276,76 @@ function cobShowIfNew() {
   cobShow();
   return true;
 }
+</script>
+
+<style id="pwa-styles">
+#pwa-banner{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9000;
+  background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:12px 16px;
+  align-items:center;gap:12px;box-shadow:0 4px 24px rgba(0,0,0,.6);max-width:340px;width:calc(100% - 48px);}
+#pwa-banner .pwa-icon{width:40px;height:40px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,#f07230,#2dba56);display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:14px;color:#fff;letter-spacing:-0.5px;}
+#pwa-banner .pwa-text{flex:1;min-width:0;}
+#pwa-banner .pwa-text strong{display:block;color:#fff;font-size:13px;font-weight:700;}
+#pwa-banner .pwa-text span{color:#888;font-size:12px;}
+#pwa-banner .pwa-btn{background:#f07230;color:#fff;border:none;border-radius:8px;
+  padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+#pwa-banner .pwa-x{background:none;border:none;color:#555;font-size:18px;cursor:pointer;
+  padding:4px;line-height:1;flex-shrink:0;}
+#ios-install-modal{display:none;position:fixed;inset:0;z-index:9001;background:rgba(0,0,0,.7);
+  align-items:flex-end;justify-content:center;}
+#ios-install-modal .ios-sheet{background:#1c1c1e;border-radius:20px 20px 0 0;padding:24px 20px 40px;
+  width:100%;max-width:480px;}
+#ios-install-modal h3{color:#fff;font-size:17px;font-weight:700;margin:0 0 4px;}
+#ios-install-modal p{color:#aaa;font-size:14px;margin:0 0 20px;}
+.ios-step{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.ios-step .ios-num{width:28px;height:28px;border-radius:50%;background:#f07230;color:#fff;
+  font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ios-step p{color:#ccc;font-size:14px;margin:0;}
+.ios-step p strong{color:#fff;}
+#ios-install-modal .ios-close{display:block;width:100%;background:#2c2c2e;color:#fff;border:none;
+  border-radius:12px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;margin-top:20px;}
+</style>
+<div id="pwa-banner">
+  <div class="pwa-icon">PS</div>
+  <div class="pwa-text">
+    <strong>Add to Home Screen</strong>
+    <span>Install for a faster app experience</span>
+  </div>
+  <button class="pwa-btn" onclick="pwaInstall()">Install</button>
+  <button class="pwa-x" onclick="pwaDismiss()">&#x2715;</button>
+</div>
+<div id="ios-install-modal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="ios-sheet">
+    <h3>Add ProServ Homes to Your Home Screen</h3>
+    <p>Get the full app experience in seconds.</p>
+    <div class="ios-step"><div class="ios-num">1</div><p>Tap the <strong>Share</strong> button &#x2197; at the bottom of Safari</p></div>
+    <div class="ios-step"><div class="ios-num">2</div><p>Scroll down and tap <strong>"Add to Home Screen"</strong></p></div>
+    <div class="ios-step"><div class="ios-num">3</div><p>Tap <strong>Add</strong> — it'll appear like a real app</p></div>
+    <button class="ios-close" onclick="document.getElementById('ios-install-modal').style.display='none'">Got it</button>
+  </div>
+</div>
+<script>
+(function(){
+  if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){});}
+  var _dp=null,_dismissed=false;
+  try{if(localStorage.getItem('pwa_dismissed'))_dismissed=true;}catch(e){}
+  var _ios=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  var _standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
+  if(!_standalone){
+    if(_ios&&!_dismissed){setTimeout(function(){document.getElementById('pwa-banner').style.display='flex';},3000);}
+    window.addEventListener('beforeinstallprompt',function(e){
+      e.preventDefault();_dp=e;
+      if(!_dismissed){setTimeout(function(){document.getElementById('pwa-banner').style.display='flex';},2000);}
+    });
+  }
+  window.pwaInstall=function(){
+    if(_dp){_dp.prompt();_dp.userChoice.then(function(){_dp=null;});document.getElementById('pwa-banner').style.display='none';}
+    else{document.getElementById('ios-install-modal').style.display='flex';}
+  };
+  window.pwaDismiss=function(){
+    document.getElementById('pwa-banner').style.display='none';
+    try{localStorage.setItem('pwa_dismissed','1');}catch(e){}
+  };
+})();
 </script>
