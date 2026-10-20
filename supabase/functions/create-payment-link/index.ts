@@ -57,7 +57,6 @@ Deno.serve(async (req) => {
 
     // Build Stripe Checkout Session via the API
     const params = new URLSearchParams({
-      "payment_method_types[]": "card",
       "mode": "payment",
       "success_url": "https://proservhomes.co/homeowner/?payment=success",
       "cancel_url": "https://proservhomes.co/homeowner/?payment=cancel",
