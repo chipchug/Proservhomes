@@ -576,7 +576,6 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
         </div>
         <div class="prof-item">
           <div class="pi-left"><div class="pi-icon">🗓️</div>
-            <div><div class="pi-lbl">Year Built</div><div class="pi-sub" id="vPropYear">1998</div></div>
           </div>
         </div>
         <div class="prof-item">
@@ -597,7 +596,6 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
           </select>
         </div>
         <div class="sched-field"><label>Approx. Sq Ft</label><input type="text" id="ePropSqft" placeholder="e.g. 2,200"></div>
-        <div class="sched-field"><label>Year Built</label><input type="text" id="ePropYear" placeholder="e.g. 1998"></div>
         <div class="sched-field"><label>Notes for Techs</label><textarea id="ePropNotes" rows="2" placeholder="Gate code, dog, parking, etc."></textarea></div>
         <button onclick="savePropEdit()" style="width:100%;margin-top:4px;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">Save Property Info</button>
       </div>
@@ -713,20 +711,9 @@ var _homePhone='';
 
 
 // ─── DATA ───────────────────────────────────────────────────────────────
-var JOBS = [
-  {id:'s4',svc:'Christmas Lights',date:'2026-11-20',time:'TBD — pending assignment',addr:'14 Oak Lane, Howell NJ 07731',price:399,status:'Requested',tech:'—',notes:'Roofline + front bushes. We\'ll confirm your appointment time shortly!'},
-  {id:'j1',svc:'Gutter Cleaning',date:'2026-11-05',time:'Morning (8am–12pm)',addr:'14 Oak Lane, Howell NJ 07731',price:149,status:'Scheduled',tech:'Jake R.',notes:'Full perimeter cleaning + flush downspouts'},
-  {id:'s2',svc:'Gutter Cleaning',date:'2026-09-18',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:149,status:'Complete',tech:'Jake R.',notes:'Fall clean, downspouts flushed',reviewPrompt:true},
-  {id:'s1',svc:'Pressure Washing',date:'2026-05-10',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:275,status:'Complete',tech:'Jake R.',notes:'Full driveway + front patio',beforePhoto:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1591382386627-349b692688ff?w=600&q=80'},
-  {id:'j2',svc:'Paver Patio',date:'2026-09-20',time:'Full Day',addr:'14 Oak Lane, Howell NJ 07731',price:5800,status:'Complete',tech:'Marcus T.',notes:'Front walkway + driveway border pavers, approx 380 sq ft',beforePhoto:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1591382386627-349b692688ff?w=600&q=80'},
-  {id:'j3',svc:'Gutter Cleaning',date:'2026-05-22',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:149,status:'Complete',tech:'Jake R.',notes:'Spring cleaning, cleared heavy debris',beforePhoto:'https://images.unsplash.com/photo-1604079628040-94301bb21b91?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1601972599720-36938d4ecd31?w=600&q=80'},
-  {id:'j4',svc:'Dryer Vent Cleaning',date:'2026-03-10',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:129,status:'Complete',tech:'Jake R.',notes:'Vent completely clogged with 5 years of lint buildup',beforePhoto:'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=600&q=80'},
-  {id:'j6',svc:'Christmas Lights',date:'2025-11-25',time:'Afternoon',addr:'14 Oak Lane, Howell NJ 07731',price:199,status:'Complete',tech:'Jake R.',notes:'Roofline + bushes, client supplied lights'},
-  {id:'j7',svc:'Gutter Cleaning',date:'2025-09-08',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:149,status:'Complete',tech:'Jake R.',notes:'Fall prep cleaning'},
-  {id:'j8',svc:'Pressure Washing',date:'2025-05-14',time:'Morning',addr:'14 Oak Lane, Howell NJ 07731',price:275,status:'Complete',tech:'Marcus T.',notes:'Full driveway + patio',beforePhoto:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',afterPhoto:'https://images.unsplash.com/photo-1591382386627-349b692688ff?w=600&q=80'}
-];
+var JOBS = [];
 
-var USER = {name:'Sarah Martinez',first:'Sarah',phone:'(732) 555-0177',addr:'14 Oak Lane, Howell NJ 07731',init:'S'};
+var USER = {name:'',first:'',phone:'',addr:'',init:'?'};
 var curTab = 'home';
 var selectedSvc = 'Gutter Cleaning';
 var openJobId = null;
@@ -1299,7 +1286,6 @@ function togglePropEdit(){
     // populate edit fields from view
     document.getElementById('ePropAddr').value  = document.getElementById('vPropAddr').textContent;
     document.getElementById('ePropSqft').value  = document.getElementById('vPropSqft').textContent.replace(' sq ft','');
-    document.getElementById('ePropYear').value  = document.getElementById('vPropYear').textContent;
     document.getElementById('ePropNotes').value = document.getElementById('vPropNotes').textContent;
     view.style.display='none';edit.style.display='';btn.textContent='Cancel';
   }
@@ -1308,14 +1294,12 @@ function savePropEdit(){
   var addr  = document.getElementById('ePropAddr').value.trim();
   var type  = document.getElementById('ePropType').value;
   var sqft  = document.getElementById('ePropSqft').value.trim();
-  var year  = document.getElementById('ePropYear').value.trim();
   var notes = document.getElementById('ePropNotes').value.trim();
   if(addr)  document.getElementById('vPropAddr').textContent  = addr;
   if(type)  document.getElementById('vPropType').textContent  = type;
   if(sqft)  document.getElementById('vPropSqft').textContent  = sqft + ' sq ft';
-  if(year)  document.getElementById('vPropYear').textContent  = year;
   if(notes) document.getElementById('vPropNotes').textContent = notes;
-  var prop = {addr:addr, type:type, sqft:sqft, year:year, notes:notes};
+  var prop = {addr:addr, type:type, sqft:sqft, notes:notes};
   lsSet('prop_data', prop);
   togglePropEdit();
   showToast('Property info saved');
@@ -1326,7 +1310,6 @@ function loadPropData(){
   if(p.addr)  {var el=document.getElementById('vPropAddr');  if(el) el.textContent=p.addr;}
   if(p.type)  {var el=document.getElementById('vPropType');  if(el) el.textContent=p.type;}
   if(p.sqft)  {var el=document.getElementById('vPropSqft');  if(el) el.textContent=p.sqft+' sq ft';}
-  if(p.year)  {var el=document.getElementById('vPropYear');  if(el) el.textContent=p.year;}
   if(p.notes) {var el=document.getElementById('vPropNotes'); if(el) el.textContent=p.notes;}
 }
 
@@ -1857,6 +1840,12 @@ async function saveProfile(){
           <div class="ob-fg" style="flex:2"><label class="ob-fl">City</label><input class="ob-fi" id="ob-city" type="text" placeholder="Jackson" autocomplete="address-level2"></div>
           <div class="ob-fg" style="flex:1"><label class="ob-fl">Zip</label><input class="ob-fi" id="ob-zip" type="text" placeholder="08527" inputmode="numeric"></div>
         </div>
+        <div class="ob-fdiv"><div class="ob-fdivl"></div><span class="ob-fdt">Home details</span><div class="ob-fdivl"></div></div>
+        <div class="ob-frow">
+          <div class="ob-fg" style="flex:2"><label class="ob-fl">Home Type</label><select class="ob-fi" id="ob-hometype" style="appearance:none;-webkit-appearance:none"><option value="">Select…</option><option>Single-family · 1-story</option><option>Single-family · 2-story</option><option>Single-family · 3+ story</option><option>Townhouse</option><option>Condo</option><option>Mobile home</option></select></div>
+          <div class="ob-fg" style="flex:1"><label class="ob-fl">Approx Sq Ft</label><input class="ob-fi" id="ob-sqft" type="text" placeholder="2,200" inputmode="numeric"></div>
+        </div>
+        <div class="ob-fg"><label class="ob-fl">Notes for Techs</label><textarea class="ob-fi" id="ob-notes" rows="2" placeholder="Gate code, dog in yard, parking instructions…" style="resize:none"></textarea></div>
         <button class="ob-fsub" id="ob-fsub" onclick="obSaveProfile()">Save &amp; Continue &#8594;</button>
       </div>
       <button class="ob-fskip" onclick="obSaveProfile(true)">Skip for now</button>
@@ -1945,9 +1934,20 @@ async function obSaveProfile(skip) {
   var addr  = (document.getElementById('ob-addr').value || '').trim();
   var city  = (document.getElementById('ob-city').value || '').trim();
   var zip   = (document.getElementById('ob-zip').value || '').trim();
+  var homeType = (document.getElementById('ob-hometype').value || '').trim();
+  var sqft   = (document.getElementById('ob-sqft').value || '').trim();
+  var notes  = (document.getElementById('ob-notes').value || '').trim();
   var fullAddr = [addr, city, zip].filter(Boolean).join(', ');
   var name  = [first, last2].filter(Boolean).join(' ');
   try { localStorage.setItem(OB_NAME_KEY, first); } catch(e) {}
+  // Persist property info locally
+  var existProp = lsGet('prop_data') || {};
+  lsSet('prop_data', Object.assign(existProp, {
+    addr: fullAddr || existProp.addr,
+    type: homeType || existProp.type,
+    sqft: sqft || existProp.sqft,
+    notes: notes || existProp.notes
+  }));
   var wn = document.getElementById('ob-wname');
   if (wn) wn.textContent = first ? first.toUpperCase() + '.' : "YOU'RE IN.";
   if (!skip && name && typeof _sb !== 'undefined' && _homePhone) {
@@ -1955,7 +1955,8 @@ async function obSaveProfile(skip) {
     if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
     try {
       var res = await _sb.from('homeowners').upsert(
-        { email: _homePhone, name: name, address: fullAddr, phone: phone },
+        { email: _homePhone, name: name, address: fullAddr, phone: phone,
+          home_type: homeType || null, sqft: sqft || null, tech_notes: notes || null },
         { onConflict: 'email' }
       );
       if (!res.error) {
