@@ -724,6 +724,7 @@ function buildAddonsSelect(selId, cat){
 }
 
 // Build add-ons/upgrades as individual checkboxes (Book Job panel)
+// Uses custom checkbox UI because global CSS sets appearance:none on all inputs
 function buildAddonsCheckboxes(fieldId, cat){
   var field=document.getElementById(fieldId);
   if(!field)return;
@@ -734,24 +735,44 @@ function buildAddonsCheckboxes(fieldId, cat){
   if(!items.length){field.style.display='none';return;}
   field.style.display='';
   items.forEach(function(svc){
-    var lbl=document.createElement('label');
-    lbl.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;font-size:13px;background:var(--surface-2,var(--surface))';
-    var cb=document.createElement('input');
-    cb.type='checkbox';
-    cb.dataset.price=svc.price;
-    cb.dataset.name=svc.name;
-    cb.style.cssText='width:16px;height:16px;flex-shrink:0;cursor:pointer';
-    cb.onchange=crAddonFill;
-    lbl.appendChild(cb);
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;border:1.5px solid var(--border-2);margin-bottom:6px;cursor:pointer;font-size:13px;background:var(--surface-2);user-select:none;transition:border-color .15s,background .15s';
+    row.dataset.price=svc.price;
+    row.dataset.name=svc.name;
+    row.dataset.checked='0';
+    // Custom checkbox box
+    var box=document.createElement('span');
+    box.className='addon-cb-box';
+    box.style.cssText='width:18px;height:18px;flex-shrink:0;border-radius:5px;border:2px solid var(--border-2);display:flex;align-items:center;justify-content:center;background:transparent;transition:background .15s,border-color .15s';
+    box.innerHTML='<svg width="11" height="9" viewBox="0 0 11 9" fill="none" style="display:none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    row.appendChild(box);
     var txt=document.createElement('span');
     txt.style.cssText='flex:1;line-height:1.3';
     txt.textContent=svc.name;
-    lbl.appendChild(txt);
+    row.appendChild(txt);
     var price=document.createElement('span');
     price.style.cssText='color:var(--green,#22c55e);font-weight:700;white-space:nowrap';
     price.textContent='+$'+Number(svc.price).toLocaleString();
-    lbl.appendChild(price);
-    checks.appendChild(lbl);
+    row.appendChild(price);
+    row.onclick=function(){
+      var on=row.dataset.checked==='1';
+      row.dataset.checked=on?'0':'1';
+      if(on){
+        box.style.background='transparent';
+        box.style.borderColor='var(--border-2)';
+        box.querySelector('svg').style.display='none';
+        row.style.borderColor='var(--border-2)';
+        row.style.background='var(--surface-2)';
+      } else {
+        box.style.background='var(--orange,#f97316)';
+        box.style.borderColor='var(--orange,#f97316)';
+        box.querySelector('svg').style.display='';
+        row.style.borderColor='var(--orange,#f97316)';
+        row.style.background='var(--surface)';
+      }
+      crAddonFill();
+    };
+    checks.appendChild(row);
   });
 }
 
@@ -822,8 +843,8 @@ function crAddonFill(){
   var baseOpt=baseSel&&baseSel.options[baseSel.selectedIndex];
   var basePrice=baseOpt&&baseOpt.dataset.price?Number(baseOpt.dataset.price):0;
   var addonPrice=0;
-  document.querySelectorAll('#crSvcAddonChecks input[type=checkbox]:checked').forEach(function(cb){
-    addonPrice+=Number(cb.dataset.price)||0;
+  document.querySelectorAll('#crSvcAddonChecks [data-checked="1"]').forEach(function(row){
+    addonPrice+=Number(row.dataset.price)||0;
   });
   var total=basePrice+addonPrice;
   if(total>0){
