@@ -1463,24 +1463,11 @@ async function doConfirmRequest(){
   if(email){
     var dstr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'TBD';
     var msg='Hi! Your '+r.service+' has been booked for '+dstr+' at '+(r.address||'')+'. '+(price?'Total: $'+price+'. ':'')+( notes?notes+' ':'')+( payLink?'Pay here: '+payLink+' ':'')+'— ProServ Homes';
-    try{
-      await fetch(SURL+'/functions/v1/send-notification',{method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify({to:email,subject:'Your ProServ Homes job is booked!',body:msg,jobId:jobId})});
-    }catch(e){}
+    var ct2=contractors.find(function(c){return c.id==ctId});
+    sendSmsNotification({event:'job_booked',jobId:jobId,homeownerEmail:email,homeownerPhone:r.homeowner_phone||'',contractorEmail:ct2?ct2.email:'',contractorPhone:ct2?ct2.phone:'',job:{service:r.service||'',address:r.address||'',scheduled_date:r.date||'',price:price,notes:notes,paymentLink:payLink},contractor:{name:ct2?ct2.name:''}});
     showToast('Job created! Customer notified ✓');
   } else {
     showToast('Job created ✓ — no email on file');
-  }
-  // Notify contractor if assigned
-  if(ctId){
-    var ct=contractors.find(function(c){return c.id==ctId});
-    var ctEmail=ct?ct.email:'';
-    if(ctEmail){
-      var dstr2=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'TBD';
-      var ctMsg='New job assigned: '+r.service+'\nDate: '+dstr2+'\nAddress: '+(r.address||'')+'\nYour pay: $'+pay+(notes?'\nNotes: '+notes:'')+'\n\n— ProServ Homes';
-      try{
-        await fetch(SURL+'/functions/v1/send-notification',{method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify({to:ctEmail,subject:'New job assigned — '+r.service,body:ctMsg,jobId:jobId})});
-      }catch(e){}
-    }
   }
   closeModal('confirmReqModal');
   renderRequests();renderDashboard();renderJobsTable();
@@ -1501,7 +1488,7 @@ async function markCtPaid(jobId){
 }
 
 document.querySelectorAll('.overlay').forEach(function(el){el.addEventListener('click',function(e){if(e.target===el)el.classList.add('hidden')})});
-if(session)enterApp()
+if(session)enterApp();
 
 (function(){
   var _t=JSON.parse(localStorage.getItem('ps_theme')||'"dark"');
