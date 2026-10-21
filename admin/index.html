@@ -441,6 +441,15 @@ textarea{resize:vertical;min-height:80px}
 
       <!-- MORE (Books + Settings) -->
       <div id="tabMore" class="tab-pane">
+        <!-- ── Payout Requests ──────────────────────────────────────────── -->
+        <div class="books-head" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Payout Requests</span>
+          <button onclick="loadPayoutRequests()" style="background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:12px;padding:4px 8px">↻ Refresh</button>
+        </div>
+        <div id="payoutList" style="padding:0 14px 4px">
+          <div style="text-align:center;padding:24px;color:var(--fg-3);font-size:13px">Loading…</div>
+        </div>
+        <!-- ── Books ──────────────────────────────────────────────────── -->
         <div class="books-head">Books</div>
         <div class="month-sel">
           <select id="booksMonth" onchange="renderBooks()"></select>
@@ -959,6 +968,68 @@ async function verifyAdminCode(){
   if(res.error){showToast('Invalid code — check your email and try again');return;}
   session={role:'admin',name:'Nick'};lsSet('ps_session',session);enterApp();
 }
+// ── Payout Requests ──────────────────────────────────────────────────────────
+async function loadPayoutRequests(){
+  var el=document.getElementById('payoutList');
+  if(!el) return;
+  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--fg-3);font-size:13px">Loading…</div>';
+  var r=await _sb.from('payout_requests').select('*').order('requested_at',{ascending:false}).limit(20);
+  if(r.error){ el.innerHTML='<div style="padding:14px;color:var(--orange);font-size:13px">Error loading: '+r.error.message+'</div>'; return; }
+  var rows=r.data||[];
+  if(!rows.length){ el.innerHTML='<div style="text-align:center;padding:24px;color:var(--fg-3);font-size:13px">No payout requests yet</div>'; return; }
+  el.innerHTML=rows.map(function(p){
+    var isPaid=p.status==='paid';
+    var isPending=p.status==='pending';
+    var amt='$'+(Number(p.amount)||0).toLocaleString();
+    var dt=p.requested_at?new Date(p.requested_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+    var badge=isPaid
+      ?'<span style="background:#1a3a1a;color:#4caf50;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">Paid</span>'
+      :'<span style="background:var(--orange-dim,#3a2200);color:var(--orange);border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">Pending</span>';
+    var approveBtn=isPending
+      ?'<button onclick="approvePayout(\''+p.id+'\',\''+p.contractor_name+'\','+p.amount+')" style="padding:8px 16px;border-radius:9px;border:none;background:#635BFF;color:#fff;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;flex-shrink:0">Pay Now</button>'
+      :'';
+    var transferLine=isPaid&&p.stripe_transfer_id?'<div style="font-size:11px;color:var(--fg-3);margin-top:2px">Transfer: '+p.stripe_transfer_id+'</div>':'';
+    return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">'
+      +'<div style="display:flex;align-items:flex-start;gap:10px">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">'
+      +'<span style="font-family:\'Barlow Condensed\',sans-serif;font-size:15px;font-weight:900;letter-spacing:.02em">'+esc(p.contractor_name||'Unknown')+'</span>'
+      +badge
+      +'</div>'
+      +'<div style="font-size:13px;font-weight:700;color:var(--orange);margin-bottom:2px">'+amt+'</div>'
+      +'<div style="font-size:11px;color:var(--fg-3)">Requested '+dt+(isPaid&&p.paid_at?' · Paid '+new Date(p.paid_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'')+'</div>'
+      +transferLine
+      +'</div>'
+      +approveBtn
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+async function approvePayout(prId, ctName, amount){
+  if(!confirm('Pay '+ctName+' $'+Number(amount).toLocaleString()+'?\n\nThis sends a Stripe transfer to their bank account.')) return;
+  showToast('Processing payment…');
+  try {
+    var resp=await fetch(SURL+'/functions/v1/process-payout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({payout_request_id:prId})
+    });
+    var data=await resp.json();
+    if(data.error){
+      showToast('⚠️ Payment failed: '+(data.error.length>80?data.error.slice(0,80)+'…':data.error));
+      return;
+    }
+    showToast('✓ Paid '+ctName+' $'+Number(data.amount_paid).toLocaleString()+' — transfer '+data.transfer_id);
+    // Also mark contractor_paid on jobs array in memory
+    if(data.jobs_marked_paid>0){
+      jobs.forEach(function(j){ if(j.contractorId && j.contractorPay>0 && !j.contractorPaid) j.contractorPaid=true; });
+    }
+    loadPayoutRequests();
+  } catch(e){
+    showToast('Network error — check console');
+    console.error('[approvePayout]',e);
+  }
+}
 function doLogout(){session=null;lsSet('ps_session',null);document.getElementById('appShell').classList.add('hidden');document.getElementById('loginScreen').classList.remove('hidden')}
 
 async function enterApp(){
@@ -985,7 +1056,7 @@ async function enterApp(){
   document.getElementById('ovSub').textContent="Here's your business overview.";
   var rr=await _sb.from('job_requests').select('*').order('id',{ascending:false});
   requests=(rr.data||[]).filter(function(r){return r.status==='pending'||r.status==='acknowledged'||r.status==='quoted'});
-  populateBooksMonths();populateContractorSelect();buildSvcSelect('jSvc');renderDashboard();renderJobsTable();renderContractors();renderBooks();renderRequests();
+  populateBooksMonths();populateContractorSelect();buildSvcSelect('jSvc');renderDashboard();renderJobsTable();renderContractors();renderBooks();renderRequests();loadPayoutRequests();
   var _jp=new URLSearchParams(window.location.search).get('job');
   if(_jp)setTimeout(function(){openJobDetail(_jp);},300);
 }

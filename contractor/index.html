@@ -409,7 +409,21 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 
       <!-- PROFILE -->
       <div id="tabProfile" class="tab-pane">
-        <div class="ms-hero">
+        <!-- Bank Account / Stripe Connect -->
+        <div style="padding:16px 16px 0">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:10px">Bank Account</div>
+          <div id="stripeStatusCard" style="background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:16px">
+            <div id="stripeStatusInner" style="display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏦</div>
+              <div style="flex:1;min-width:0">
+                <div id="stripeStatusTitle" style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;margin-bottom:2px">Loading…</div>
+                <div id="stripeStatusSub" style="font-size:12px;color:var(--fg-3)">Checking status</div>
+              </div>
+            </div>
+            <button id="stripeConnectBtn" onclick="_stripeOnboard()" style="display:none;width:100%;margin-top:12px;padding:12px;border-radius:10px;border:none;background:#635BFF;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">Connect Bank Account</button>
+          </div>
+        </div>
+        <div class="ms-hero" style="margin-top:16px">
           <div class="ms-eye">Your Progress</div>
           <div class="ms-title">Milestones</div>
           <div class="ms-sub" id="mhSub">Keep building.</div>
@@ -451,7 +465,7 @@ function jr2l(r){
   return{id:r.id,client:r.client,phone:r.phone,address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,status:r.status||'New',notes:r.notes||'',photos:photos,beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}
 }
 function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,status:j.status||'New',notes:j.notes||''}}
-function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||''}}
+function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',stripeAccountId:r.stripe_account_id||null,stripeOnboarded:!!r.stripe_onboarded}}
 
 var SEED_CONTRACTORS=[{id:'c1',name:'Jake R.',phone:'(732) 555-1234',specialty:'General'}];
 var SEED_JOBS=[
@@ -576,6 +590,78 @@ async function _reqPayout(){
     if(btn){ btn.disabled=false; btn.textContent='Request Payout'; }
   }
 }
+// ── Stripe Connect onboarding ────────────────────────────────────────────────
+function rStripeStatus(){
+  var titleEl = document.getElementById('stripeStatusTitle');
+  var subEl   = document.getElementById('stripeStatusSub');
+  var btn     = document.getElementById('stripeConnectBtn');
+  var icoEl   = document.getElementById('stripeStatusInner');
+  if(!titleEl) return;
+  if(!cc){ titleEl.textContent='Not loaded'; return; }
+  if(cc.stripeOnboarded){
+    titleEl.textContent='Bank Connected ✓';
+    titleEl.style.color='var(--green)';
+    if(subEl) subEl.textContent='Your payouts are sent directly to your bank account';
+    if(btn) btn.style.display='none';
+  } else if(cc.stripeAccountId){
+    titleEl.textContent='Onboarding Incomplete';
+    titleEl.style.color='var(--orange)';
+    if(subEl) subEl.textContent='Tap below to finish connecting your bank account';
+    if(btn){ btn.style.display='block'; btn.textContent='Finish Setup'; }
+  } else {
+    titleEl.textContent='No Bank Connected';
+    titleEl.style.color='var(--fg-2)';
+    if(subEl) subEl.textContent='Connect your bank account to receive direct payouts';
+    if(btn) btn.style.display='block';
+  }
+}
+async function _stripeOnboard(){
+  var btn = document.getElementById('stripeConnectBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Connecting…'; }
+  try {
+    var ctId = cc && cc.id ? cc.id : null;
+    if(!ctId){ toast('Session error — please log out and back in'); if(btn){btn.disabled=false;btn.textContent='Connect Bank Account';} return; }
+    var resp = await fetch(SURL+'/functions/v1/stripe-onboard', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      body: JSON.stringify({contractor_id: ctId})
+    });
+    var data = await resp.json();
+    if(data.error){ toast('⚠️ '+data.error); if(btn){btn.disabled=false;btn.textContent='Connect Bank Account';} return; }
+    if(data.already_onboarded){
+      if(cc) cc.stripeOnboarded=true;
+      rStripeStatus();
+      return;
+    }
+    if(data.url){
+      // Redirect to Stripe onboarding — they'll come back to /contractor/?stripe=success
+      window.location.href = data.url;
+    }
+  } catch(e){
+    console.warn('[stripe-onboard] error', e);
+    toast('Connection error — try again');
+    if(btn){ btn.disabled=false; btn.textContent='Connect Bank Account'; }
+  }
+}
+// Check stripe=success in URL after returning from Stripe onboarding
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  if(params.get('stripe')==='success'){
+    history.replaceState(null,'',window.location.pathname);
+    // Reload contractor data to pick up stripe_onboarded=true
+    setTimeout(function(){
+      if(cc && cc.id){
+        _sb.from('contractors').select('stripe_account_id,stripe_onboarded').eq('id',cc.id).single().then(function(r){
+          if(r.data){
+            if(cc){ cc.stripeAccountId=r.data.stripe_account_id; cc.stripeOnboarded=!!r.data.stripe_onboarded; }
+            rStripeStatus();
+            toast('🎉 Bank account connected — you\'re all set!');
+          }
+        });
+      }
+    }, 800);
+  }
+})();
 function _cSwView(v){
   var listEl = document.getElementById('allList');
   var calEl = document.getElementById('cCalWrap');
@@ -694,7 +780,7 @@ async function enterApp(){
     document.getElementById('hInit').textContent=(cc.name||'?')[0].toUpperCase();document.getElementById('hName').textContent=cc.name||'Contractor';
   }
   var now=new Date();document.getElementById('homeDateLine').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  rHome();rJobs();rEarn();rMs();
+  rHome();rJobs();rEarn();rMs();rStripeStatus();
   var _jp=new URLSearchParams(window.location.search).get('job');
   if(_jp)setTimeout(function(){openS(_jp);},300);
   // Show onboarding overlay for first-time contractors
