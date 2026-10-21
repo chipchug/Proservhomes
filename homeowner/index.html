@@ -1475,6 +1475,17 @@ function openSheet(id){
   var j = JOBS.find(function(x){return x.id===id;});
   if(!j) return;
   openJobId = id;
+  // Sync selectedSvc so booking tab shows this job's service tiers
+  var _jSvcStr = j.svc || '';
+  var _jSvcCat = (function(){
+    var parts = _jSvcStr.split(/\s+[–—\-]+\s+/);
+    var cat = parts.length > 1 ? parts[0].trim() : _jSvcStr.trim();
+    if(SVC_DATA[cat]) return cat;
+    for(var k in SVC_DATA){ if(cat.indexOf(k)===0 || k.indexOf(cat)===0) return k; }
+    for(var k in SVC_DATA){ if(_jSvcStr.indexOf(k)===0) return k; }
+    return null;
+  })();
+  if(_jSvcCat) selectedSvc = _jSvcCat;
   var d = new Date(j.date+'T12:00:00');
   var ds = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   var pill = j.status==='Scheduled'?'<span class="pill pill-sched">Scheduled</span>':j.status==='Requested'?'<span class="pill pill-req">Requested</span>':j.status==='Paid'?'<span class="pill" style="background:var(--green-dim);border:1.5px solid var(--green);color:var(--green)">Paid ✓</span>':'<span class="pill pill-done">Complete</span>';

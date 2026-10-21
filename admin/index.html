@@ -676,7 +676,15 @@ var SERVICES=[
   {cat:'Paver Patio',name:'Upgrade: Natural Stone',price:2000},
   {cat:'Paver Patio',name:'Upgrade: In-Ground LED Lighting',price:1200},
   {cat:'Paver Patio',name:'Upgrade: Retaining Wall Section',price:3500},
-  {cat:'Paver Patio',name:'Upgrade: Polymeric Sand & Sealer',price:450}
+  {cat:'Paver Patio',name:'Upgrade: Polymeric Sand & Sealer',price:450},
+  // Snow Removal
+  {cat:'Snow Removal',name:'Driveway Only',price:85},
+  {cat:'Snow Removal',name:'Driveway + Walkways',price:125},
+  {cat:'Snow Removal',name:'Full Property',price:175},
+  {cat:'Snow Removal',name:'Seasonal Contract',price:0},
+  {cat:'Snow Removal',name:'Add-on: Ice Melt Application',price:30},
+  {cat:'Snow Removal',name:'Add-on: Extra-Long Driveway',price:35},
+  {cat:'Snow Removal',name:'Add-on: Back Patio or Deck',price:40}
 ];
 
 // Build a grouped <select> from SERVICES base tiers (no Add-on:/Upgrade:), optionally filtered to one category
@@ -693,8 +701,8 @@ function buildSvcSelect(selId, filterCat){
     og.label=cat;
     items.forEach(function(svc){
       var o=document.createElement('option');
-      o.value=svc.name;
-      o.textContent=svc.name+' — $'+svc.price.toLocaleString();
+      o.value=svc.cat+' – '+svc.name;
+      o.textContent=svc.name+(svc.price?(' — $'+svc.price.toLocaleString()):'');
       o.dataset.price=svc.price;
       o.dataset.cat=svc.cat;
       og.appendChild(o);
