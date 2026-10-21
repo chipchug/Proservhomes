@@ -1215,7 +1215,7 @@ function openJobDetail(id){
 }
 async function updateStatus(id,st){var i=jobs.findIndex(function(x){return x.id===id});if(i<0)return;var prev=jobs[i].status;jobs[i].status=st;await _sb.from('jobs').update({status:st}).eq('id',id);renderDashboard();renderJobsTable();renderBooks();closeModal('detModal');showToast('Status: '+st);
 // SMS on key status changes
-var evtMap={Scheduled:'job_accepted',Complete:'job_completed',Cancelled:'job_cancelled'};
+var evtMap={Complete:'job_completed',Cancelled:'job_cancelled'};
 if(evtMap[st]&&evtMap[st]!==evtMap[prev]){var jj=jobs[i];var ct=contractors.find(function(c){return c.id===jj.contractorId});sendSmsNotification({event:evtMap[st],job:{id:jj.id,service:jj.service,address:jj.address,scheduled_date:jj.date,amount:jj.price},homeowner:{name:jj.client,phone:jj.phone||null,email:jj.email||null},contractor:ct?{name:ct.name,phone:ct.phone||null,email:ct.email||null}:null});}}
 
 function openNewJob(){_editJobId=null;buildSvcSelect('jSvc');document.getElementById('jEditId').value='';document.getElementById('jClient').value='';document.getElementById('jPhone').value='';document.getElementById('jEmail').value='';document.getElementById('jAddr').value='';document.getElementById('jDate').value='';document.getElementById('jStatus').value='New';document.getElementById('jPrice').value='';document.getElementById('jPay').value='';document.getElementById('jPayNote').textContent='';document.getElementById('jPayLink').value='';document.getElementById('jCtPaid').checked=false;document.getElementById('jNotes').value='';document.getElementById('jobModalTitle').textContent='New Job';document.getElementById('delJobBtn').classList.add('hidden');updateSmsPreview();document.getElementById('jobModal').classList.remove('hidden')}
@@ -1225,11 +1225,8 @@ document.getElementById('jSvc').addEventListener('change',updateSmsPreview);docu
 async function saveJob(){var client=document.getElementById('jClient').value.trim();if(!client){showToast('Client name required');return}var isNew=!_editJobId;var id=_editJobId||('j'+Date.now());var i=jobs.findIndex(function(x){return x.id===id});var prevJob=i>=0?jobs[i]:null;var prevCtId=prevJob?prevJob.contractorId:null;var j={id:id,client:client,phone:document.getElementById('jPhone').value,email:document.getElementById('jEmail').value.trim(),address:document.getElementById('jAddr').value,service:document.getElementById('jSvc').value,date:document.getElementById('jDate').value,price:Number(document.getElementById('jPrice').value)||0,contractorId:document.getElementById('jContractor').value,contractorPay:Number(document.getElementById('jPay').value)||0,contractorPaid:document.getElementById('jCtPaid').checked,paymentLink:document.getElementById('jPayLink').value.trim(),status:document.getElementById('jStatus').value,notes:document.getElementById('jNotes').value};if(i>=0)jobs[i]=j;else jobs.unshift(j);var res=await _sb.from('jobs').upsert([jl2r(j)]);if(res.error)console.warn('Supabase:',res.error.message);closeModal('jobModal');renderDashboard();renderJobsTable();renderBooks();showToast(isNew?'Job created ✓':'Job updated');
 // SMS/Email notifications
 var ct=contractors.find(function(c){return c.id===j.contractorId});
-if(isNew){
-  // New job booked
-  sendSmsNotification({event:'job_booked',job:{id:j.id,service:j.service,address:j.address,scheduled_date:j.date,amount:j.price},homeowner:{name:j.client,phone:j.phone||null,email:j.email||null},contractor:ct?{name:ct.name,phone:ct.phone||null,email:ct.email||null}:null});
-} else if(j.contractorId&&j.contractorId!==prevCtId){
-  // Contractor newly assigned or changed on existing job
+if(j.contractorId&&(isNew||j.contractorId!==prevCtId)){
+  // Contractor assigned (new job) or reassigned — notify contractor only
   sendSmsNotification({event:'job_accepted',job:{id:j.id,service:j.service,address:j.address,scheduled_date:j.date,amount:j.price},homeowner:{name:j.client,phone:j.phone||null,email:j.email||null},contractor:ct?{name:ct.name,phone:ct.phone||null,email:ct.email||null}:null});
 }}
 async function deleteJob(){var id=document.getElementById('jEditId').value;if(!id)return;jobs=jobs.filter(function(j){return j.id!==id});await _sb.from('jobs').delete().eq('id',id);closeModal('jobModal');renderDashboard();renderJobsTable();renderBooks();showToast('Job deleted')}

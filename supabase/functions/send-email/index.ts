@@ -127,7 +127,7 @@ interface OutboundEmail {
   recipient: string;
 }
 
-function buildEmails(payload: EmailPayload, adminEmail?: string): OutboundEmail[] {
+async function buildEmails(payload: EmailPayload, adminEmail?: string): Promise<OutboundEmail[]> {
   const msgs: OutboundEmail[] = [];
   const { event, job, homeowner, contractor } = payload;
 
@@ -237,21 +237,8 @@ function buildEmails(payload: EmailPayload, adminEmail?: string): OutboundEmail[
   }
 
   // ── job_accepted ──────────────────────────────────────────────────────────
+  // Fires when admin assigns a contractor. Contractor only — no admin, no homeowner.
   if (event === "job_accepted") {
-    if (homeowner?.email) {
-      msgs.push({
-        to: homeowner.email,
-        recipient: "homeowner",
-        subject: contractor?.name ? `✅ You're all set — ${contractor.name} is confirmed for your job` : "✅ Your ProServ Homes job is confirmed",
-        html: emailHtml({
-          headline: "You're all set!",
-          body: `Great news! ${contractor?.name ? `<strong>${contractor.name}</strong> has been assigned to your job` : "A technician has been assigned to your job"}${job?.scheduled_date ? ` and will be there on <strong>${job.scheduled_date}</strong>` : ""}. You'll receive a reminder before your appointment. Questions? Reply here anytime.`,
-          jobDetails: jobDetailsHtml,
-          ctaUrl: "https://proservhomes.co/homeowner/",
-          ctaLabel: "View My Jobs",
-        }),
-      });
-    }
     if (contractor?.email) {
       msgs.push({
         to: contractor.email,
@@ -263,20 +250,6 @@ function buildEmails(payload: EmailPayload, adminEmail?: string): OutboundEmail[
           jobDetails: jobDetailsHtml,
           ctaUrl: "https://proservhomes.co/contractor/",
           ctaLabel: "View in Contractor Portal",
-        }),
-      });
-    }
-    if (adminEmail) {
-      msgs.push({
-        to: adminEmail,
-        recipient: "admin",
-        subject: `✅ Job accepted — ${job?.service ?? "Service"} · ${homeowner?.name ?? ""}`,
-        html: emailHtml({
-          headline: "Job accepted",
-          body: `<strong>${contractor?.name ?? "A contractor"}</strong> has accepted the job for <strong>${homeowner?.name ?? "homeowner"}</strong>.`,
-          jobDetails: jobDetailsHtml,
-          ctaUrl: "https://proservhomes.co/admin/",
-          ctaLabel: "Open Admin Portal",
         }),
       });
     }
@@ -515,7 +488,7 @@ Deno.serve(async (req) => {
       return respond({ sent: 0, message: "OTP emails handled by Supabase Auth" });
     }
 
-    const emails = buildEmails(payload, adminEmail);
+    const emails = await buildEmails(payload, adminEmail);
 
     if (emails.length === 0) {
       return respond({ sent: 0, message: "No email recipients found in payload" });

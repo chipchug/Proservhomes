@@ -881,7 +881,12 @@ function rHome(){
   ll.innerHTML=act.slice(0,5).map(jrow).join('')
 }
 
-function rJobs(){var j=mj().sort(function(a,b){return new Date(b.date)-new Date(a.date)});var el=document.getElementById('allList');if(!j.length){el.innerHTML='<div style="color:var(--fg-3);text-align:center;padding:48px 0">No jobs assigned yet</div>';return}el.innerHTML=j.map(jrow).join('');_updateJobsBadge();}
+function rJobs(){var j=mj().sort(function(a,b){var an=_isNewJob(a)?1:0,bn=_isNewJob(b)?1:0;if(bn!==an)return bn-an;return new Date(b.date)-new Date(a.date);});var el=document.getElementById('allList');if(!j.length){el.innerHTML='<div style="color:var(--fg-3);text-align:center;padding:48px 0">No jobs assigned yet</div>';return}el.innerHTML=j.map(jrow).join('');_updateJobsBadge();}
+
+// ─── "NEW" job tracking — unseen Scheduled jobs get a NEW pill ───────────
+function _seenJobs(){try{return JSON.parse(localStorage.getItem('ct_seen_jobs')||'[]')}catch(e){return[]}}
+function _markSeen(id){try{var s=_seenJobs();if(s.indexOf(id)<0){s.push(id);localStorage.setItem('ct_seen_jobs',JSON.stringify(s));}}catch(e){}}
+function _isNewJob(j){return j.status==='Scheduled'&&_seenJobs().indexOf(j.id)<0;}
 
 // ─── QUOTE REQUESTS ───────────────────────────────────────────────────────
 
@@ -891,7 +896,8 @@ function jrow(j){
   var thumb=cfg.img
     ?'<div class="jr-thumb" style="overflow:hidden;padding:0"><img src="'+cfg.img+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:10px"></div>'
     :'<div class="jr-thumb" style="background:'+cfg.bg+'">'+cfg.icon+'</div>';
-  return'<div class="jr" onclick="openS(\''+j.id+'\')">'+thumb+'<div class="jr-body"><div class="jr-svc">'+esc(j.service)+'</div><div class="jr-client">'+esc(j.client)+'</div><div class="jr-meta"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'+esc(j.address)+'</div><div class="jr-meta"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+dstr+'</div><div class="jr-bot"><div class="jr-pay">$'+Number(j.contractorPay||0).toLocaleString()+'</div>'+sbadge(j.status)+'</div></div><div class="jr-chev"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>'
+  var newPill=_isNewJob(j)?'<span class="badge badge-new" style="margin-left:6px;vertical-align:middle;font-size:9px">NEW</span>':'';
+  return'<div class="jr" onclick="openS(\''+j.id+'\')">'+thumb+'<div class="jr-body"><div class="jr-svc">'+esc(j.service)+newPill+'</div><div class="jr-client">'+esc(j.client)+'</div><div class="jr-meta"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'+esc(j.address)+'</div><div class="jr-meta"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+dstr+'</div><div class="jr-bot"><div class="jr-pay">$'+Number(j.contractorPay||0).toLocaleString()+'</div>'+sbadge(j.status)+'</div></div><div class="jr-chev"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>'
 }
 
 // photo state per open sheet
@@ -902,6 +908,7 @@ var _photoAfter  = [];
 function openS(id){
   var j=jobs.find(function(x){return x.id===id});
   if(!j) return;
+  _markSeen(id); // clear NEW badge when contractor opens the job
   _photoJobId = id;
   // Load existing saved photos from before_photo / after_photo columns
   _photoBefore = j.beforePhoto ? [{file:null,url:j.beforePhoto,uploaded:true,storagePath:''}] : [];
@@ -1334,15 +1341,6 @@ async function submitCtQuote(reqId){
   toast('Quote submitted ✓ — Nick will follow up');
   closeQR();
   if(typeof rQuotes==='function')rQuotes();
-}
-
-function jrow(j){
-  var cfg=svcCfg(j.service);
-  var dstr=j.date?new Date(j.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'—';
-  var thumb=cfg.img
-    ?'<div class="jr-thumb" style="overflow:hidden;padding:0"><img src="'+cfg.img+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:10px"></div>'
-    :'<div class="jr-thumb" style="background:'+cfg.bg+'">'+cfg.icon+'</div>';
-  return'<div class="jr" onclick="openS(\''+j.id+'\')">'+thumb+'<div class="jr-body"><div class="jr-svc">'+esc(j.service)+'</div><div class="jr-client">'+esc(j.client)+'</div><div class="jr-meta"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'+esc(j.address)+'</div><div class="jr-meta"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+dstr+'</div><div class="jr-bot"><div class="jr-pay">$'+Number(j.contractorPay||0).toLocaleString()+'</div>'+sbadge(j.status)+'</div></div><div class="jr-chev"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>'
 }
 
 
