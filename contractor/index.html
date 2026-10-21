@@ -470,7 +470,7 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 </div>
 <div id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.68.0/dist/umd/supabase.js"></script>
 <script>
 var SURL='https://chmicqvorgjqlthufgwt.supabase.co';
 var SKEY='sb_publishable_7W-vHGcu-U60LiTsG_7i5g_7ijIyTOJ';
@@ -721,14 +721,20 @@ async function sendCodeUnified(){
   useEmailLogin=true;pp=raw.toLowerCase();
   var btn=document.getElementById('sendCodeBtn');
   btn.disabled=true;btn.textContent='Sending…';
-  var res=await _sb.auth.signInWithOtp({email:pp,options:{shouldCreateUser:true,emailRedirectTo:'https://proservhomes.co/contractor/'}});
-  btn.disabled=false;btn.textContent='Send Code';
-  if(res.error){toast('Error: '+res.error.message);return;}
-  document.getElementById('phoneStep').style.display='none';
-  document.getElementById('otpStep').style.display='block';
-  document.getElementById('otpSub').textContent='We emailed a 6-digit code to '+pp;
-  document.getElementById('demoHint').style.display='none';
-  document.getElementById('backBtn').textContent='← Change Email';
+  try {
+    var res=await _sb.auth.signInWithOtp({email:pp,options:{shouldCreateUser:true,emailRedirectTo:'https://proservhomes.co/contractor/'}});
+    btn.disabled=false;btn.textContent='Send Code';
+    if(res.error){toast('Error: '+res.error.message);return;}
+    document.getElementById('phoneStep').style.display='none';
+    document.getElementById('otpStep').style.display='block';
+    document.getElementById('otpSub').textContent='We emailed a 6-digit code to '+pp;
+    document.getElementById('demoHint').style.display='none';
+    document.getElementById('backBtn').textContent='← Change Email';
+  } catch(err) {
+    btn.disabled=false;btn.textContent='Send Code';
+    toast('Could not send code — '+(err.message||'check connection and try again'));
+    console.error('[PSC] sendCodeUnified error',err);
+  }
 }
 function fp(v){var d=v.replace(/\D/g,'');if(d.length<=3)return d;if(d.length<=6)return'('+d.slice(0,3)+') '+d.slice(3);return'('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6,10)}
 var _pi=document.getElementById('phoneInput');if(_pi)_pi.addEventListener('input',function(){this.value=fp(this.value)});
