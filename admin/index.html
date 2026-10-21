@@ -1160,8 +1160,17 @@ function openEditJob(id){var j=jobs.find(function(x){return x.id===id});if(!j)re
 function updateSmsPreview(){var s=document.getElementById('jSvc').value;var d=document.getElementById('jDate').value;var a=document.getElementById('jAddr').value;var p=document.getElementById('jPrice').value;var dstr=d?new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'{date}';document.getElementById('smsPreview').textContent='ProServ Homes: Your '+s+' is confirmed for '+dstr+(a?' at '+a:'')+(p?' — $'+p:'')+'. Questions? Reply here.'}
 document.getElementById('jSvc').addEventListener('change',updateSmsPreview);document.getElementById('jDate').addEventListener('change',updateSmsPreview);document.getElementById('jAddr').addEventListener('input',updateSmsPreview);document.getElementById('jPrice').addEventListener('input',updateSmsPreview);
 async function saveJob(){var client=document.getElementById('jClient').value.trim();if(!client){showToast('Client name required');return}var isNew=!_editJobId;var id=_editJobId||('j'+Date.now());var i=jobs.findIndex(function(x){return x.id===id});var j={id:id,client:client,phone:document.getElementById('jPhone').value,email:document.getElementById('jEmail').value.trim(),address:document.getElementById('jAddr').value,service:document.getElementById('jSvc').value,date:document.getElementById('jDate').value,price:Number(document.getElementById('jPrice').value)||0,contractorId:document.getElementById('jContractor').value,contractorPay:Number(document.getElementById('jPay').value)||0,contractorPaid:document.getElementById('jCtPaid').checked,paymentLink:document.getElementById('jPayLink').value.trim(),status:document.getElementById('jStatus').value,notes:document.getElementById('jNotes').value};if(i>=0)jobs[i]=j;else jobs.unshift(j);var res=await _sb.from('jobs').upsert([jl2r(j)]);if(res.error)console.warn('Supabase:',res.error.message);closeModal('jobModal');renderDashboard();renderJobsTable();renderBooks();showToast(isNew?'Job created ✓':'Job updated');
-// SMS for new job booked
-if(isNew){var ct=contractors.find(function(c){return c.id===j.contractorId});sendSmsNotification({event:'job_booked',job:{id:j.id,service:j.service,address:j.address,scheduled_date:j.date,amount:j.price},homeowner:{name:j.client,phone:j.phone||null,email:j.email||null},contractor:ct?{name:ct.name,phone:ct.phone||null,email:ct.email||null}:null});}}
+// SMS/Email notifications
+var ct=contractors.find(function(c){return c.id===j.contractorId});
+var prevJob=i>=0?jobs[i]:null;
+var prevCtId=prevJob?prevJob.contractorId:null;
+if(isNew){
+  // New job booked
+  sendSmsNotification({event:'job_booked',job:{id:j.id,service:j.service,address:j.address,scheduled_date:j.date,amount:j.price},homeowner:{name:j.client,phone:j.phone||null,email:j.email||null},contractor:ct?{name:ct.name,phone:ct.phone||null,email:ct.email||null}:null});
+} else if(j.contractorId&&j.contractorId!==prevCtId){
+  // Contractor newly assigned or changed on existing job
+  sendSmsNotification({event:'job_accepted',job:{id:j.id,service:j.service,address:j.address,scheduled_date:j.date,amount:j.price},homeowner:{name:j.client,phone:j.phone||null,email:j.email||null},contractor:ct?{name:ct.name,phone:ct.phone||null,email:ct.email||null}:null});
+}}
 async function deleteJob(){var id=document.getElementById('jEditId').value;if(!id)return;jobs=jobs.filter(function(j){return j.id!==id});await _sb.from('jobs').delete().eq('id',id);closeModal('jobModal');renderDashboard();renderJobsTable();renderBooks();showToast('Job deleted')}
 
 function populateContractorSelect(){var s=document.getElementById('jContractor');s.innerHTML=contractors.map(function(c){return'<option value="'+c.id+'">'+esc(c.name)+'</option>'}).join('')}
