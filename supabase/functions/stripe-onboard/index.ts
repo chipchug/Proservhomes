@@ -65,8 +65,8 @@ Deno.serve(async (req) => {
     });
 
   try {
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY secret not set");
+    const stripeKey = Deno.env.get("APP_STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("APP_STRIPE_SECRET_KEY secret not set");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
