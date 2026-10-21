@@ -1459,16 +1459,18 @@ async function doConfirmRequest(){
   // Mark request as confirmed
   await _sb.from('job_requests').update({status:'confirmed'}).eq('id',rid);
   requests=requests.filter(function(x){return x.id!=rid});
-  // Notify customer
-  if(email){
-    var dstr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'TBD';
-    var msg='Hi! Your '+r.service+' has been booked for '+dstr+' at '+(r.address||'')+'. '+(price?'Total: $'+price+'. ':'')+( notes?notes+' ':'')+( payLink?'Pay here: '+payLink+' ':'')+'— ProServ Homes';
-    var ct2=contractors.find(function(c){return c.id==ctId});
-    sendSmsNotification({event:'job_booked',jobId:jobId,homeownerEmail:email,homeownerPhone:r.homeowner_phone||'',contractorEmail:ct2?ct2.email:'',contractorPhone:ct2?ct2.phone:'',job:{service:r.service||'',address:r.address||'',scheduled_date:r.date||'',price:price,notes:notes,paymentLink:payLink},contractor:{name:ct2?ct2.name:''}});
-    showToast('Job created! Customer notified ✓');
-  } else {
-    showToast('Job created ✓ — no email on file');
+  // Notify homeowner + contractor
+  var ct2=contractors.find(function(c){return c.id==ctId});
+  var hwName=r.client_name||r.name||'Customer';
+  var sharedJob={id:jobId,service:r.service||'',address:r.address||'',scheduled_date:r.date||'',amount:price};
+  var sharedHw={name:hwName,email:email||null,phone:r.homeowner_phone||null};
+  // job_booked: homeowner "request confirmed" + admin "new booking"
+  sendSmsNotification({event:'job_booked',job:sharedJob,homeowner:sharedHw});
+  // job_accepted: homeowner "you're all set — [Tech]" + contractor "new job alert"
+  if(ctId && ct2){
+    sendSmsNotification({event:'job_accepted',job:sharedJob,homeowner:sharedHw,contractor:{name:ct2.name,email:ct2.email||null,phone:ct2.phone||null}});
   }
+  showToast(ctId?'Job created! Homeowner & contractor notified ✓':'Job created! Customer notified ✓');
   closeModal('confirmReqModal');
   renderRequests();renderDashboard();renderJobsTable();
 }
