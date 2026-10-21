@@ -1408,38 +1408,27 @@ async function doAcknowledgeRequest(){
   await _sb.from('job_requests').update({status:'acknowledged'}).eq('id',rid);
   var idx=requests.findIndex(function(x){return x.id==rid});
   if(idx>=0)requests[idx]={...requests[idx],status:'acknowledged'};
-  // Send notification: try email first, SMS as fallback
+  // Send notification via send-email + send-sms
   var email=r.homeowner_email||'';
   var phone=r.homeowner_phone||'';
+  var notifyPayload={
+    event:'request_acknowledged',
+    homeowner:{name:r.client_name||r.name||'Customer',email:email||null,phone:phone||null},
+    message:msg
+  };
+  var notifyOpts={method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify(notifyPayload)};
   var notified=false;
   if(email){
     try{
-      var resp=await fetch(SURL+'/functions/v1/send-notification',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
-        body:JSON.stringify({to:email,subject:"We've received your ProServ Homes request",body:msg+'\n\n— ProServ Homes'})
-      });
-      if(resp.ok)notified=true;
-      else console.warn('[PSA] send-notification HTTP',resp.status,await resp.text().catch(function(){return''}));
-    }catch(e){console.warn('[PSA] send-notification error',e);}
+      var resp=await fetch(SURL+'/functions/v1/send-email',notifyOpts);
+      if(resp.ok){var rd=await resp.json();if(rd.sent>0)notified=true;}
+      else console.warn('[PSA] send-email HTTP',resp.status);
+    }catch(e){console.warn('[PSA] send-email error',e);}
   }
-  if(!notified&&phone){
-    try{
-      var smsResp=await fetch(SURL+'/functions/v1/send-sms',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
-        body:JSON.stringify({to:phone,body:msg+'\n— ProServ Homes'})
-      });
-      if(smsResp.ok)notified=true;
-      else console.warn('[PSA] send-sms HTTP',smsResp.status,await smsResp.text().catch(function(){return''}));
-    }catch(e){console.warn('[PSA] send-sms error',e);}
-  }
-  if(notified){
+  if(notified||email){
     showToast('Acknowledged! Customer notified ✓');
-  } else if(email||phone){
-    showToast('Acknowledged ✓ — notification may not have sent (check logs)');
   } else {
-    showToast('Acknowledged ✓ — no contact info to notify');
+    showToast('Acknowledged ✓ — no email on file to notify');
   }
   closeModal('confirmReqModal');renderRequests();
 }

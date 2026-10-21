@@ -56,6 +56,7 @@ interface EmailPayload {
   homeowner?: PersonInfo;
   contractor?: PersonInfo;
   amount?: number;
+  message?: string;  // free-text for request_acknowledged
 }
 
 function formatCurrency(n?: number): string {
@@ -317,6 +318,41 @@ function buildEmails(payload: EmailPayload, adminEmail?: string): OutboundEmail[
           headline: "Job cancelled",
           body: `A job has been cancelled.${homeowner?.name ? `<br><strong>Homeowner:</strong> ${homeowner.name}` : ""}${contractor?.name ? `<br><strong>Contractor:</strong> ${contractor.name}` : ""}`,
           jobDetails: jobDetailsHtml,
+          ctaUrl: "https://proservhomes.co/admin/",
+          ctaLabel: "Open Admin Portal",
+        }),
+      });
+    }
+    return msgs;
+  }
+
+  // ── request_acknowledged ─────────────────────────────────────────────────
+  if (event === "request_acknowledged") {
+    const customMsg = payload.message;
+    const firstName = homeowner?.name?.split(" ")[0] ?? "there";
+    if (homeowner?.email) {
+      msgs.push({
+        to: homeowner.email,
+        recipient: "homeowner",
+        subject: "ProServ Homes — We've received your request",
+        html: emailHtml({
+          headline: `Thanks, ${firstName} — we're on it!`,
+          body: customMsg
+            ? customMsg.replace(/\n/g, "<br>")
+            : `We've received your service request and will be in touch shortly to confirm your appointment and answer any questions you have.`,
+          ctaUrl: "https://proservhomes.co/homeowner/",
+          ctaLabel: "View My Requests",
+        }),
+      });
+    }
+    if (adminEmail) {
+      msgs.push({
+        to: adminEmail,
+        recipient: "admin",
+        subject: `👋 Request acknowledged — ${homeowner?.name ?? "Homeowner"}`,
+        html: emailHtml({
+          headline: "Request acknowledged",
+          body: `You acknowledged the service request from <strong>${homeowner?.name ?? "a homeowner"}</strong>.${homeowner?.email ? `<br>Email: ${homeowner.email}` : ""}${homeowner?.phone ? `<br>Phone: ${homeowner.phone}` : ""}`,
           ctaUrl: "https://proservhomes.co/admin/",
           ctaLabel: "Open Admin Portal",
         }),
