@@ -1460,17 +1460,16 @@ async function doConfirmRequest(){
   await _sb.from('job_requests').update({status:'confirmed'}).eq('id',rid);
   requests=requests.filter(function(x){return x.id!=rid});
   // Notify homeowner + contractor
+  // (homeowner already received job_booked when they submitted the form)
   var ct2=contractors.find(function(c){return c.id==ctId});
   var hwName=r.client_name||r.name||'Customer';
   var sharedJob={id:jobId,service:r.service||'',address:r.address||'',scheduled_date:r.date||'',amount:price};
   var sharedHw={name:hwName,email:email||null,phone:r.homeowner_phone||null};
-  // job_booked: homeowner "request confirmed" + admin "new booking"
-  sendSmsNotification({event:'job_booked',job:sharedJob,homeowner:sharedHw});
-  // job_accepted: homeowner "you're all set — [Tech]" + contractor "new job alert"
   if(ctId && ct2){
+    // job_accepted: homeowner "you're all set — [Tech]" + contractor "new job alert" + admin confirmation
     sendSmsNotification({event:'job_accepted',job:sharedJob,homeowner:sharedHw,contractor:{name:ct2.name,email:ct2.email||null,phone:ct2.phone||null}});
   }
-  showToast(ctId?'Job created! Homeowner & contractor notified ✓':'Job created! Customer notified ✓');
+  showToast(ctId?'Job created! Homeowner & contractor notified ✓':'Job created ✓');
   closeModal('confirmReqModal');
   renderRequests();renderDashboard();renderJobsTable();
 }
