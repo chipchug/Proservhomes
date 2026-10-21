@@ -891,34 +891,15 @@ async function savePhotos(){
     return;
   }
 
+  function _btnErr(msg){ if(btn){btn.disabled=false;btn.style.background='#c0392b';btn.innerHTML='⚠️ '+msg;setTimeout(function(){btn.style.background='';btn.innerHTML='💾 Save Photos to Job';},4000);} toast('⚠️ '+msg); }
   try{
-    // Ensure valid Supabase auth session — RLS UPDATE policy requires authenticated role
-    var sess = await _sb.auth.getSession();
-    if(!sess.data || !sess.data.session){
-      // Try refresh once
-      var ref = await _sb.auth.refreshSession();
-      if(!ref.data || !ref.data.session){
-        // Session truly gone — force re-login
-        toast('⚠️ Session expired — please log in again');
-        if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
-        setTimeout(function(){doLogout();},1500);
-        return;
-      }
-    }
+    if(!jobId){ _btnErr('No job selected (jobId null)'); return; }
     var dbUpdate={};
     if(bUrl)dbUpdate.before_photo=bUrl;
     if(aUrl)dbUpdate.after_photo=aUrl;
     var upd=await _sb.from('jobs').update(dbUpdate).eq('id',jobId);
     if(upd.error){
-      toast('⚠️ '+upd.error.message);
-      if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
-      return;
-    }
-    // Verify the row was actually updated (catches silent RLS blocks)
-    var verify=await _sb.from('jobs').select('id').eq('id',jobId).limit(1);
-    if(!verify.data||!verify.data.length){
-      toast('⚠️ Not saved — RLS may be blocking. Try logging out and back in.');
-      if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
+      _btnErr(upd.error.message||upd.error.code||'DB error');
       return;
     }
     var j=jobs.find(function(x){return x.id===jobId;});
@@ -927,8 +908,7 @@ async function savePhotos(){
     if(btn){btn.disabled=false;btn.innerHTML='✓ Saved';}
     renderPhotoGrids();
   }catch(err){
-    toast('⚠️ Save error: '+(err&&err.message?err.message:'unknown'));
-    if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
+    _btnErr(err&&err.message?err.message.slice(0,40):'unknown error');
     return;
   }
   // Re-render action buttons now that photos are saved
