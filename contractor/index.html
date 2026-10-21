@@ -1141,6 +1141,8 @@ async function setSt(id,st){
   await _sb.from('jobs').update({status:st}).eq('id',id);
   closeS();rHome();rJobs();rEarn();rMs();
   toast(st==='In Progress'?'Job started 🔧':'Job complete ✅');
+  // Notify admin when contractor starts a job (with before photos)
+  if(st==='In Progress'){var jj=jobs[i];var beforeUrls=(_photoBefore||[]).filter(function(p){return p.uploaded&&p.url;}).map(function(p){return p.url;});sendSmsNotification({event:'job_started',job:{id:jj.id,service:jj.service,address:jj.address,scheduled_date:jj.date,amount:jj.price},homeowner:{name:jj.client,phone:jj.phone||null,email:jj.homeownerEmail||jj.email||null},contractor:{name:(typeof cc!=='undefined'&&cc&&cc.name)||'Contractor',email:(typeof cc!=='undefined'&&cc&&cc.email)||null},before_photos:beforeUrls});}
   // SMS when contractor completes a job
   if(st==='Complete'){var jj=jobs[i];sendSmsNotification({event:'job_completed',job:{id:jj.id,service:jj.service,address:jj.address,scheduled_date:jj.date,amount:jj.price},homeowner:{name:jj.client,phone:jj.phone||null,email:jj.homeownerEmail||jj.email||null},contractor:{name:(typeof cc!=='undefined'&&cc&&cc.name)||'Contractor',email:(typeof cc!=='undefined'&&cc&&cc.email)||null}});}
 }

@@ -12,6 +12,7 @@
  * Events (same interface as send-sms):
  *   job_booked       — homeowner books / admin alert
  *   job_accepted     — homeowner gets assigned notice, contractor gets job notice
+ *   job_started      — admin alert with before photos when contractor starts job
  *   job_completed    — homeowner done notice, contractor payment coming
  *   job_cancelled    — homeowner + contractor cancelled notice
  *   payout_request   — admin only
@@ -56,7 +57,8 @@ interface EmailPayload {
   homeowner?: PersonInfo;
   contractor?: PersonInfo;
   amount?: number;
-  message?: string;  // free-text for request_acknowledged
+  message?: string;       // free-text for request_acknowledged
+  before_photos?: string[]; // public URLs — job_started event
 }
 
 function formatCurrency(n?: number): string {
@@ -166,6 +168,34 @@ function buildEmails(payload: EmailPayload, adminEmail?: string): OutboundEmail[
         html: emailHtml({
           headline: "New booking just came in",
           body: `<strong>${homeowner?.name ?? "A homeowner"}</strong> has submitted a service request.${homeowner?.phone ? `<br>Phone: ${homeowner.phone}` : ""}${homeowner?.email ? `<br>Email: ${homeowner.email}` : ""}`,
+          jobDetails: jobDetailsHtml,
+          ctaUrl: "https://proservhomes.co/admin/",
+          ctaLabel: "Open Admin Portal",
+        }),
+      });
+    }
+    return msgs;
+  }
+
+  // ── job_started ───────────────────────────────────────────────────────────
+  if (event === "job_started") {
+    if (adminEmail) {
+      const photos = payload.before_photos ?? [];
+      const photoHtml = photos.length
+        ? `<div style="margin-top:16px"><p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.06em">Before Photos</p><div style="display:flex;gap:10px;flex-wrap:wrap">${
+            photos.map(url =>
+              `<a href="${url}" target="_blank" style="display:block;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0"><img src="${url}" alt="Before photo" style="display:block;width:160px;height:120px;object-fit:cover"></a>`
+            ).join("")
+          }</div></div>`
+        : `<p style="margin:8px 0 0;font-size:13px;color:#999">No before photos attached.</p>`;
+
+      msgs.push({
+        to: adminEmail,
+        recipient: "admin",
+        subject: `🔧 Job started — ${contractor?.name ?? "Contractor"} · ${job?.service ?? "Service"}`,
+        html: emailHtml({
+          headline: "Job started",
+          body: `<strong>${contractor?.name ?? "A contractor"}</strong> has started the job for <strong>${homeowner?.name ?? "homeowner"}</strong>.${contractor?.email ? `<br>Contractor: ${contractor.email}` : ""}${photoHtml}`,
           jobDetails: jobDetailsHtml,
           ctaUrl: "https://proservhomes.co/admin/",
           ctaLabel: "Open Admin Portal",
