@@ -861,6 +861,7 @@ footer {
         <span class="hero-pill">✓ Concrete &amp; Pavers</span>
         <span class="hero-pill">✓ Christmas Lights</span>
         <span class="hero-pill">✓ Dryer Vent Cleaning</span>
+        <span class="hero-pill">✓ Snow Removal</span>
       </div>
       <div class="hero-badges">
         <div class="badge-item">
@@ -1061,6 +1062,15 @@ footer {
         </div>
       </div>
 
+      <!-- Snow Removal -->
+      <div class="service-card">
+        <div class="service-body">
+          <h3>Snow Removal</h3>
+          <p>Per-visit clearing for driveways, walkways, and steps — or lock in a seasonal contract for unlimited coverage all winter. Ice melt included.</p>
+          <span class="service-season">Nov – Mar</span>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -1120,6 +1130,7 @@ footer {
       <button type="button" class="est-tab" data-tab="fence">Fence Install</button>
       <button type="button" class="est-tab" data-tab="concrete">Concrete</button>
       <button type="button" class="est-tab" data-tab="pavers">Pavers</button>
+      <button type="button" class="est-tab" data-tab="snow">Snow Removal</button>
     </div>
 
     <!-- ── GUTTERS ── -->
@@ -1689,6 +1700,83 @@ footer {
         </div>
       </div>
       <p style="font-size:.82rem;color:var(--fg-soft);margin-top:10px;">Estimates based on standard NJ Shore market pricing. Grading, demo of existing surface, or oversized areas may affect final price. Free written quote before any work.</p>
+    </div>
+
+    <!-- Snow Removal panel -->
+    <div class="est-panel" id="est-snow">
+      <div class="est-step">
+        <div class="est-step-label">Property type</div>
+        <div class="est-options">
+          <label class="est-opt">
+            <input type="radio" name="snow-type" value="driveway" data-low="75" data-high="100">
+            <span class="est-opt-inner">
+              <span class="est-opt-title">Driveway Only</span>
+              <span class="est-opt-sub">Standard 2-car &middot; per visit</span>
+              <span class="est-opt-price">$75&ndash;$100</span>
+            </span>
+          </label>
+          <label class="est-opt">
+            <input type="radio" name="snow-type" value="driveway-walks" data-low="100" data-high="150">
+            <span class="est-opt-inner">
+              <span class="est-opt-title">Driveway + Walkways</span>
+              <span class="est-opt-sub">Driveway, front walk &amp; steps</span>
+              <span class="est-opt-price">$100&ndash;$150</span>
+            </span>
+          </label>
+          <label class="est-opt">
+            <input type="radio" name="snow-type" value="full" data-low="150" data-high="200">
+            <span class="est-opt-inner">
+              <span class="est-opt-title">Full Property</span>
+              <span class="est-opt-sub">Driveway, all walks, steps &amp; stoop</span>
+              <span class="est-opt-price">$150&ndash;$200</span>
+            </span>
+          </label>
+          <label class="est-opt">
+            <input type="radio" name="snow-type" value="seasonal" data-low="0" data-high="0">
+            <span class="est-opt-inner">
+              <span class="est-opt-title">Seasonal Contract</span>
+              <span class="est-opt-sub">Unlimited visits &middot; full winter coverage</span>
+              <span class="est-opt-price">Custom quote</span>
+            </span>
+          </label>
+        </div>
+      </div>
+      <div class="est-step">
+        <div class="est-step-label">Add-ons (optional)</div>
+        <div class="est-addons">
+          <label class="est-addon">
+            <span class="est-addon-inner">
+              <input type="checkbox" data-low="25" data-high="40" data-name="Ice melt application">
+              <span class="est-addon-body">
+                <span class="est-addon-name">Ice melt application</span>
+                <span class="est-addon-desc">Rock salt or calcium chloride spread after clearing</span>
+              </span>
+            </span>
+            <span class="est-addon-price">+$25&ndash;$40</span>
+          </label>
+          <label class="est-addon">
+            <span class="est-addon-inner">
+              <input type="checkbox" data-low="25" data-high="50" data-name="Extra-long driveway">
+              <span class="est-addon-body">
+                <span class="est-addon-name">Extra-long driveway</span>
+                <span class="est-addon-desc">Over 2-car length or circular driveway</span>
+              </span>
+            </span>
+            <span class="est-addon-price">+$25&ndash;$50</span>
+          </label>
+          <label class="est-addon">
+            <span class="est-addon-inner">
+              <input type="checkbox" data-low="30" data-high="50" data-name="Back patio or deck">
+              <span class="est-addon-body">
+                <span class="est-addon-name">Back patio or deck</span>
+                <span class="est-addon-desc">Cleared and salted</span>
+              </span>
+            </span>
+            <span class="est-addon-price">+$30&ndash;$50</span>
+          </label>
+        </div>
+      </div>
+      <p style="font-size:.82rem;color:var(--fg-soft);margin-top:10px;">Per-visit pricing for each snowfall event 2"+. Back-to-back storms within 24 hrs count as one visit. Seasonal contracts include unlimited visits — free quote provided.</p>
     </div>
 
     <!-- ── Running Total ── -->

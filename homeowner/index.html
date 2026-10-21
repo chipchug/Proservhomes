@@ -465,6 +465,7 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <div class="svc-tab" onclick="pickSvcTab(this,'Fence Install')">🪵 Fence</div>
           <div class="svc-tab" onclick="pickSvcTab(this,'Concrete')">🏗️ Concrete</div>
           <div class="svc-tab" onclick="pickSvcTab(this,'Pavers')">🧱 Pavers</div>
+          <div class="svc-tab" onclick="pickSvcTab(this,'Snow Removal')">❄️ Snow</div>
         </div>
 
         <!-- DYNAMIC PRICING PANEL -->
@@ -711,6 +712,7 @@ function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 var STRIPE_LINKS = {
   'Gutter Cleaning':     'https://buy.stripe.com/REPLACE_GUTTER',
   'Pressure Washing':    'https://buy.stripe.com/REPLACE_PRESSURE',
+  'Snow Removal':        'https://buy.stripe.com/REPLACE_SNOW',
   'Dryer Vent Cleaning': 'https://buy.stripe.com/REPLACE_DRYER',
   'Window Cleaning':     'https://buy.stripe.com/REPLACE_WINDOWS',
   'Christmas Lights':    'https://buy.stripe.com/REPLACE_LIGHTS',
@@ -1081,6 +1083,22 @@ var SVC_DATA = {
       {name:'Polymeric sand & sealer',     desc:'Locks joints, protects from NJ freeze-thaw',           price:'+$400–$700'}
     ],
     disclaimer: 'Estimates based on standard NJ Shore market pricing. Grading, demo of existing surface, or oversized areas may affect final price. Free written quote before any work.'
+  },
+  'Snow Removal': {
+    sectionLabel: 'PROPERTY TYPE',
+    tiers: [
+      {name:'Driveway Only',          sub:'Standard 2-car · per visit',                price:'$75–$100'},
+      {name:'Driveway + Walkways',    sub:'Driveway, front walk & steps · per visit',  price:'$100–$150'},
+      {name:'Full Property',          sub:'Driveway, all walks, steps & stoop',        price:'$150–$200'},
+      {name:'Seasonal Contract',      sub:'Unlimited visits · full winter coverage',   price:'Custom quote'}
+    ],
+    addonsLabel: 'ADD-ONS (OPTIONAL)',
+    addons: [
+      {name:'Ice melt application',   desc:'Rock salt or calcium chloride spread after clearing', price:'+$25–$40'},
+      {name:'Extra-long driveway',    desc:'Over 2-car length or circular driveway',              price:'+$25–$50'},
+      {name:'Back patio or deck',     desc:'Cleared and salted',                                  price:'+$30–$50'}
+    ],
+    disclaimer: 'Per-visit pricing for each snowfall event 2"+ . Back-to-back storms within 24 hrs count as one visit. Seasonal contracts include unlimited visits for the full winter season — free quote provided.'
   }
 };
 
