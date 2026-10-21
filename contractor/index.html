@@ -538,21 +538,43 @@ function _admCalPrev(cid){ _admCalM--; if(_admCalM<0){_admCalM=11;_admCalY--;} _
 function _admCalNext(cid){ _admCalM++; if(_admCalM>11){_admCalM=0;_admCalY++;} _admRenderCal(cid); }
 function _admPickDate(iso, cid){ _admCalSelDate=iso; _admRenderCal(cid); }
 async function _reqPayout(){
-  var owed = parseFloat((document.getElementById('eOwed')||{}).textContent||'0')||0;
+  // Read owed amount directly from jobs data (not DOM text which has $ prefix)
+  var owedJobs = mj().filter(function(x){ return x.contractorPay>0 && !x.contractorPaid; });
+  var owed = owedJobs.reduce(function(s,x){ return s+Number(x.contractorPay||0); }, 0);
   if(owed<=0){ toast('No earnings owed at this time'); return; }
   var ctName = (typeof cc !== 'undefined' && cc && cc.name) ? cc.name : 'Contractor';
-  toast('Payout request submitted — you\'ll receive payment within 2–3 business days');
+  var ctId   = (typeof cc !== 'undefined' && cc && cc.id)   ? cc.id   : null;
+  var btn = document.querySelector('[onclick="_reqPayout()"]');
+  if(btn){ btn.disabled=true; btn.textContent='Submitting…'; }
   try {
+    // Save payout request to Supabase so Nick can review & approve it
+    var pr = await _sb.from('payout_requests').insert({
+      contractor_id: ctId,
+      contractor_name: ctName,
+      amount: owed,
+      status: 'pending',
+      requested_at: new Date().toISOString(),
+      job_ids: owedJobs.map(function(j){ return j.id; })
+    });
+    if(pr.error){ console.warn('[payout] db insert error', pr.error); }
+    // Notify Nick via SMS
     await fetch(SURL+'/functions/v1/send-sms', {
       method: 'POST',
       headers: {'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
       body: JSON.stringify({
         event: 'payout_request',
-        contractor: {name: ctName},
+        contractor: {name: ctName, id: ctId},
         amount: owed
       })
     });
-  } catch(e) { console.warn('[payout] sms error', e); }
+    toast('Payout request submitted ✓ — you\'ll receive payment within 2–3 business days');
+    if(btn){ btn.disabled=false; btn.textContent='✓ Request Submitted'; }
+    setTimeout(function(){ if(btn) btn.textContent='Request Payout'; }, 5000);
+  } catch(e) {
+    console.warn('[payout] error', e);
+    toast('Request sent — Nick will process your payout shortly');
+    if(btn){ btn.disabled=false; btn.textContent='Request Payout'; }
+  }
 }
 function _cSwView(v){
   var listEl = document.getElementById('allList');
