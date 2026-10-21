@@ -969,8 +969,8 @@ function renderHome(){
   if(next){
     var d = new Date(next.date+'T12:00:00');
     var ds = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-    var _nsCat = next.svc ? next.svc.split(' – ')[0] : '';
-    var _nsImg = SVC_IMAGES[_nsCat] || '';
+    var _nsCat = next.svc ? next.svc.split(/\s+[–—\-]+\s+/)[0].trim() : '';
+    var _nsImg = SVC_IMAGES[_nsCat] || (function(){for(var k in SVC_IMAGES){if(next.svc&&next.svc.indexOf(k)===0)return SVC_IMAGES[k];}return '';})();
     var _nsThumb = _nsImg ? '<div style="width:68px;height:68px;border-radius:10px;overflow:hidden;flex-shrink:0;margin-bottom:12px"><img src="'+_nsImg+'" alt="'+esc(_nsCat)+'" style="width:100%;height:100%;object-fit:cover;display:block"></div>' : '';
     wrap.innerHTML = '<div class="card">'+_nsThumb+'<div class="ns-eyebrow">Next Service</div><div class="ns-title">'+next.svc+'</div>'
       +'<div class="ns-row"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>'+ds+'</div>'
@@ -1047,8 +1047,8 @@ function renderHistory(){
     var dot = j.status==='Scheduled'?'sched':(j.status==='Requested'?'req':'done');
     var pill = j.status==='Scheduled'?'<span class="pill pill-sched">Scheduled</span>':(j.status==='Requested'?'<span class="pill pill-req">Requested</span>':'<span class="pill pill-done">Complete</span>');
     var isLast = i===JOBS.length-1;
-    var _tlCat = j.svc ? j.svc.split(' – ')[0] : '';
-    var _tlImg = SVC_IMAGES[_tlCat] || '';
+    var _tlCat = j.svc ? j.svc.split(/\s+[–—\-]+\s+/)[0].trim() : '';
+    var _tlImg = SVC_IMAGES[_tlCat] || (function(){for(var k in SVC_IMAGES){if(j.svc&&j.svc.indexOf(k)===0)return SVC_IMAGES[k];}return '';})();
     var _tlThumb = _tlImg
       ? '<div style="width:68px;height:68px;border-radius:10px;overflow:hidden;flex-shrink:0"><img src="'+_tlImg+'" alt="'+esc(_tlCat)+'" style="width:100%;height:100%;object-fit:cover;display:block"></div>'
       : '';
@@ -1217,7 +1217,7 @@ function renderSvcPanel(svc){
   var d = SVC_DATA[svc];
   if(!d){document.getElementById('svcPricingPanel').innerHTML='';return;}
   var html = '<div class="svc-panel">';
-  var _svcImg = SVC_IMAGES[svc];
+  var _svcImg = SVC_IMAGES[svc] || (function(){for(var k in SVC_IMAGES){if(svc&&svc.indexOf(k)===0)return SVC_IMAGES[k];}return null;})();
   if(_svcImg){ html += '<div style="margin-bottom:14px"><img src="'+_svcImg+'" alt="'+svc+'" style="width:100%;height:180px;object-fit:cover;border-radius:10px;display:block"></div>'; }
   html += '<div class="svc-section-lbl">'+d.sectionLabel+'</div>';
   html += '<div class="svc-tier-grid">';
