@@ -181,13 +181,44 @@ function buildEmails(payload: EmailPayload, adminEmail?: string): OutboundEmail[
   if (event === "job_started") {
     if (adminEmail) {
       const photos = payload.before_photos ?? [];
-      const photoHtml = photos.length
+      // Photos may be base64 data: URIs (blocked by email clients) — upload them to storage
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const serviceKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      const publicUrls: string[] = [];
+      for (const url of photos) {
+        if (!url) continue;
+        if (url.startsWith("data:")) {
+          // Upload to job-photos storage bucket and get a public URL
+          try {
+            const match = url.match(/^data:(image\/\w+);base64,(.+)$/);
+            if (match && supabaseUrl && serviceKey) {
+              const mimeType = match[1];
+              const ext = mimeType.split("/")[1] ?? "jpg";
+              const bytes = Uint8Array.from(atob(match[2]), c => c.charCodeAt(0));
+              const path = `before/${job?.id ?? "unknown"}/${crypto.randomUUID()}.${ext}`;
+              const uploadResp = await fetch(`${supabaseUrl}/storage/v1/object/job-photos/${path}`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${serviceKey}`, "Content-Type": mimeType, "x-upsert": "true" },
+                body: bytes,
+              });
+              if (uploadResp.ok) {
+                publicUrls.push(`${supabaseUrl}/storage/v1/object/public/job-photos/${path}`);
+              }
+            }
+          } catch (_) { /* skip broken photo */ }
+        } else {
+          publicUrls.push(url);
+        }
+      }
+      const photoHtml = publicUrls.length
         ? `<div style="margin-top:16px"><p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.06em">Before Photos</p><div style="display:flex;gap:10px;flex-wrap:wrap">${
-            photos.map(url =>
-              `<a href="${url}" target="_blank" style="display:block;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0"><img src="${url}" alt="Before photo" style="display:block;width:160px;height:120px;object-fit:cover"></a>`
+            publicUrls.map(u =>
+              `<a href="${u}" target="_blank" style="display:block;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0"><img src="${u}" alt="Before photo" style="display:block;width:160px;height:120px;object-fit:cover"></a>`
             ).join("")
           }</div></div>`
-        : `<p style="margin:8px 0 0;font-size:13px;color:#999">No before photos attached.</p>`;
+        : photos.length
+          ? `<p style="margin:8px 0 0;font-size:13px;color:#999">${photos.length} before photo${photos.length>1?"s":""} saved — <a href="https://proservhomes.co/admin/" style="color:#F26310">view in admin portal</a>.</p>`
+          : `<p style="margin:8px 0 0;font-size:13px;color:#999">No before photos attached.</p>`;
 
       msgs.push({
         to: adminEmail,

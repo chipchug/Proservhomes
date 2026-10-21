@@ -887,6 +887,7 @@ function initApp(){
   try{renderHistory();}catch(e){console.error('[PSH] renderHistory',e);}
   try{loadPropData();}catch(e){console.error('[PSH] loadPropData',e);}
   try{selectedSvc='Gutter Cleaning';renderSvcPanel('Gutter Cleaning');}catch(e){console.error('[PSH] renderSvcPanel',e);}
+  try{_startBroadRealtime(USER.email||_homePhone);}catch(e){console.error('[PSH] realtime',e);}
   } catch(e){ console.error('[PSH] initApp crash:',e); }
 }
 
@@ -931,28 +932,32 @@ function renderTracker(){
 }
 
 function _startTrackRealtime(jobId){
-  if(_trackChannel) return; // already subscribed
-  if(!_sb) return;
-  _trackChannel = _sb.channel('job-track-'+jobId)
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'jobs',filter:'id=eq.'+jobId},function(payload){
+  // no-op: broadJobChannel already watches all jobs for this user
+}
+
+function _stopTrackRealtime(){
+  // no-op
+}
+
+// Broad subscription: watches ALL jobs for this homeowner — started once at login
+var _broadJobChannel = null;
+function _startBroadRealtime(email){
+  if(_broadJobChannel || !_sb || !email) return;
+  _broadJobChannel = _sb.channel('hw-jobs-'+email.replace(/[^a-z0-9]/gi,'_'))
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'jobs',filter:'email=eq.'+email},function(payload){
       var updated = payload.new;
       if(!updated) return;
-      var idx = JOBS.findIndex(function(j){return j.id===jobId;});
+      var idx = JOBS.findIndex(function(j){return j.id===updated.id;});
       if(idx>=0){
         JOBS[idx].status = updated.status||JOBS[idx].status;
         JOBS[idx].tech   = updated.tech||JOBS[idx].tech;
+      } else if(updated.id){
+        JOBS.push({id:updated.id,svc:updated.service||'',date:updated.date||'',time:updated.time||'',addr:updated.address||'',price:Number(updated.price)||0,status:updated.status||'Scheduled',tech:updated.tech||'ProServ Crew',notes:updated.notes||'',beforePhoto:updated.before_photo||null,afterPhoto:updated.after_photo||null});
       }
       renderTracker();
       renderHome();
     })
     .subscribe();
-}
-
-function _stopTrackRealtime(){
-  if(_trackChannel && _sb){
-    _sb.removeChannel(_trackChannel);
-    _trackChannel = null;
-  }
 }
 
 function renderHome(){
