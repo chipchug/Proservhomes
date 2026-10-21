@@ -1256,20 +1256,13 @@ async function submitRequest(){
   switchTab('home');
 }
 
-// ─── SMS NOTIFICATION HELPER ─────────────────────────────────────────────
-// Calls the send-sms Supabase edge function. Fire-and-forget — errors are
-// logged to console only so they never break the user-facing flow.
+// ─── NOTIFICATION HELPER (SMS + Email) ────────────────────────────────────
+// Fire-and-forget — errors logged to console only, never block the UX.
 function sendSmsNotification(payload){
   if(!_sb) return;
-  fetch(SURL+'/functions/v1/send-sms',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
-    body:JSON.stringify(payload)
-  }).then(function(r){return r.json();}).then(function(d){
-    console.log('[SMS]',payload.event,'sent:',d.sent,'failed:',d.failed);
-  }).catch(function(e){
-    console.warn('[SMS] notification error:',e);
-  });
+  var opts={method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify(payload)};
+  fetch(SURL+'/functions/v1/send-sms',opts).then(function(r){return r.json();}).then(function(d){console.log('[SMS]',payload.event,'sent:',d.sent,'failed:',d.failed);}).catch(function(e){console.warn('[SMS] error:',e);});
+  fetch(SURL+'/functions/v1/send-email',opts).then(function(r){return r.json();}).then(function(d){console.log('[Email]',payload.event,'sent:',d.sent,'failed:',d.failed);}).catch(function(e){console.warn('[Email] error:',e);});
 }
 
 // ─── OPEN NEXT JOB ───────────────────────────────────────────────────────
