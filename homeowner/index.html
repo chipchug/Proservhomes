@@ -27,6 +27,28 @@
 .cal-wrap{padding:16px 16px 0}
 .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .cal-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;letter-spacing:.03em;text-transform:uppercase}
+/* ── JOB TRACKING ────────────────────────────────────────────────────── */
+.track-card{background:linear-gradient(135deg,#1c2a1c 0%,#1a1a1a 100%);border:1.5px solid var(--green);border-radius:16px;padding:18px 16px;position:relative;overflow:hidden}
+.track-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(31,155,42,0.12) 0%,transparent 60%);pointer-events:none}
+.track-pulse{display:inline-flex;align-items:center;gap:7px;background:rgba(31,155,42,0.18);border:1px solid rgba(31,155,42,0.4);border-radius:100px;padding:4px 12px 4px 8px;font-size:12px;font-weight:700;color:var(--green);letter-spacing:.04em;margin-bottom:14px}
+.track-pulse::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--green);animation:tpulse 1.6s ease-in-out infinite}
+@keyframes tpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.track-job-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:.02em;color:var(--fg);line-height:1.1;margin-bottom:4px}
+.track-meta{font-size:12px;color:var(--fg-2);margin-bottom:18px}
+.track-steps{display:flex;align-items:center;gap:0;margin-bottom:20px}
+.track-step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;z-index:1}
+.track-step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid var(--border-2);background:var(--surface-2);color:var(--fg-3);transition:all .3s;position:relative;z-index:1}
+.track-step.done .track-step-dot{background:var(--green);border-color:var(--green);color:#fff}
+.track-step.active .track-step-dot{background:var(--orange);border-color:var(--orange);color:#fff;box-shadow:0 0 0 4px rgba(242,99,16,0.22)}
+.track-step-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin-top:7px;text-align:center}
+.track-step.done .track-step-label{color:var(--green)}
+.track-step.active .track-step-label{color:var(--orange)}
+.track-connector{flex:1;height:2px;background:var(--border-2);margin-top:-18px;position:relative;z-index:0;transition:background .3s}
+.track-connector.done{background:var(--green)}
+.track-tech{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border-2);border-radius:10px;padding:10px 12px}
+.track-tech-av{width:38px;height:38px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.track-tech-name{font-size:14px;font-weight:700;color:var(--fg)}
+.track-tech-sub{font-size:12px;color:var(--fg-2);margin-top:1px}
 .cal-nav{display:flex;gap:6px}
 .cal-nav button{background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
@@ -398,6 +420,9 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <h1 id="greetName">Good morning, Sarah</h1>
         <div class="sub" id="greetSub">Here's what's coming up at your property.</div>
       </div>
+
+      <!-- LIVE JOB TRACKER (shown when a job is In Progress) -->
+      <div id="liveTrackWrap" style="display:none;padding:12px 16px 0"></div>
 
       <div class="next-svc" id="nextSvcWrap">
         <!-- filled by renderHome() -->
@@ -866,7 +891,74 @@ function initApp(){
 }
 
 // ─── HOME ────────────────────────────────────────────────────────────────
+// ── LIVE JOB TRACKER ──────────────────────────────────────────────────────
+var _trackChannel = null;
+
+function renderTracker(){
+  var wrap = document.getElementById('liveTrackWrap');
+  if(!wrap) return;
+  var active = JOBS.find(function(j){return j.status==='In Progress';});
+  if(!active){
+    wrap.style.display='none';
+    wrap.innerHTML='';
+    _stopTrackRealtime();
+    return;
+  }
+  wrap.style.display='block';
+  var d = active.date ? new Date(active.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) : '';
+  var timeStr = active.time ? ' · '+active.time : '';
+  // steps: Scheduled(done), In Progress(active), Complete(pending)
+  wrap.innerHTML = '<div class="track-card">'
+    +'<div class="track-pulse">🔧 In Progress</div>'
+    +'<div class="track-job-title">'+esc(active.svc)+'</div>'
+    +'<div class="track-meta">'+esc(d)+esc(timeStr)+(active.addr?(' · '+esc(active.addr)):'')+'</div>'
+    // stepper
+    +'<div class="track-steps">'
+      +'<div class="track-step done"><div class="track-step-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="track-step-label">Scheduled</div></div>'
+      +'<div class="track-connector done"></div>'
+      +'<div class="track-step active"><div class="track-step-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="track-step-label">Working</div></div>'
+      +'<div class="track-connector"></div>'
+      +'<div class="track-step"><div class="track-step-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="track-step-label">Done</div></div>'
+    +'</div>'
+    // tech row
+    +'<div class="track-tech">'
+      +'<div class="track-tech-av">👷</div>'
+      +'<div><div class="track-tech-name">'+esc(active.tech||'ProServ Crew')+'</div>'
+        +'<div class="track-tech-sub">Your technician is on-site</div></div>'
+    +'</div>'
+  +'</div>';
+  _startTrackRealtime(active.id);
+}
+
+function _startTrackRealtime(jobId){
+  if(_trackChannel) return; // already subscribed
+  if(!_sb) return;
+  _trackChannel = _sb.channel('job-track-'+jobId)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'jobs',filter:'id=eq.'+jobId},function(payload){
+      var updated = payload.new;
+      if(!updated) return;
+      var idx = JOBS.findIndex(function(j){return j.id===jobId;});
+      if(idx>=0){
+        JOBS[idx].status = updated.status||JOBS[idx].status;
+        JOBS[idx].tech   = updated.tech||JOBS[idx].tech;
+      }
+      renderTracker();
+      renderHome();
+    })
+    .subscribe();
+}
+
+function _stopTrackRealtime(){
+  if(_trackChannel && _sb){
+    _sb.removeChannel(_trackChannel);
+    _trackChannel = null;
+  }
+}
+
 function renderHome(){
+  renderTracker();
+  var active = JOBS.find(function(j){return j.status==='In Progress';});
+  if(active){document.getElementById('greetSub').textContent='Your '+active.svc+' is in progress right now.';}
   var next = JOBS.find(function(j){return j.status==='Scheduled';});
   var wrap = document.getElementById('nextSvcWrap');
   if(next){
