@@ -214,6 +214,11 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
 /* PROFILE TAB */
 .prof-hero{background:var(--surface);border-bottom:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:10px}
 .prof-av{width:68px;height:68px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:#fff}
+.prof-av-wrap{position:relative;width:68px;height:68px;cursor:pointer;flex-shrink:0}
+.prof-av-wrap .prof-av{width:100%;height:100%}
+.prof-av-wrap img{width:68px;height:68px;border-radius:50%;object-fit:cover;display:block}
+.prof-av-cam{position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--orange);border:2px solid var(--surface);display:flex;align-items:center;justify-content:center}
+.prof-av-cam svg{display:block}
 .prof-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:.02em}
 .prof-phone{font-size:13px;color:var(--fg-2)}
 .prof-list{padding:16px}
@@ -547,7 +552,11 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <!-- PROFILE -->
     <div id="tab-profile" class="tab-content">
       <div class="prof-hero">
-        <div class="prof-av" id="profAv">S</div>
+        <div class="prof-av-wrap" onclick="document.getElementById('profAvatarInput').click()" title="Change photo">
+          <div class="prof-av" id="profAv">S</div>
+          <div class="prof-av-cam"><svg width="11" height="11" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+        </div>
+        <input type="file" id="profAvatarInput" accept="image/*" style="display:none" onchange="uploadProfilePhoto(this)">
         <div class="prof-name" id="profName">Sarah Martinez</div>
         <div class="prof-phone" id="profPhone">(732) 555-0177</div>
       </div>
@@ -829,8 +838,16 @@ function initApp(){
   function _setText(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
   _setText('greetName', g+', '+USER.first);
   _setText('hName', USER.first+' M.');
-  _setText('hInit', USER.init);
-  _setText('profAv', USER.init);
+  // Avatar — show photo if previously uploaded, else initials
+  var _savedAvatar = null;
+  try{_savedAvatar = localStorage.getItem('ps_avatar_url');}catch(e){}
+  if(_savedAvatar){ _applyAvatar(_savedAvatar); }
+  else {
+    // Try auth user_metadata for avatar_url
+    if(_sb){_sb.auth.getUser().then(function(r){var u=r&&r.data&&r.data.user;var av=u&&u.user_metadata&&u.user_metadata.avatar_url;if(av){try{localStorage.setItem('ps_avatar_url',av);}catch(e){}_applyAvatar(av);}});}
+    _setText('hInit', USER.init);
+    _setText('profAv', USER.init);
+  }
   _setText('profName', USER.name);
   _setText('profPhone', USER.phone||'');
   _setText('profAddr', USER.addr||'');
@@ -853,7 +870,10 @@ function renderHome(){
   if(next){
     var d = new Date(next.date+'T12:00:00');
     var ds = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-    wrap.innerHTML = '<div class="card"><div class="ns-eyebrow">Next Service</div><div class="ns-title">'+next.svc+'</div>'
+    var _nsCat = next.svc ? next.svc.split(' – ')[0] : '';
+    var _nsImg = SVC_IMAGES[_nsCat] || '';
+    var _nsImgHtml = _nsImg ? '<div style="margin:-16px -16px 14px;border-radius:10px 10px 0 0;overflow:hidden;height:140px"><img src="'+_nsImg+'" alt="'+esc(_nsCat)+'" style="width:100%;height:100%;object-fit:cover;display:block"></div>' : '';
+    wrap.innerHTML = '<div class="card">'+_nsImgHtml+'<div class="ns-eyebrow">Next Service</div><div class="ns-title">'+next.svc+'</div>'
       +'<div class="ns-row"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>'+ds+'</div>'
       +'<div class="ns-row"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'+next.time+'</div>'
       +'<div class="ns-row"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>'+next.addr+'</div>'
@@ -928,9 +948,13 @@ function renderHistory(){
     var dot = j.status==='Scheduled'?'sched':(j.status==='Requested'?'req':'done');
     var pill = j.status==='Scheduled'?'<span class="pill pill-sched">Scheduled</span>':(j.status==='Requested'?'<span class="pill pill-req">Requested</span>':'<span class="pill pill-done">Complete</span>');
     var isLast = i===JOBS.length-1;
+    var _tlCat = j.svc ? j.svc.split(' – ')[0] : '';
+    var _tlImg = SVC_IMAGES[_tlCat] || '';
+    var _tlImgHtml = _tlImg ? '<div style="margin:-13px -13px 11px;border-radius:10px 10px 0 0;overflow:hidden;height:110px"><img src="'+_tlImg+'" alt="'+esc(_tlCat)+'" style="width:100%;height:100%;object-fit:cover;display:block"></div>' : '';
     return '<div class="tl-item">'
       +'<div class="tl-dot-col"><div class="tl-dot '+dot+'"></div>'+(isLast?'':'<div class="tl-line"></div>')+'</div>'
       +'<div class="tl-body"><div class="tl-card" onclick="openSheet(\'' + j.id + '\')">'
+      +_tlImgHtml
       +'<div class="tl-top"><div class="tl-svc">'+j.svc+'</div>'+pill+'</div>'
       +'<div class="tl-meta">'+ds+' · '+j.tech+'</div>'
       +'<div class="tl-foot"><div class="tl-price">$'+j.price+'</div>'
@@ -1518,6 +1542,40 @@ function payOnline(jobId){
     showToast('Could not connect to payment service');
     if(btn){btn.disabled=false;btn.innerHTML='💳&nbsp; Pay Online';}
   });
+}
+
+// ─── AVATAR ──────────────────────────────────────────────────────────────
+function _applyAvatar(url){
+  var wrap=document.getElementById('profAv');
+  var hInit=document.getElementById('hInit');
+  if(wrap){wrap.innerHTML='<img src="'+url+'" alt="Profile photo" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">';}
+  if(hInit){hInit.innerHTML='<img src="'+url+'" alt="Profile photo" style="width:30px;height:30px;border-radius:50%;object-fit:cover;display:block">';}
+}
+
+async function uploadProfilePhoto(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(!_sb){showToast('Not signed in');return;}
+  try{
+    var userRes=await _sb.auth.getUser();
+    var userId=userRes&&userRes.data&&userRes.data.user&&userRes.data.user.id;
+    if(!userId){showToast('Not signed in');return;}
+    var ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+    var path='homeowner/'+userId+'.'+ext;
+    var upRes=await _sb.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});
+    if(upRes.error){showToast('Upload failed: '+upRes.error.message);return;}
+    var pubRes=_sb.storage.from('avatars').getPublicUrl(path);
+    var publicUrl=pubRes&&pubRes.data&&pubRes.data.publicUrl;
+    if(!publicUrl){showToast('Could not get photo URL');return;}
+    // Add cache-bust so UI refreshes even if same filename
+    var displayUrl=publicUrl+'?t='+Date.now();
+    await _sb.auth.updateUser({data:{avatar_url:publicUrl}});
+    try{localStorage.setItem('ps_avatar_url',displayUrl);}catch(e){}
+    _applyAvatar(displayUrl);
+    showToast('Profile photo updated ✓');
+  }catch(e){showToast('Upload failed');}
+  // Reset input so same file can be re-selected
+  input.value='';
 }
 
 // ─── TOAST ───────────────────────────────────────────────────────────────

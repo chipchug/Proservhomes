@@ -87,7 +87,15 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 #appShell{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
 .app-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top,0px));background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
 .user-pill{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:100px;padding:4px 10px 4px 4px;cursor:pointer}
-.uavatar{width:30px;height:30px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;flex-shrink:0}
+.uavatar{width:30px;height:30px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;flex-shrink:0;overflow:hidden}
+.ct-av-hero{display:flex;flex-direction:column;align-items:center;padding:28px 16px 20px;border-bottom:1px solid var(--border)}
+.ct-av-wrap{position:relative;width:80px;height:80px;cursor:pointer;flex-shrink:0;margin-bottom:12px}
+.ct-av-wrap .ct-av{width:80px;height:80px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;overflow:hidden}
+.ct-av-wrap img{width:80px;height:80px;border-radius:50%;object-fit:cover;display:block}
+.ct-av-cam{position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--orange);border:2.5px solid var(--surface);display:flex;align-items:center;justify-content:center}
+.ct-av-cam svg{display:block}
+.ct-av-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;color:var(--fg)}
+.ct-av-sub{font-size:13px;color:var(--fg-3);margin-top:2px}
 .uname{font-size:13px;font-weight:600;color:var(--fg)}
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .scroll-inner{padding-bottom:100px}
@@ -409,6 +417,16 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 
       <!-- PROFILE -->
       <div id="tabProfile" class="tab-pane">
+        <!-- Profile Photo -->
+        <div class="ct-av-hero">
+          <div class="ct-av-wrap" onclick="document.getElementById('ctAvatarInput').click()" title="Change photo">
+            <div class="ct-av" id="ctAv">J</div>
+            <div class="ct-av-cam"><svg width="13" height="13" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+          </div>
+          <input type="file" id="ctAvatarInput" accept="image/*" style="display:none" onchange="uploadContractorPhoto(this)">
+          <div class="ct-av-name" id="ctAvName">Contractor</div>
+          <div class="ct-av-sub" id="ctAvSub">Tap photo to update</div>
+        </div>
         <!-- Bank Account / Stripe Connect -->
         <div style="padding:16px 16px 0">
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:10px">Bank Account</div>
@@ -776,6 +794,38 @@ async function verifyCode(){
 }
 function doLogout(){try{localStorage.removeItem('ps_c_session');}catch(e){}cSess=null;cc=null;_sb.auth.signOut().finally(function(){window.location.href='https://proservhomes.co/contractor/';});}
 
+function _applyContractorAvatar(url){
+  var ctAv=document.getElementById('ctAv');
+  var hInit=document.getElementById('hInit');
+  if(ctAv){ctAv.innerHTML='<img src="'+url+'" alt="Profile photo" style="width:80px;height:80px;border-radius:50%;object-fit:cover;display:block">';}
+  if(hInit){hInit.innerHTML='<img src="'+url+'" alt="Profile photo" style="width:30px;height:30px;border-radius:50%;object-fit:cover;display:block">';}
+}
+
+async function uploadContractorPhoto(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(!_sb){alert('Not signed in');return;}
+  try{
+    var userRes=await _sb.auth.getUser();
+    var userId=userRes&&userRes.data&&userRes.data.user&&userRes.data.user.id;
+    if(!userId){alert('Not signed in');return;}
+    var ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+    var path='contractor/'+userId+'.'+ext;
+    var upRes=await _sb.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});
+    if(upRes.error){alert('Upload failed: '+upRes.error.message);return;}
+    var pubRes=_sb.storage.from('avatars').getPublicUrl(path);
+    var publicUrl=pubRes&&pubRes.data&&pubRes.data.publicUrl;
+    if(!publicUrl){alert('Could not get photo URL');return;}
+    var displayUrl=publicUrl+'?t='+Date.now();
+    await _sb.auth.updateUser({data:{avatar_url:publicUrl}});
+    try{localStorage.setItem('ps_ct_avatar_url',displayUrl);}catch(e){}
+    _applyContractorAvatar(displayUrl);
+    // Show success
+    var sub=document.getElementById('ctAvSub');if(sub)sub.textContent='Photo updated ✓';setTimeout(function(){if(sub)sub.textContent='Tap photo to update';},2500);
+  }catch(e){alert('Upload failed');}
+  input.value='';
+}
+
 async function enterApp(){
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
@@ -783,7 +833,15 @@ async function enterApp(){
   if(cc){
     var jr=await _sb.from('jobs').select('*').eq('contractor_id',cc.id).order('date',{ascending:false});
     jobs=jr.data?jr.data.map(jr2l):[];
-    document.getElementById('hInit').textContent=(cc.name||'?')[0].toUpperCase();document.getElementById('hName').textContent=cc.name||'Contractor';
+    var _ctInitial=(cc.name||'?')[0].toUpperCase();
+    document.getElementById('hName').textContent=cc.name||'Contractor';
+    document.getElementById('hInit').textContent=_ctInitial;
+    var _ctAv=document.getElementById('ctAv');if(_ctAv)_ctAv.textContent=_ctInitial;
+    var _ctAvN=document.getElementById('ctAvName');if(_ctAvN)_ctAvN.textContent=cc.name||'Contractor';
+    // Load saved avatar
+    var _savedCtAvatar=null;try{_savedCtAvatar=localStorage.getItem('ps_ct_avatar_url');}catch(e){}
+    if(_savedCtAvatar){_applyContractorAvatar(_savedCtAvatar);}
+    else{_sb.auth.getUser().then(function(r){var u=r&&r.data&&r.data.user;var av=u&&u.user_metadata&&u.user_metadata.avatar_url;if(av){try{localStorage.setItem('ps_ct_avatar_url',av);}catch(e){}_applyContractorAvatar(av);}});}
   }
   var now=new Date();document.getElementById('homeDateLine').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   rHome();rJobs();rEarn();rMs();rStripeStatus();
