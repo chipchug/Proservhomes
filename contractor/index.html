@@ -617,30 +617,42 @@ function rStripeStatus(){
 }
 async function _stripeOnboard(){
   var btn = document.getElementById('stripeConnectBtn');
+  var subEl = document.getElementById('stripeStatusSub');
   if(btn){ btn.disabled=true; btn.textContent='Connecting…'; }
+  function _btnErr(msg){
+    if(btn){ btn.disabled=false; btn.style.background='#c0392b'; btn.textContent='⚠️ '+msg.slice(0,50); setTimeout(function(){ btn.style.background='#635BFF'; btn.textContent='Connect Bank Account'; },5000); }
+    if(subEl) subEl.textContent='Error: '+msg;
+    console.error('[stripe-onboard]', msg);
+  }
   try {
     var ctId = cc && cc.id ? cc.id : null;
-    if(!ctId){ toast('Session error — please log out and back in'); if(btn){btn.disabled=false;btn.textContent='Connect Bank Account';} return; }
+    if(!ctId){ _btnErr('No session — log out and back in'); return; }
     var resp = await fetch(SURL+'/functions/v1/stripe-onboard', {
       method:'POST',
       headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
       body: JSON.stringify({contractor_id: ctId})
     });
+    // Show raw status if not OK
+    if(!resp.ok){
+      var rawText = await resp.text();
+      _btnErr('HTTP '+resp.status+': '+rawText.slice(0,80));
+      return;
+    }
     var data = await resp.json();
-    if(data.error){ toast('⚠️ '+data.error); if(btn){btn.disabled=false;btn.textContent='Connect Bank Account';} return; }
+    if(data.error){ _btnErr(data.error); return; }
     if(data.already_onboarded){
       if(cc) cc.stripeOnboarded=true;
       rStripeStatus();
       return;
     }
     if(data.url){
-      // Redirect to Stripe onboarding — they'll come back to /contractor/?stripe=success
+      if(subEl) subEl.textContent='Redirecting to Stripe…';
       window.location.href = data.url;
+    } else {
+      _btnErr('No URL returned from server');
     }
   } catch(e){
-    console.warn('[stripe-onboard] error', e);
-    toast('Connection error — try again');
-    if(btn){ btn.disabled=false; btn.textContent='Connect Bank Account'; }
+    _btnErr(e && e.message ? e.message.slice(0,60) : 'Network error');
   }
 }
 // Check stripe=success in URL after returning from Stripe onboarding
