@@ -892,13 +892,32 @@ async function savePhotos(){
   }
 
   try{
+    // Ensure valid Supabase auth session — RLS UPDATE policy requires authenticated role
+    var sess = await _sb.auth.getSession();
+    if(!sess.data || !sess.data.session){
+      // Try refresh once
+      var ref = await _sb.auth.refreshSession();
+      if(!ref.data || !ref.data.session){
+        // Session truly gone — force re-login
+        toast('⚠️ Session expired — please log in again');
+        if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
+        setTimeout(function(){doLogout();},1500);
+        return;
+      }
+    }
     var dbUpdate={};
     if(bUrl)dbUpdate.before_photo=bUrl;
     if(aUrl)dbUpdate.after_photo=aUrl;
-    // Match admin pattern exactly — no .select() so we don't need SELECT RLS to match
     var upd=await _sb.from('jobs').update(dbUpdate).eq('id',jobId);
     if(upd.error){
       toast('⚠️ '+upd.error.message);
+      if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
+      return;
+    }
+    // Verify the row was actually updated (catches silent RLS blocks)
+    var verify=await _sb.from('jobs').select('id').eq('id',jobId).limit(1);
+    if(!verify.data||!verify.data.length){
+      toast('⚠️ Not saved — RLS may be blocking. Try logging out and back in.');
       if(btn){btn.disabled=false;btn.innerHTML='💾 Save Photos to Job';}
       return;
     }
@@ -1003,9 +1022,17 @@ if(cSess){
           cSess=null;
           // Login screen is already visible by default
         }
-      }).catch(function(){ enterApp(); }); // fallback: enter anyway
+      }).catch(function(e){
+        // Network error on refresh — still enter but session may be invalid
+        console.warn('[PSC] session refresh network error, entering anyway',e);
+        enterApp();
+      });
     }
-  }).catch(function(){ enterApp(); }); // network issue: enter anyway
+  }).catch(function(e){
+    // Network error on getSession — still enter but session may be invalid
+    console.warn('[PSC] getSession network error, entering anyway',e);
+    enterApp();
+  });
 }
 
 (function(){
