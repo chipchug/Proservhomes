@@ -899,7 +899,7 @@ async function enterApp(){
   if(typeof cobShowIfNew==='function') cobShowIfNew();
 }
 
-function swTab(n,el){['Home','Jobs','Earnings','Profile'].forEach(function(t){var el2=document.getElementById('tab'+t);if(el2)el2.classList.remove('active')});var tp=document.getElementById('tab'+n);if(tp)tp.classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;if(n==='Jobs'){var jb=document.getElementById('ctJobsBadge');if(jb){jb.classList.add('hidden');jb.textContent='';}}if(n==='Profile'){pfLoadProfile();}}}
+function swTab(n,el){['Home','Jobs','Earnings','Profile'].forEach(function(t){var el2=document.getElementById('tab'+t);if(el2)el2.classList.remove('active')});var tp=document.getElementById('tab'+n);if(tp)tp.classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;if(n==='Jobs'){var jb=document.getElementById('ctJobsBadge');if(jb){jb.classList.add('hidden');jb.textContent='';}}if(n==='Profile'){pfLoadProfile();}}
 function _updateJobsBadge(){var newJ=mj().filter(function(j){return j.status==='New'||j.status==='Scheduled'});var badge=document.getElementById('ctJobsBadge');if(!badge)return;if(newJ.length){badge.textContent=newJ.length;badge.classList.remove('hidden');}else{badge.classList.add('hidden');}}
 function mj(){return jobs.filter(function(j){return cc&&j.contractorId===cc.id})}
 
