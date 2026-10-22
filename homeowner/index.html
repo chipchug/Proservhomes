@@ -611,12 +611,8 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
           </div>
         </div>
         <div class="prof-item">
-          <div class="pi-left"><div class="pi-icon">🗓️</div>
-          </div>
-        </div>
-        <div class="prof-item">
           <div class="pi-left"><div class="pi-icon">📝</div>
-            <div><div class="pi-lbl">Notes for Techs</div><div class="pi-sub" id="vPropNotes">Gate code: 1234. Dog in backyard.</div></div>
+            <div><div class="pi-lbl">Notes for Techs</div><div class="pi-sub" id="vPropNotes">—</div></div>
           </div>
         </div>
       </div>
@@ -661,14 +657,13 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <div class="prof-list">
         <div class="prof-item">
           <div class="pi-left"><div class="pi-icon">📅</div>
-            <div><div class="pi-lbl">Member Since</div><div class="pi-sub">March 2025</div></div>
+            <div><div class="pi-lbl">Member Since</div><div class="pi-sub" id="profMemberSince">—</div></div>
           </div>
         </div>
         <div class="prof-item">
           <div class="pi-left"><div class="pi-icon">🔔</div>
             <div><div class="pi-lbl">SMS Reminders</div><div class="pi-sub">On — 24h before service</div></div>
           </div>
-          <svg class="pi-chev" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
         <div class="prof-item">
           <div class="pi-left"><div class="pi-icon">📊</div>
@@ -887,6 +882,14 @@ function initApp(){
   var total = done.reduce(function(s,j){return s+j.price;},0);
   var pe=document.getElementById('profTotal'); if(pe) pe.textContent=done.length+' completed';
   var ps=document.getElementById('profSpent'); if(ps) ps.textContent='$'+total.toLocaleString()+' lifetime';
+  // Member Since
+  var ms=document.getElementById('profMemberSince');
+  if(ms && USER.createdAt){
+    var d=new Date(USER.createdAt);
+    ms.textContent=d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  }
+  // Property fields
+  var vn=document.getElementById('vPropNotes'); if(vn) vn.textContent=USER.techNotes||'—';
   try{renderHome();}catch(e){console.error('[PSH] renderHome',e);}
   try{renderHistory();}catch(e){console.error('[PSH] renderHistory',e);}
   try{loadPropData();}catch(e){console.error('[PSH] loadPropData',e);}
@@ -1492,12 +1495,16 @@ function savePropEdit(){
   showToast('Property info saved');
 }
 function loadPropData(){
-  var p = lsGet('prop_data');
-  if(!p) return;
-  if(p.addr)  {var el=document.getElementById('vPropAddr');  if(el) el.textContent=p.addr;}
-  if(p.type)  {var el=document.getElementById('vPropType');  if(el) el.textContent=p.type;}
-  if(p.sqft)  {var el=document.getElementById('vPropSqft');  if(el) el.textContent=p.sqft+' sq ft';}
-  if(p.notes) {var el=document.getElementById('vPropNotes'); if(el) el.textContent=p.notes;}
+  // Merge localStorage (most current edits) with USER fields loaded from DB
+  var p = lsGet('prop_data') || {};
+  var addr  = p.addr  || USER.addr     || '';
+  var type  = p.type  || USER.homeType || '';
+  var sqft  = p.sqft  || USER.sqft     || '';
+  var notes = p.notes || USER.techNotes|| '';
+  var ea=document.getElementById('vPropAddr');  if(ea) ea.textContent=addr||'—';
+  var et=document.getElementById('vPropType');  if(et) et.textContent=type||'—';
+  var es=document.getElementById('vPropSqft');  if(es) es.textContent=sqft?(sqft+' sq ft'):'—';
+  var en=document.getElementById('vPropNotes'); if(en) en.textContent=notes||'—';
 }
 
 // ─── BILLING ───────────────────────────────────────────────────────────────
@@ -1913,7 +1920,7 @@ function _goToProfileSetup(email){
     if(hr.data && hr.data.length){
       // Returning user — go straight to dashboard, skip profileSetup entirely
       var hw=hr.data[0]; var name=hw.name||'';
-      USER={name:name||email,first:name?name.split(' ')[0]:email.split('@')[0],email:email,addr:hw.address||'',phone:hw.phone||'',init:(name||email)[0].toUpperCase()};
+      USER={name:name||email,first:name?name.split(' ')[0]:email.split('@')[0],email:email,addr:hw.address||'',phone:hw.phone||'',init:(name||email)[0].toUpperCase(),createdAt:hw.created_at||null,homeType:hw.home_type||'',sqft:hw.sqft||'',techNotes:hw.tech_notes||''};
       _sb.from('jobs').select('*').eq('email',email).order('date',{ascending:false}).then(function(jr){
         if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
         _showScreen('appShell');
@@ -2216,7 +2223,7 @@ async function obSaveProfile(skip) {
         { onConflict: 'email' }
       );
       if (!res.error) {
-        USER = { name: name, first: first || name, email: _homePhone, addr: fullAddr, phone: phone, init: (name[0] || '?').toUpperCase() };
+        USER = { name: name, first: first || name, email: _homePhone, addr: fullAddr, phone: phone, init: (name[0] || '?').toUpperCase(), createdAt: new Date().toISOString(), homeType: homeType||'', sqft: sqft||'', techNotes: notes||'' };
       }
     } catch(e) { console.warn('[OB] profile save error', e); }
     if (btn) { btn.disabled = false; btn.textContent = 'Save & Continue →'; }
