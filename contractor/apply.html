@@ -70,12 +70,14 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
 .perks{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);max-width:720px;margin:0 auto;padding:0 20px;}
 .perks{padding:0;margin:0 max(20px,env(safe-area-inset-left,0px));max-width:none;}
 @media(min-width:720px){.perks{max-width:680px;margin:0 auto;}}
-.perk{background:#0a0a0a;padding:28px 22px;border:none;position:relative;}
+.perk{background:#0a0a0a;padding:0;border:none;position:relative;overflow:hidden;}
 .perk::after{content:'';position:absolute;inset:0;border:1px solid rgba(255,255,255,.07);}
-.perk-icon{font-size:22px;margin-bottom:14px;display:block;line-height:1;}
+.perk-img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;margin-bottom:0;}
+.perk-body-wrap{padding:20px 22px 24px;}
 .perk-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:.01em;text-transform:uppercase;color:#fff;margin-bottom:6px;line-height:1.1;}
 .perk-body{font-size:13px;color:rgba(255,255,255,.52);line-height:1.55;}
-.perk-accent{display:block;width:24px;height:2px;background:var(--green);margin-bottom:14px;border-radius:2px;}
+.perk-accent{display:block;width:24px;height:2px;background:var(--green);margin-bottom:12px;border-radius:2px;}
+.perk{background:#0a0a0a;padding:0;}
 
 /* ── Requirements section ── */
 .standard-wrap{background:#050505;padding:64px 0 0;border-top:1px solid rgba(255,255,255,.07);}
@@ -171,40 +173,52 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
     </div>
     <div class="perks">
       <div class="perk">
-        <span class="perk-accent"></span>
-        <div class="perk-icon">📲</div>
-        <div class="perk-title">Jobs come to you</div>
-        <div class="perk-body">Receive job requests instantly. First Pro to accept wins — no bidding wars.</div>
+        <img class="perk-img" src="img/perk-jobs-come-to-you.jpg" alt="Jobs come to you" loading="lazy">
+        <div class="perk-body-wrap">
+          <span class="perk-accent"></span>
+          <div class="perk-title">Jobs come to you</div>
+          <div class="perk-body">Receive job requests instantly. First Pro to accept wins — no bidding wars.</div>
+        </div>
       </div>
       <div class="perk">
-        <span class="perk-accent"></span>
-        <div class="perk-icon">💵</div>
-        <div class="perk-title">Fast payouts</div>
-        <div class="perk-body">Request your earnings any time. Direct deposit, no waiting for checks.</div>
+        <img class="perk-img" src="img/perk-fast-payouts.jpg" alt="Fast payouts" loading="lazy">
+        <div class="perk-body-wrap">
+          <span class="perk-accent"></span>
+          <div class="perk-title">Fast payouts</div>
+          <div class="perk-body">Request your earnings any time. Direct deposit, no waiting for checks.</div>
+        </div>
       </div>
       <div class="perk">
-        <span class="perk-accent"></span>
-        <div class="perk-icon">📅</div>
-        <div class="perk-title">Your schedule</div>
-        <div class="perk-body">Accept or pass on any job. Work as much or as little as you want.</div>
+        <img class="perk-img" src="img/perk-your-schedule.jpg" alt="Your schedule" loading="lazy">
+        <div class="perk-body-wrap">
+          <span class="perk-accent"></span>
+          <div class="perk-title">Your schedule</div>
+          <div class="perk-body">Accept or pass on any job. Work as much or as little as you want.</div>
+        </div>
       </div>
       <div class="perk">
-        <span class="perk-accent"></span>
-        <div class="perk-icon">🏘️</div>
-        <div class="perk-title">Real homeowners</div>
-        <div class="perk-body">Every job is a vetted NJ homeowner. No commercial jobs, no drama.</div>
+        <img class="perk-img" src="img/perk-real-homeowners.jpg" alt="Real homeowners" loading="lazy">
+        <div class="perk-body-wrap">
+          <span class="perk-accent"></span>
+          <div class="perk-title">Real homeowners</div>
+          <div class="perk-body">Every job is a vetted NJ homeowner. No commercial jobs, no drama.</div>
+        </div>
       </div>
       <div class="perk">
-        <span class="perk-accent"></span>
-        <div class="perk-icon">⭐</div>
-        <div class="perk-title">Build your rep</div>
-        <div class="perk-body">5-star reviews stay attached to your profile. Earn more as you grow.</div>
+        <img class="perk-img" src="img/perk-build-your-rep.jpg" alt="Build your rep" loading="lazy">
+        <div class="perk-body-wrap">
+          <span class="perk-accent"></span>
+          <div class="perk-title">Build your rep</div>
+          <div class="perk-body">5-star reviews stay attached to your profile. Earn more as you grow.</div>
+        </div>
       </div>
       <div class="perk">
-        <span class="perk-accent"></span>
-        <div class="perk-icon">🛡️</div>
-        <div class="perk-title">Backed by ProServ</div>
-        <div class="perk-body">We handle billing, scheduling, and support so you can focus on the work.</div>
+        <img class="perk-img" src="img/perk-backed-by-proserv.jpg" alt="Backed by ProServ" loading="lazy">
+        <div class="perk-body-wrap">
+          <span class="perk-accent"></span>
+          <div class="perk-title">Backed by ProServ</div>
+          <div class="perk-body">We handle billing, scheduling, and support so you can focus on the work.</div>
+        </div>
       </div>
     </div>
   </div>
