@@ -73,8 +73,9 @@ function emailHtml(opts: {
   jobDetails?: string;
   ctaUrl?: string;
   ctaLabel?: string;
+  extraHtml?: string;
 }): string {
-  const { headline, body, jobDetails = "", ctaUrl, ctaLabel } = opts;
+  const { headline, body, jobDetails = "", ctaUrl, ctaLabel, extraHtml = "" } = opts;
   const ctaHtml = ctaUrl
     ? `<div style="margin-top:24px"><a href="${ctaUrl}" style="display:inline-block;padding:13px 26px;background:#F26310;color:#fff;font-family:Arial,sans-serif;font-size:15px;font-weight:700;text-decoration:none;border-radius:8px">${ctaLabel ?? "View Portal"}</a></div>`
     : "";
@@ -104,6 +105,7 @@ function emailHtml(opts: {
           <p style="margin:0;font-size:15px;line-height:1.65;color:#555">${body}</p>
           ${jobHtml}
           ${ctaHtml}
+          ${extraHtml}
         </td></tr>
         <!-- FOOTER -->
         <tr><td style="padding:16px 28px 24px;border-top:1px solid #ebebeb">
@@ -405,6 +407,28 @@ async function buildEmails(payload: EmailPayload, adminEmail?: string): Promise<
     return msgs;
   }
 
+  // ── payment_link_sent ─────────────────────────────────────────────────────
+  if (event === "payment_link_sent") {
+    const amount = job?.amount ? formatCurrency(job.amount) : "the balance";
+    const svc = job?.service ?? "your service";
+    const payUrl = (payload as any).paymentUrl as string | undefined;
+    if (homeowner?.email) {
+      msgs.push({
+        to: homeowner.email,
+        recipient: "homeowner",
+        subject: `💳 Your payment link is ready — ${svc} · ProServ Homes`,
+        html: emailHtml({
+          headline: "Ready to complete your booking?",
+          body: `Hi ${homeowner?.name ?? "there"}, your payment link for <strong>${svc}</strong> (<strong>${amount}</strong>) is ready. Click the button below to pay securely via card — it only takes a minute.`,
+          ctaUrl: payUrl ?? "https://proservhomes.co/homeowner/",
+          ctaLabel: "Pay Securely Now",
+          extraHtml: payUrl ? `<p style="font-size:13px;color:#888;margin-top:12px">Or copy this link: <a href="${payUrl}" style="color:#f26310">${payUrl}</a></p>` : undefined,
+        }),
+      });
+    }
+    return msgs;
+  }
+
   // ── payout_request ────────────────────────────────────────────────────────
   if (event === "payout_request") {
     if (adminEmail) {
@@ -437,6 +461,102 @@ async function buildEmails(payload: EmailPayload, adminEmail?: string): Promise<
           body: `Your payout of <strong>${amount}</strong> has been processed and is on its way to your bank account. It typically arrives within 1–2 business days depending on your bank.`,
           ctaUrl: "https://proservhomes.co/contractor/",
           ctaLabel: "View My Earnings",
+        }),
+      });
+    }
+    return msgs;
+  }
+
+  // ── contractor_application_submitted ─────────────────────────────────────
+  if (event === "contractor_application_submitted") {
+    const applicant = (payload as any).applicant as { name: string; email: string } | undefined;
+    if (applicant?.email) {
+      msgs.push({
+        to: applicant.email,
+        recipient: "applicant",
+        subject: "🙌 Application received — ProServ Homes",
+        html: emailHtml({
+          headline: `You're in! We'll be in touch, ${applicant.name?.split(" ")[0] ?? "there"}.`,
+          body: `Thanks for applying to become a ProServ Pro! Your application has been received and our team will review it shortly.<br><br>We take pride in building a team of true professionals, and we look forward to learning more about you. Once we've had a chance to review your application, we'll follow up with next steps — so keep an eye on your inbox.`,
+          ctaUrl: "https://proservhomes.co/contractor/",
+          ctaLabel: "Learn About the Portal",
+        }),
+      });
+    }
+    if (adminEmail) {
+      msgs.push({
+        to: adminEmail,
+        recipient: "admin",
+        subject: `📋 New ProServ Pro Application — ${applicant?.name ?? "Applicant"}`,
+        html: emailHtml({
+          headline: "New ProServ Pro Application",
+          body: `<strong>${applicant?.name ?? "Someone"}</strong> has submitted an application to become a ProServ Pro.${applicant?.email ? `<br>Email: <a href="mailto:${applicant.email}" style="color:#F26310">${applicant.email}</a>` : ""}<br><br>Log into the admin portal to review the full application, including their experience, qualifications, and portfolio photos.`,
+          ctaUrl: "https://proservhomes.co/admin/",
+          ctaLabel: "Review Application",
+        }),
+      });
+    }
+    return msgs;
+  }
+
+  // ── contractor_application_denied ─────────────────────────────────────────
+  if (event === "contractor_application_denied") {
+    const applicant = (payload as any).applicant as { name: string; email: string } | undefined;
+    if (applicant?.email) {
+      msgs.push({
+        to: applicant.email,
+        recipient: "applicant",
+        subject: "Your ProServ Homes application — an update",
+        html: emailHtml({
+          headline: `Thanks for your interest, ${applicant.name?.split(" ")[0] ?? "there"}.`,
+          body: `Thank you for taking the time to apply to become a ProServ Pro. After careful review, we aren't moving forward with your application at this time — though this is not a reflection of your skills or character.<br><br>We keep all applications on file and often revisit them as our team grows. If a suitable opportunity opens up, we'll be in touch.<br><br>We appreciate your interest in ProServ Homes and wish you the best!`,
+        }),
+      });
+    }
+    return msgs;
+  }
+
+  // ── contractor_application_approved ──────────────────────────────────────
+  if (event === "contractor_application_approved") {
+    const applicant = (payload as any).applicant as { name: string; email: string } | undefined;
+    const interviewDates = (payload as any).interviewDates as string[] | undefined;
+    if (applicant?.email) {
+      const dateList = interviewDates?.length
+        ? `<ul style="margin:12px 0;padding-left:20px;color:#444;font-size:14px;line-height:2">${interviewDates.map(d => `<li>${d}</li>`).join("")}</ul>`
+        : "";
+      msgs.push({
+        to: applicant.email,
+        recipient: "applicant",
+        subject: `🎉 Congrats ${applicant.name?.split(" ")[0] ?? ""} — let's set up a call!`,
+        html: emailHtml({
+          headline: `Great news, ${applicant.name?.split(" ")[0] ?? "there"}!`,
+          body: `We reviewed your application and we'd love to set up a quick phone interview to learn more about you and answer any questions you might have about joining the ProServ Pro team.${dateList ? `<br>Here are a few times that work on our end — just reply to this email with your preferred option:${dateList}` : "<br><br>We'll be in touch shortly to find a time that works for both of us."}<br><br>We're excited about the possibility of working together!`,
+          ctaUrl: "https://proservhomes.co/contractor/",
+          ctaLabel: "View ProServ Pro Portal",
+        }),
+      });
+    }
+    return msgs;
+  }
+
+  // ── contractor_welcome ────────────────────────────────────────────────────
+  if (event === "contractor_welcome") {
+    const applicant = (payload as any).applicant as { name: string; email: string } | undefined;
+    if (applicant?.email) {
+      msgs.push({
+        to: applicant.email,
+        recipient: "applicant",
+        subject: `🏠 Welcome to the team, ${applicant.name?.split(" ")[0] ?? "ProServ Pro"}!`,
+        html: emailHtml({
+          headline: `Welcome to ProServ Homes, ${applicant.name?.split(" ")[0] ?? ""}!`,
+          body: `It was a pleasure speaking with you — you're exactly what ProServ Homes is looking for in a ProServ Pro, and we can't wait to get you started.<br><br><strong>Here's what to expect:</strong><br>
+• Use your email and phone number to log into the contractor portal and set up your profile<br>
+• Once you're set up, jobs will come directly to you through the app<br>
+• <strong>Speed matters!</strong> When a new job arrives, review it immediately and accept it before another ProServ Pro does — jobs go to the first Pro to accept<br>
+• Keep your profile up to date with your availability so we can match the right jobs to you<br><br>
+We're thrilled to have you on the team. Get ready for some great work ahead!`,
+          ctaUrl: "https://proservhomes.co/contractor/",
+          ctaLabel: "Set Up Your Profile Now",
         }),
       });
     }

@@ -734,7 +734,7 @@ var STRIPE_LINKS = {
   'Window Cleaning':     'https://buy.stripe.com/REPLACE_WINDOWS',
   'Christmas Lights':    'https://buy.stripe.com/REPLACE_LIGHTS',
 };
-function jr2l(r){return{id:r.id,svc:r.service||r.svc,date:r.date,time:r.time||'',addr:r.address||r.addr,price:Number(r.price)||0,status:r.status||'Scheduled',tech:r.tech||'ProServ Crew',contractorId:r.contractor_id||null,notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null,startedAt:r.started_at||null,completedAt:r.completed_at||null}}
+function jr2l(r){return{id:r.id,svc:r.service||r.svc,date:r.date,time:r.time||'',addr:r.address||r.addr,price:Number(r.price)||0,status:r.status||'Scheduled',tech:r.tech||'ProServ Team',contractorId:r.contractor_id||null,notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null,startedAt:r.started_at||null,completedAt:r.completed_at||null}}
 var _homePhone='';
 
 
@@ -957,8 +957,8 @@ function renderTracker(){
     +'</div>'
     +'<div class="track-tech" id="trackTechRow">'
       +'<div class="track-tech-av" id="trackTechAv">👷</div>'
-      +'<div><div class="track-tech-name" id="trackTechName">'+esc(_job.tech||'ProServ Crew')+'</div>'
-        +'<div class="track-tech-sub">'+(_isDone?'Job completed':'Your technician is on-site')+'</div></div>'
+      +'<div><div class="track-tech-name" id="trackTechName">'+esc(_job.tech||'ProServ Team')+'</div>'
+        +'<div class="track-tech-sub">'+(_isDone?'Job completed':'Your ProServ Pro is on-site')+'</div></div>'
     +'</div>'
     +ctaHtml
   +'</div>';
@@ -1005,7 +1005,7 @@ function _startBroadRealtime(email){
         JOBS[idx].status = updated.status||JOBS[idx].status;
         JOBS[idx].tech   = updated.tech||JOBS[idx].tech;
       } else if(updated.id){
-        JOBS.push({id:updated.id,svc:updated.service||'',date:updated.date||'',time:updated.time||'',addr:updated.address||'',price:Number(updated.price)||0,status:updated.status||'Scheduled',tech:updated.tech||'ProServ Crew',notes:updated.notes||'',beforePhoto:updated.before_photo||null,afterPhoto:updated.after_photo||null});
+        JOBS.push({id:updated.id,svc:updated.service||'',date:updated.date||'',time:updated.time||'',addr:updated.address||'',price:Number(updated.price)||0,status:updated.status||'Scheduled',tech:updated.tech||'ProServ Team',notes:updated.notes||'',beforePhoto:updated.before_photo||null,afterPhoto:updated.after_photo||null});
       }
       renderTracker();
       renderHome();
@@ -1614,7 +1614,7 @@ function openSheet(id){
     +(j.startedAt?'<div class="sheet-row"><div class="sr-label">Started</div><div class="sr-val">'+fmtTs(j.startedAt)+'</div></div>':'')
     +(j.completedAt?'<div class="sheet-row"><div class="sr-label">Completed</div><div class="sr-val">'+fmtTs(j.completedAt)+'</div></div>':'')
     +'<div class="sheet-row"><div class="sr-label">Address</div><div class="sr-val">'+j.addr+'</div></div>'
-    +'<div class="sheet-row" id="sheetTechRow"><div class="sr-label">Technician</div><div class="sr-val" id="sheetTechVal"><div style="display:flex;align-items:center;gap:10px"><div class="track-tech" id="sheetTechAv" style="width:32px;height:32px;font-size:12px;flex-shrink:0"></div><span id="sheetTechName">'+esc(j.tech)+'</span></div></div></div>'
+    +'<div class="sheet-row" id="sheetTechRow"><div class="sr-label">ProServ Pro</div><div class="sr-val" id="sheetTechVal"><div style="display:flex;align-items:center;gap:10px"><div class="track-tech" id="sheetTechAv" style="width:32px;height:32px;font-size:12px;flex-shrink:0"></div><span id="sheetTechName">'+esc(j.tech)+'</span></div></div></div>'
     +(j.notes?'<div class="sheet-row"><div class="sr-label">Notes</div><div class="sr-val">'+j.notes+'</div></div>':'')
     +'<div class="sheet-price-row"><div style="font-size:13px;color:var(--fg-2)">Service Total</div><div class="sheet-total">$<span>'+j.price+'</span></div></div>'
     +photosHtml
@@ -1721,7 +1721,7 @@ function downloadInvoice(jobId){
   var rd=j.date?new Date(j.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'}):'—';
   doc.text('Service: '+j.svc,W/2,y);
   doc.text('Date: '+rd,W/2,y+14);
-  if(j.tech)doc.text('Technician: '+j.tech,W/2,y+26);
+  if(j.tech)doc.text('ProServ Pro: '+j.tech,W/2,y+26);
   var statusColor=j.status==='Complete'?[31,155,42]:[242,99,16];
   doc.setTextColor(statusColor[0],statusColor[1],statusColor[2]);
   doc.text('Status: '+j.status,W/2,y+38);

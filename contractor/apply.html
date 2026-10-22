@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Become a ProServ Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --orange:#F26310;
+  --orange-dim:rgba(242,99,16,.12);
+  --bg:#0d0d0d;
+  --bg2:#161616;
+  --surface:#1e1e1e;
+  --surface-2:#252525;
+  --border:#2e2e2e;
+  --fg:#f0f0f0;
+  --fg-2:#b0b0b0;
+  --fg-3:#666;
+  --green:#1DB954;
+  --green-dim:rgba(29,185,84,.12);
+  --radius:14px;
+}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#f5f5f3;
+  --bg2:#ececea;
+  --surface:#fff;
+  --surface-2:#f0f0ee;
+  --border:#ddd;
+  --fg:#111;
+  --fg-2:#555;
+  --fg-3:#999;
+  color-scheme:light;
+}}
+:root[data-theme="light"]{
+  --bg:#f5f5f3;--bg2:#ececea;--surface:#fff;--surface-2:#f0f0ee;--border:#ddd;--fg:#111;--fg-2:#555;--fg-3:#999;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{color-scheme:dark;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-height:100vh;}
+.page{display:block;}
+
+/* ── LANDING ── */
+#landingPage{}
+.hero{background:linear-gradient(160deg,#1a0a00 0%,#111 60%,#0d0d0d 100%);padding:56px 20px 64px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(242,99,16,.25) 0%,transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--orange);margin-bottom:14px;}
+.hero-title{font-family:'Barlow Condensed',sans-serif;font-size:clamp(38px,9vw,64px);font-weight:900;line-height:1.0;letter-spacing:-.01em;color:#fff;margin-bottom:18px;}
+.hero-title span{color:var(--orange);}
+.hero-sub{font-size:17px;line-height:1.65;color:rgba(255,255,255,.7);max-width:520px;margin:0 auto 36px;}
+.hero-cta{display:inline-block;background:var(--orange);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:16px 36px;border-radius:50px;text-decoration:none;cursor:pointer;border:none;transition:opacity .15s;}
+.hero-cta:hover{opacity:.88;}
+
+.section{padding:48px 20px;max-width:680px;margin:0 auto;}
+.section-label{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:10px;}
+.section-title{font-family:'Barlow Condensed',sans-serif;font-size:clamp(26px,6vw,36px);font-weight:900;line-height:1.1;margin-bottom:16px;}
+.section-body{font-size:15px;line-height:1.7;color:var(--fg-2);}
+
+.perks{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;padding:48px 20px;max-width:680px;margin:0 auto;}
+.perk{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 20px;}
+.perk-icon{font-size:28px;margin-bottom:10px;}
+.perk-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;margin-bottom:6px;}
+.perk-body{font-size:13px;color:var(--fg-2);line-height:1.5;}
+
+.reqs{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 22px;max-width:680px;margin:0 auto 48px;margin-left:max(20px,env(safe-area-inset-left,0px));margin-right:max(20px,env(safe-area-inset-right,0px));}
+.reqs ul{list-style:none;display:grid;gap:10px;}
+.reqs li{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.5;color:var(--fg-2);}
+.reqs li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px;}
+
+.apply-bottom{text-align:center;padding:40px 20px 72px;background:linear-gradient(0deg,rgba(242,99,16,.06) 0%,transparent 100%);}
+.apply-bottom p{font-size:14px;color:var(--fg-3);margin-top:14px;}
+
+/* ── APPLICATION FORM ── */
+#formPage{display:none;padding:0 0 72px;}
+.form-hero{background:linear-gradient(160deg,#1a0a00 0%,#111 100%);padding:40px 20px 36px;text-align:center;}
+.form-hero h1{font-family:'Barlow Condensed',sans-serif;font-size:clamp(28px,7vw,44px);font-weight:900;color:#fff;margin-bottom:8px;}
+.form-hero p{font-size:14px;color:rgba(255,255,255,.6);}
+
+.form-body{max-width:600px;margin:0 auto;padding:28px max(20px,env(safe-area-inset-left,0px));}
+.form-section{margin-bottom:32px;}
+.form-section-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--orange);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--fg-3);margin-bottom:6px;}
+.field input,.field textarea,.field select{width:100%;background:var(--surface);color:var(--fg);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'Inter',sans-serif;font-size:15px;outline:none;transition:border-color .15s;}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--orange);}
+.field textarea{min-height:90px;resize:vertical;line-height:1.5;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.exp-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;position:relative;}
+.exp-remove{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--fg-3);font-size:18px;cursor:pointer;line-height:1;padding:4px;}
+.exp-remove:hover{color:#e53e3e;}
+.add-exp-btn{display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1.5px dashed var(--border);border-radius:10px;padding:12px 16px;font-size:14px;font-weight:600;color:var(--fg-2);cursor:pointer;width:100%;justify-content:center;transition:border-color .15s,color .15s;}
+.add-exp-btn:hover{border-color:var(--orange);color:var(--orange);}
+
+.photo-upload-area{border:2px dashed var(--border);border-radius:12px;padding:28px 20px;text-align:center;cursor:pointer;transition:border-color .15s;}
+.photo-upload-area:hover{border-color:var(--orange);}
+.photo-upload-area input{display:none;}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:12px;}
+.photo-thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--surface-2);}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-thumb-rm{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.6);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
+
+.svc-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+.svc-tag{padding:7px 14px;border-radius:50px;border:1.5px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--fg-2);transition:all .12s;}
+.svc-tag.selected{background:var(--orange-dim);border-color:var(--orange);color:var(--orange);}
+
+.submit-btn{width:100%;background:var(--orange);color:#fff;border:none;border-radius:12px;padding:16px;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-top:8px;transition:opacity .15s;}
+.submit-btn:hover{opacity:.88;}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ── SUCCESS POPUP ── */
+.popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s;}
+.popup-overlay.show{opacity:1;pointer-events:all;}
+.popup{background:var(--surface);border-radius:20px;padding:36px 28px;max-width:380px;width:100%;text-align:center;transform:scale(.92);transition:transform .25s;}
+.popup-overlay.show .popup{transform:scale(1);}
+.popup-icon{font-size:52px;margin-bottom:16px;}
+.popup h2{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;margin-bottom:10px;}
+.popup p{font-size:14px;color:var(--fg-2);line-height:1.6;margin-bottom:24px;}
+.popup-close{background:var(--orange);color:#fff;border:none;border-radius:10px;padding:13px 28px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;width:100%;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ LANDING PAGE ═══════════════════ -->
+<div id="landingPage">
+
+  <div class="hero">
+    <div class="hero-eyebrow">Now Accepting Applications</div>
+    <h1 class="hero-title">Become a<br><span>ProServ Pro</span></h1>
+    <p class="hero-sub">Join New Jersey's fastest-growing home services network. Set your own schedule, get jobs sent straight to your phone, and keep more of what you earn.</p>
+    <button class="hero-cta" onclick="showForm()">Apply Now — It's Free</button>
+  </div>
+
+  <div class="perks">
+    <div class="perk">
+      <div class="perk-icon">📲</div>
+      <div class="perk-title">Jobs come to you</div>
+      <div class="perk-body">Receive job requests instantly. First Pro to accept wins — no bidding wars.</div>
+    </div>
+    <div class="perk">
+      <div class="perk-icon">💵</div>
+      <div class="perk-title">Fast payouts</div>
+      <div class="perk-body">Request your earnings any time. Direct deposit, no waiting for checks.</div>
+    </div>
+    <div class="perk">
+      <div class="perk-icon">📅</div>
+      <div class="perk-title">You control your schedule</div>
+      <div class="perk-body">Accept or pass on any job. Work as much or as little as you want.</div>
+    </div>
+    <div class="perk">
+      <div class="perk-icon">🏘️</div>
+      <div class="perk-title">Local, real homeowners</div>
+      <div class="perk-body">Every job is a vetted NJ homeowner. No commercial jobs, no drama.</div>
+    </div>
+    <div class="perk">
+      <div class="perk-icon">⭐</div>
+      <div class="perk-title">Build your reputation</div>
+      <div class="perk-body">5-star reviews stay attached to your profile. Earn more as you grow.</div>
+    </div>
+    <div class="perk">
+      <div class="perk-icon">🛡️</div>
+      <div class="perk-title">Backed by ProServ</div>
+      <div class="perk-body">We handle billing, scheduling, and customer support so you can focus on the work.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">What We Look For</div>
+    <div class="section-title">The ProServ Standard</div>
+    <div class="section-body" style="margin-bottom:20px">We only work with the best. Every ProServ Pro is vetted, insured, and committed to showing up and doing the job right.</div>
+  </div>
+
+  <div class="reqs">
+    <ul>
+      <li>At least 2 years of professional experience in your trade</li>
+      <li>Valid proof of insurance (general liability minimum)</li>
+      <li>Reliable transportation and your own tools/equipment</li>
+      <li>Smartphone to receive and manage job requests</li>
+      <li>Professional communication with homeowners</li>
+      <li>Commitment to high-quality work and on-time arrivals</li>
+      <li>Located in or near the Central / Northern New Jersey area</li>
+    </ul>
+  </div>
+
+  <div class="apply-bottom">
+    <button class="hero-cta" onclick="showForm()">Start Your Application</button>
+    <p>Takes about 5 minutes · We review every application personally</p>
+  </div>
+
+</div><!-- /landingPage -->
+
+
+<!-- ═══════════════════ APPLICATION FORM ═══════════════════ -->
+<div id="formPage">
+
+  <div class="form-hero">
+    <h1>ProServ Pro Application</h1>
+    <p>Tell us about yourself and your work — we review every application personally.</p>
+  </div>
+
+  <div class="form-body">
+
+    <div class="form-section">
+      <div class="form-section-title">Your Info</div>
+      <div class="field-row">
+        <div class="field"><label>First &amp; Last Name *</label><input id="aName" placeholder="Jake Rodriguez" autocomplete="name"></div>
+        <div class="field"><label>Phone *</label><input id="aPhone" type="tel" placeholder="(732) 555-0000" autocomplete="tel"></div>
+      </div>
+      <div class="field"><label>Email Address *</label><input id="aEmail" type="email" placeholder="jake@email.com" autocomplete="email"></div>
+      <div class="field"><label>Town / City you work in</label><input id="aCity" placeholder="Freehold, NJ"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Services You Offer</div>
+      <div class="field"><label>Select all that apply</label>
+        <div class="svc-tags" id="svcTags">
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Lawn Care">🌿 Lawn Care</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Leaf Removal">🍂 Leaf Removal</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Snow Removal">❄️ Snow Removal</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Fence Install / Repair">🪵 Fencing</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Pressure Washing">💦 Pressure Washing</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Gutter Cleaning">🍃 Gutters</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Concrete Work">🏗️ Concrete</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Paver Installation">🧱 Pavers</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Junk Removal">🗑️ Junk Removal</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Handyman Services">🔧 Handyman</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Window Cleaning">🪟 Windows</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Dryer Vent Cleaning">🌀 Dryer Vents</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Christmas Lights">🎄 Christmas Lights</div>
+          <div class="svc-tag" onclick="toggleSvc(this)" data-svc="Other">Other</div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px"><label>Anything else? Add other services</label><input id="aOtherSvcs" placeholder="Painting, roofing repairs, etc."></div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">About You</div>
+      <div class="field"><label>Quick bio — who are you? *</label>
+        <textarea id="aBio" placeholder="Example: I've been doing exterior home services for 8 years. I specialize in fencing and concrete work. I'm known for showing up on time and leaving the site cleaner than I found it."></textarea>
+      </div>
+      <div class="field"><label>Qualifications, licenses, or certifications</label>
+        <textarea id="aQuals" placeholder="Example: NJ Home Improvement Contractor license #123456, OSHA 10 certified, EPA Lead-Safe certified"></textarea>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Work Experience</div>
+      <div id="expList"></div>
+      <button class="add-exp-btn" onclick="addExp()">+ Add experience</button>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Before &amp; After Photos</div>
+      <p style="font-size:13px;color:var(--fg-3);margin-bottom:14px;line-height:1.5">Upload photos showing your work quality. Before/after pairs are ideal. Up to 10 images.</p>
+      <div class="photo-upload-area" onclick="document.getElementById('photoInput').click()">
+        <div style="font-size:32px;margin-bottom:8px">📸</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Tap to upload photos</div>
+        <div style="font-size:12px;color:var(--fg-3)">JPG, PNG, HEIC · up to 10 images</div>
+        <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotos(this)">
+      </div>
+      <div class="photo-grid" id="photoGrid"></div>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitApplication()">Submit Application</button>
+    <div style="text-align:center;font-size:12px;color:var(--fg-3);margin-top:12px">We typically respond within 1–2 business days.</div>
+
+  </div>
+</div><!-- /formPage -->
+
+<!-- ═══════════════════ SUCCESS POPUP ═══════════════════ -->
+<div class="popup-overlay" id="successPopup">
+  <div class="popup">
+    <div class="popup-icon">🎉</div>
+    <h2>You're in — we'll be in touch!</h2>
+    <p>Your application was submitted successfully. We review every application personally and will reach out within 1–2 business days. Check your email for a confirmation.</p>
+    <button class="popup-close" onclick="document.getElementById('successPopup').classList.remove('show')">Got it!</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+var SURL='https://chmicqvorgjqlthufgwt.supabase.co';
+var SKEY='sb_publishable_7W-vHGcu-U60LiTsG_7i5g_7ijIyTOJ';
+var _sb=null;try{_sb=supabase.createClient(SURL,SKEY);}catch(e){}
+
+var _photoFiles=[];
+var _expCount=0;
+
+function showForm(){
+  document.getElementById('landingPage').style.display='none';
+  document.getElementById('formPage').style.display='block';
+  window.scrollTo(0,0);
+}
+
+function toggleSvc(el){el.classList.toggle('selected');}
+
+function addExp(){
+  _expCount++;
+  var n=_expCount;
+  var d=document.getElementById('expList');
+  var div=document.createElement('div');
+  div.className='exp-item';
+  div.id='exp-'+n;
+  div.innerHTML=
+    '<button class="exp-remove" onclick="document.getElementById(\'exp-'+n+'\').remove()" title="Remove">×</button>'
+    +'<div class="field"><label>Job / Role Title</label><input id="expTitle-'+n+'" placeholder="Lead Fence Installer"></div>'
+    +'<div class="field-row">'
+      +'<div class="field"><label>Company / Client</label><input id="expCo-'+n+'" placeholder="Self-employed"></div>'
+      +'<div class="field"><label>Years of experience</label><input id="expYrs-'+n+'" type="number" min="1" max="40" placeholder="5"></div>'
+    +'</div>'
+    +'<div class="field"><label>Description of work done</label><textarea id="expDesc-'+n+'" placeholder="Installed 200+ vinyl, wood, and chain-link fences. Managed a 2-person crew..."></textarea></div>';
+  d.appendChild(div);
+}
+// Start with one experience block
+addExp();
+
+function handlePhotos(input){
+  var files=Array.from(input.files||[]);
+  var remaining=10-_photoFiles.length;
+  files.slice(0,remaining).forEach(function(f){
+    if(!f.type.startsWith('image/'))return;
+    _photoFiles.push(f);
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var wrap=document.createElement('div');
+      wrap.className='photo-thumb';
+      var idx=_photoFiles.indexOf(f);
+      wrap.innerHTML='<img src="'+e.target.result+'" alt="work photo"><button class="photo-thumb-rm" onclick="removePhoto('+idx+',this.parentNode)">×</button>';
+      document.getElementById('photoGrid').appendChild(wrap);
+    };
+    reader.readAsDataURL(f);
+  });
+  input.value='';
+}
+
+function removePhoto(idx,el){
+  _photoFiles[idx]=null;
+  el.remove();
+}
+
+async function submitApplication(){
+  var name=(document.getElementById('aName').value||'').trim();
+  var phone=(document.getElementById('aPhone').value||'').trim();
+  var email=(document.getElementById('aEmail').value||'').trim().toLowerCase();
+  var bio=(document.getElementById('aBio').value||'').trim();
+
+  if(!name){alert('Please enter your name.');return;}
+  if(!phone){alert('Please enter your phone number.');return;}
+  if(!email||!email.includes('@')){alert('Please enter a valid email address.');return;}
+  if(!bio){alert('Please tell us a bit about yourself.');return;}
+
+  var btn=document.getElementById('submitBtn');
+  btn.disabled=true;btn.textContent='Submitting…';
+
+  // Collect services
+  var svcs=Array.from(document.querySelectorAll('.svc-tag.selected')).map(function(el){return el.dataset.svc;});
+  var other=(document.getElementById('aOtherSvcs').value||'').trim();
+  if(other)svcs.push(other);
+
+  // Collect experience
+  var expItems=[];
+  document.querySelectorAll('.exp-item').forEach(function(el){
+    var id=el.id.replace('exp-','');
+    var t=(document.getElementById('expTitle-'+id)||{}).value||'';
+    var c=(document.getElementById('expCo-'+id)||{}).value||'';
+    var y=(document.getElementById('expYrs-'+id)||{}).value||'';
+    var d=(document.getElementById('expDesc-'+id)||{}).value||'';
+    if(t||d)expItems.push({title:t,company:c,years:y,description:d});
+  });
+
+  // Upload photos to Supabase Storage
+  var photoUrls=[];
+  if(_sb){
+    for(var i=0;i<_photoFiles.length;i++){
+      var f=_photoFiles[i];
+      if(!f)continue;
+      try{
+        var ext=f.name.split('.').pop()||'jpg';
+        var path='applications/'+Date.now()+'_'+i+'.'+ext;
+        var up=await _sb.storage.from('documents').upload(path,f,{upsert:true});
+        if(!up.error){
+          var pub=_sb.storage.from('documents').getPublicUrl(path);
+          if(pub.data&&pub.data.publicUrl)photoUrls.push(pub.data.publicUrl);
+        }
+      }catch(e){}
+    }
+  }
+
+  // Build row
+  var row={
+    name:name,
+    email:email,
+    phone:phone,
+    bio:bio,
+    experience:JSON.stringify(expItems),
+    qualifications:(document.getElementById('aQuals').value||'').trim()||null,
+    photo_urls:JSON.stringify(photoUrls),
+    services:JSON.stringify(svcs),
+    status:'pending'
+  };
+
+  var saved=false;
+  if(_sb){
+    try{
+      var res=await _sb.from('applications').insert([row]);
+      if(!res.error)saved=true;
+    }catch(e){}
+  }
+
+  // Send confirmation emails
+  var payload={
+    event:'contractor_application_submitted',
+    applicant:{name:name,email:email,phone:phone}
+  };
+  var opts={method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify(payload)};
+  fetch(SURL+'/functions/v1/send-email',opts).catch(function(){});
+
+  btn.disabled=false;btn.textContent='Submit Application';
+  document.getElementById('successPopup').classList.add('show');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>

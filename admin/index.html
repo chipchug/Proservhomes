@@ -438,10 +438,21 @@ textarea{resize:vertical;min-height:80px}
             <button id="ctToggleContractors" onclick="showCustomersView('contractors')" style="padding:7px 14px;border-radius:8px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;background:var(--orange);color:#fff">Contractors</button>
             <button id="ctToggleHomeowners" onclick="showCustomersView('homeowners')" style="padding:7px 14px;border-radius:8px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;background:var(--surface-2);color:var(--fg-2)">Homeowners</button>
           </div>
-          <button id="addContractorBtn" onclick="openAddContractor()" style="display:flex;align-items:center;gap:5px;background:var(--orange);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">+ Add</button>
+          <button id="addEntityBtn" onclick="onAddEntity()" style="display:flex;align-items:center;gap:5px;background:var(--orange);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">+ Add</button>
         </div>
         <div id="contractorList"></div>
         <div id="homeownerList" style="display:none"></div>
+      </div>
+
+      <!-- APPLICATIONS -->
+      <div id="tabApps" class="tab-pane">
+        <div class="books-head" style="display:flex;align-items:center;justify-content:space-between">
+          <span>ProServ Pro Applications</span>
+          <button onclick="loadApplications()" style="background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:12px;padding:4px 8px">↻ Refresh</button>
+        </div>
+        <div id="appsList" style="padding:0 14px 80px">
+          <div style="padding:24px 0;text-align:center;color:var(--fg-3);font-size:13px">Loading applications…</div>
+        </div>
       </div>
 
       <!-- MORE (Books + Settings) -->
@@ -480,6 +491,7 @@ textarea{resize:vertical;min-height:80px}
     <button class="nb" onclick="switchTab('Requests',this)" id="navRequests" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Requests<span id="reqBadge" class="req-badge hidden"></span></button>
     <button class="nb" onclick="switchTab('Jobs',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Jobs</button>
     <button class="nb" onclick="switchTab('Customers',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Contractors</button>
+    <button class="nb" onclick="switchTab('Apps',this)" id="navApps" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Apps<span id="appsBadge" class="req-badge hidden"></span></button>
     <button class="nb" onclick="switchTab('More',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>More</button>
   </nav>
 </div>
@@ -608,8 +620,10 @@ textarea{resize:vertical;min-height:80px}
       </div>
       <div id="ctBioWrap" style="display:none;background:var(--surface-2);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--fg-2);margin-bottom:10px;line-height:1.5" id="ctBio"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px" id="ctInterestsWrap"></div>
-      <div id="ctInsuranceWrap" style="display:none;margin-bottom:4px">
-        <a id="ctInsuranceLink" href="#" target="_blank" style="font-size:13px;color:var(--orange);font-weight:600;text-decoration:none">📄 View Insurance Document</a>
+      <div id="ctInsuranceWrap" style="display:none;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--fg-3);letter-spacing:.06em;margin-bottom:6px">INSURANCE</div>
+        <div id="ctInsurancePreview" style="margin-bottom:8px"></div>
+        <a id="ctInsuranceLink" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--orange);font-weight:600;text-decoration:none;background:var(--surface-2);border-radius:8px;padding:8px 12px">📄 Open Full Document</a>
       </div>
       <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
       <div style="font-size:11px;font-weight:700;color:var(--fg-3);letter-spacing:.06em;margin-bottom:10px">ADMIN CONTROLS</div>
@@ -667,6 +681,34 @@ textarea{resize:vertical;min-height:80px}
     </div>
     <div style="margin-top:4px">
       <button class="mbtn mbtn-sec" onclick="closeModal('hwModal')" style="width:100%">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Homeowner manually -->
+<div class="overlay hidden" id="addHwModal">
+  <div class="modal" style="max-height:88vh;overflow-y:auto">
+    <div class="modal-pill"></div>
+    <div class="modal-title">Add Homeowner</div>
+    <div class="field"><label>Full Name *</label><input id="ahName" placeholder="Jane Smith"></div>
+    <div class="field"><label>Email *</label><input type="email" id="ahEmail" placeholder="jane@email.com"></div>
+    <div class="field"><label>Phone</label><input type="tel" id="ahPhone" placeholder="(732) 555-0000" maxlength="14"></div>
+    <div class="field"><label>Address</label><input id="ahAddress" placeholder="123 Main St, City, NJ 07000"></div>
+    <div class="field"><label>Home Type</label>
+      <select id="ahHomeType">
+        <option value="">Select…</option>
+        <option>Single Family</option>
+        <option>Townhouse</option>
+        <option>Condo</option>
+        <option>Multi-Family</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="field"><label>Square Footage</label><input type="number" id="ahSqft" placeholder="2000"></div>
+    <div class="field"><label>Notes for Techs</label><textarea id="ahNotes" style="background:var(--surface-2);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:10px;width:100%;font-size:14px;font-family:inherit;min-height:72px;resize:vertical" placeholder="Gate code, dogs on property, etc."></textarea></div>
+    <div class="mbtn-row">
+      <button class="mbtn mbtn-primary" onclick="saveNewHomeowner()">Save Homeowner</button>
+      <button class="mbtn mbtn-sec" onclick="closeModal('addHwModal')">Cancel</button>
     </div>
   </div>
 </div>
@@ -1168,6 +1210,79 @@ async function approvePayout(prId, ctName, amount){
     console.error('[approvePayout]',e);
   }
 }
+/* ── Applications ─────────────────────────────────────────────────── */
+var _applications = [];
+async function loadApplications(){
+  var el=document.getElementById('appsList');
+  if(el)el.innerHTML='<div style="padding:24px 0;text-align:center;color:var(--fg-3);font-size:13px">Loading…</div>';
+  try{
+    var res=await _sb.from('applications').select('*').order('created_at',{ascending:false});
+    if(res.error){console.warn('loadApplications:',res.error.message);if(el)el.innerHTML='<div style="padding:24px;text-align:center;color:var(--fg-3)">Could not load applications</div>';return;}
+    _applications=res.data||[];
+    var pending=_applications.filter(function(a){return a.status==='pending'});
+    var badge=document.getElementById('appsBadge');
+    if(badge){if(pending.length>0){badge.textContent=pending.length;badge.classList.remove('hidden');}else{badge.classList.add('hidden');}}
+    renderApplications();
+  }catch(e){console.error('[loadApplications]',e);}
+}
+function renderApplications(){
+  var el=document.getElementById('appsList');
+  if(!el)return;
+  if(!_applications.length){el.innerHTML='<div style="padding:40px 0;text-align:center;color:var(--fg-3);font-size:14px">No applications yet</div>';return;}
+  el.innerHTML=_applications.map(function(a){
+    var statusColor={'pending':'var(--orange)','approved':'var(--green)','denied':'var(--red)','welcomed':'var(--blue,#3b82f6)'}[a.status]||'var(--fg-3)';
+    var photos=Array.isArray(a.photo_urls)?a.photo_urls:(a.photo_urls?JSON.parse(a.photo_urls):[]);
+    var services=Array.isArray(a.services)?a.services:(a.services?JSON.parse(a.services):[]);
+    var dt=a.created_at?new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+    return '<div class="fu-item" style="flex-direction:column;align-items:stretch;gap:0;padding:16px;margin-bottom:10px;border-radius:14px;background:var(--surface);border:1px solid var(--border)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+        +'<div><div style="font-size:16px;font-weight:800;letter-spacing:.01em">'+esc(a.name)+'</div>'
+        +'<div style="font-size:12px;color:var(--fg-3);margin-top:2px">'+esc(a.email)+(a.phone?' · '+esc(a.phone):'')+'</div></div>'
+        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
+          +'<span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:'+statusColor+'">'+a.status+'</span>'
+          +'<span style="font-size:11px;color:var(--fg-3)">'+dt+'</span>'
+        +'</div>'
+      +'</div>'
+      +(services.length?'<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">'+services.map(function(s){return'<span style="font-size:11px;font-weight:700;padding:3px 8px;background:var(--orange);color:#fff;border-radius:20px">'+esc(s)+'</span>'}).join('')+'</div>':'')
+      +(a.bio?'<div style="font-size:13px;color:var(--fg-2);margin-bottom:8px;line-height:1.5">'+esc(a.bio)+'</div>':'')
+      +(a.qualifications?'<div style="font-size:12px;color:var(--fg-3);margin-bottom:8px"><strong>Qualifications:</strong> '+esc(a.qualifications)+'</div>':'')
+      +(a.experience?'<div style="font-size:12px;color:var(--fg-3);margin-bottom:8px"><strong>Experience:</strong> '+esc(a.experience)+'</div>':'')
+      +(photos.length?'<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px">'+photos.map(function(u){return'<a href="'+esc(u)+'" target="_blank"><img src="'+esc(u)+'" style="width:72px;height:72px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--border)"></a>'}).join('')+'</div>':'')
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">'
+        +(a.status==='pending'?
+          '<button onclick="appAction(\'deny\',\''+a.id+'\')" style="flex:1;min-width:100px;padding:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;color:var(--red);font-weight:700;font-size:13px;cursor:pointer">✕ Deny</button>'
+          +'<button onclick="appAction(\'approve\',\''+a.id+'\')" style="flex:2;min-width:120px;padding:10px;background:var(--orange);border:none;border-radius:10px;color:#fff;font-weight:800;font-size:13px;cursor:pointer">✓ Approve + Schedule Interview</button>'
+        :'')
+        +(a.status==='approved'?
+          '<button onclick="appAction(\'welcome\',\''+a.id+'\')" style="flex:1;padding:10px;background:var(--green,#22c55e);border:none;border-radius:10px;color:#fff;font-weight:800;font-size:13px;cursor:pointer">🎉 Send Welcome Email</button>'
+        :'')
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+async function appAction(action,id){
+  var a=_applications.find(function(x){return x.id===id});
+  if(!a)return;
+  if(action==='deny'){
+    if(!confirm('Send a polite denial email to '+a.name+'?'))return;
+    await sendSmsNotification({event:'contractor_application_denied',applicant:{name:a.name,email:a.email}});
+    await _sb.from('applications').update({status:'denied',reviewed_at:new Date().toISOString()}).eq('id',id);
+    a.status='denied';renderApplications();showToast('Denial email sent to '+a.name);
+  } else if(action==='approve'){
+    var d1=prompt('Interview date/time option 1 (e.g. Mon Nov 4 at 10am):');if(!d1)return;
+    var d2=prompt('Interview date/time option 2:');if(!d2)return;
+    var d3=prompt('Interview date/time option 3:');if(!d3)return;
+    await sendSmsNotification({event:'contractor_application_approved',applicant:{name:a.name,email:a.email},interviewDates:[d1,d2,d3]});
+    await _sb.from('applications').update({status:'approved',reviewed_at:new Date().toISOString()}).eq('id',id);
+    a.status='approved';renderApplications();showToast('Interview scheduling email sent to '+a.name);
+  } else if(action==='welcome'){
+    if(!confirm('Send welcome + onboarding email to '+a.name+'?'))return;
+    await sendSmsNotification({event:'contractor_welcome',applicant:{name:a.name,email:a.email}});
+    await _sb.from('applications').update({status:'welcomed',reviewed_at:new Date().toISOString()}).eq('id',id);
+    a.status='welcomed';renderApplications();showToast('Welcome email sent to '+a.name+' 🎉');
+  }
+}
+/* ─────────────────────────────────────────────────────────────────── */
 function doLogout(){session=null;lsSet('ps_session',null);document.getElementById('appShell').classList.add('hidden');document.getElementById('loginScreen').classList.remove('hidden')}
 function showAdminMenu(e){e.stopPropagation();var existing=document.getElementById('adminDropdown');if(existing){existing.remove();return;}var menu=document.createElement('div');menu.id='adminDropdown';menu.style.cssText='position:fixed;top:54px;right:12px;background:var(--surface);border:1px solid var(--border-2);border-radius:12px;padding:6px;min-width:160px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.25)';menu.innerHTML='<button onclick="doLogout()" style="display:block;width:100%;padding:10px 14px;background:none;border:none;color:var(--red);font-family:inherit;font-size:14px;font-weight:600;text-align:left;border-radius:8px;cursor:pointer">Sign Out</button>';document.body.appendChild(menu);setTimeout(function(){document.addEventListener('click',function rm(){menu.remove();document.removeEventListener('click',rm);},{once:true});},0);}
 
@@ -1200,7 +1315,7 @@ async function enterApp(){
   if(_jp)setTimeout(function(){openJobDetail(_jp);},300);
 }
 
-function switchTab(n,el){['Overview','Requests','Jobs','Customers','More'].forEach(function(t){document.getElementById('tab'+t).classList.remove('active')});document.getElementById('tab'+n).classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0}
+function switchTab(n,el){['Overview','Requests','Jobs','Customers','Apps','More'].forEach(function(t){document.getElementById('tab'+t).classList.remove('active')});document.getElementById('tab'+n).classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;if(n==='Apps')loadApplications()}
 
 function renderDashboard(){
   var now=new Date();var mn=now.getMonth();var yr=now.getFullYear();
@@ -1315,20 +1430,57 @@ function populateContractorSelect(){var s=document.getElementById('jContractor')
 function renderContractors(){var el=document.getElementById('contractorList');if(!contractors.length){el.innerHTML='<div style="text-align:center;padding:48px;color:var(--fg-3)">No contractors yet</div>';return}el.innerHTML=contractors.map(function(c){var jc=jobs.filter(function(j){return j.contractorId===c.id}).length;var avHtml=c.photo_url?'<div class="ct-av" style="padding:0;overflow:hidden"><img src="'+esc(c.photo_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>':'<div class="ct-av">'+c.name[0]+'</div>';return'<div class="ct-card" onclick="openEditCtx(\''+c.id+'\')">'+avHtml+'<div class="ct-body"><div class="ct-name">'+esc(c.name)+'</div><div class="ct-spec">'+esc(c.spec||c.specialty||'')+'</div></div><div class="ct-jobs">'+jc+'<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left:3px"><polyline points="9 18 15 12 9 6"/></svg></div></div>'}).join('')}
 
 var _homeowners=[];
+var _customersView='contractors';
 function showCustomersView(v){
+  _customersView=v;
   var cBtn=document.getElementById('ctToggleContractors');var hBtn=document.getElementById('ctToggleHomeowners');
   var cList=document.getElementById('contractorList');var hList=document.getElementById('homeownerList');
-  var addBtn=document.getElementById('addContractorBtn');
+  var addBtn=document.getElementById('addEntityBtn');
   if(v==='homeowners'){
     cBtn.style.background='var(--surface-2)';cBtn.style.color='var(--fg-2)';
     hBtn.style.background='var(--orange)';hBtn.style.color='#fff';
-    cList.style.display='none';hList.style.display='block';addBtn.style.display='none';
+    cList.style.display='none';hList.style.display='block';
+    if(addBtn){addBtn.style.display='flex';addBtn.textContent='+ Add Homeowner';}
     if(!_homeowners.length){loadHomeowners();}
   } else {
     hBtn.style.background='var(--surface-2)';hBtn.style.color='var(--fg-2)';
     cBtn.style.background='var(--orange)';cBtn.style.color='#fff';
-    hList.style.display='none';cList.style.display='block';addBtn.style.display='flex';
+    hList.style.display='none';cList.style.display='block';
+    if(addBtn){addBtn.style.display='flex';addBtn.textContent='+ Add';}
   }
+}
+function onAddEntity(){
+  if(_customersView==='homeowners'){openAddHomeowner();}
+  else{openAddContractor();}
+}
+function openAddHomeowner(){
+  ['ahName','ahEmail','ahPhone','ahAddress','ahSqft','ahNotes'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  var ht=document.getElementById('ahHomeType');if(ht)ht.value='';
+  document.getElementById('addHwModal').classList.remove('hidden');
+}
+async function saveNewHomeowner(){
+  var name=(document.getElementById('ahName').value||'').trim();
+  var email=(document.getElementById('ahEmail').value||'').trim().toLowerCase();
+  if(!name){showToast('Name is required');return;}
+  if(!email||!email.includes('@')){showToast('Valid email is required');return;}
+  var row={
+    id:'hw_'+Date.now(),
+    name:name,
+    email:email,
+    phone:document.getElementById('ahPhone').value.trim()||null,
+    address:document.getElementById('ahAddress').value.trim()||null,
+    home_type:document.getElementById('ahHomeType').value||null,
+    sqft:parseInt(document.getElementById('ahSqft').value)||null,
+    notes:document.getElementById('ahNotes').value.trim()||null,
+    role:'homeowner',
+    created_at:new Date().toISOString()
+  };
+  var res=await _sb.from('profiles').upsert([row],{onConflict:'email'});
+  if(res.error){showToast('Error: '+(res.error.message||'Could not save'));return;}
+  closeModal('addHwModal');
+  _homeowners=[];
+  await loadHomeowners();
+  showToast('Homeowner added ✓');
 }
 async function loadHomeowners(){
   var el=document.getElementById('homeownerList');
@@ -1384,9 +1536,22 @@ function openEditCtx(id){
     var si=Array.isArray(c.service_interests)?c.service_interests:[];
     iw.innerHTML=si.length?si.map(function(s,i){return'<span style="background:var(--surface-2);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600"><span style="color:var(--orange);margin-right:4px">'+(i+1)+'.</span>'+esc(s)+'</span>';}).join(''):'';
   }
-  // Insurance
+  // Insurance — show image preview if it's an image, otherwise just the link
   var insw=document.getElementById('ctInsuranceWrap'); var insl=document.getElementById('ctInsuranceLink');
-  if(insw&&insl){insw.style.display=c.insurance_url?'':'none';insl.href=c.insurance_url||'#';}
+  var insPrev=document.getElementById('ctInsurancePreview');
+  if(insw&&insl){
+    insw.style.display=c.insurance_url?'':'none';
+    insl.href=c.insurance_url||'#';
+    if(insPrev){
+      if(c.insurance_url&&/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(c.insurance_url)){
+        insPrev.innerHTML='<a href="'+esc(c.insurance_url)+'" target="_blank"><img src="'+esc(c.insurance_url)+'" style="max-width:100%;max-height:200px;border-radius:8px;object-fit:contain;border:1px solid var(--border)"></a>';
+      } else if(c.insurance_url) {
+        insPrev.innerHTML='<div style="background:var(--surface-2);border-radius:8px;padding:16px;text-align:center;color:var(--fg-3);font-size:13px">📄 PDF document on file</div>';
+      } else {
+        insPrev.innerHTML='';
+      }
+    }
+  }
   document.getElementById('ctModal').classList.remove('hidden');
 }
 function openHwDetail(email){
@@ -1448,17 +1613,26 @@ function sendPaymentLink(jobId){
   .then(function(r){return r.json();})
   .then(function(d){
     if(d.url){
+      // Email the payment link to homeowner
+      var ct=contractors.find(function(c){return c.id===j.contractorId});
+      sendSmsNotification({
+        event:'payment_link_sent',
+        job:{id:j.id,service:j.service,address:j.address,scheduled_date:j.date,amount:j.price},
+        homeowner:{name:j.client,phone:j.phone||null,email:j.email||null},
+        contractor:ct?{name:ct.name,phone:ct.phone||null,email:ct.email||null}:null,
+        paymentUrl:d.url
+      });
       // Copy to clipboard + open
       try{
         navigator.clipboard.writeText(d.url).then(function(){
-          showToast('Payment link copied to clipboard!');
+          showToast('Payment link copied & email sent to homeowner!');
         }).catch(function(){
           window.open(d.url,'_blank');
-          showToast('Payment link opened — share with client');
+          showToast('Payment link opened & email sent to homeowner');
         });
       }catch(e){
         window.open(d.url,'_blank');
-        showToast('Payment link opened — share with client');
+        showToast('Payment link opened & email sent to homeowner');
       }
       if(btn){btn.disabled=false;btn.innerHTML='💳 Send Payment Link';}
     } else {
