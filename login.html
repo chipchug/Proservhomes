@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://proservhomes.co/og-image.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600&family=Inter:wght@400;500&display=swap">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -139,12 +139,26 @@ body{
 .admin-link:hover{color:rgba(255,255,255,.65)}
 
 /* FOOTER */
-footer{
-  text-align:center;padding:18px 20px;
-  font-size:12px;color:rgba(255,255,255,.25);
-  border-top:1px solid rgba(255,255,255,.06);
-}
-footer a{color:rgba(255,255,255,.35);text-decoration:none}
+.site-footer{background:#1a1a1a;border-top:1px solid rgba(255,255,255,.08);padding:56px max(20px,env(safe-area-inset-left,0px)) calc(40px + env(safe-area-inset-bottom,0px));}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]) .site-footer{background:#f0efed;border-top-color:rgba(0,0,0,.1);}}
+:root[data-theme="light"] .site-footer{background:#f0efed;border-top-color:rgba(0,0,0,.1);}
+.footer-inner{max-width:680px;margin:0 auto;}
+.footer-top{display:flex;flex-direction:column;align-items:flex-start;gap:32px;padding-bottom:40px;border-bottom:1px solid rgba(255,255,255,.07);}
+@media(min-width:580px){.footer-top{flex-direction:row;align-items:flex-start;justify-content:space-between;}}
+.footer-logo img{height:56px;width:auto;display:block;filter:brightness(.85);}
+.footer-tagline{font-size:13px;color:rgba(255,255,255,.4);margin-top:10px;line-height:1.5;max-width:220px;}
+.footer-nav{display:flex;gap:40px;flex-wrap:wrap;}
+.footer-nav-col{}
+.footer-nav-label{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#F26310;margin-bottom:12px;}
+.footer-nav-col ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.footer-nav-col li a{font-size:14px;color:rgba(255,255,255,.5);text-decoration:none;transition:color .15s;}
+.footer-nav-col li a:hover{color:#fff;}
+.footer-bottom{padding-top:24px;display:flex;flex-direction:column;gap:6px;}
+@media(min-width:580px){.footer-bottom{flex-direction:row;align-items:center;justify-content:space-between;}}
+.footer-copy{font-size:12px;color:rgba(255,255,255,.25);letter-spacing:.02em;}
+.footer-legal-links{display:flex;gap:16px;}
+.footer-legal-links a{font-size:12px;color:rgba(255,255,255,.25);text-decoration:none;}
+.footer-legal-links a:hover{color:rgba(255,255,255,.5);}
 </style>
 </head>
 <body>
@@ -206,8 +220,45 @@ footer a{color:rgba(255,255,255,.35);text-decoration:none}
   </div>
 </main>
 
-<footer>
-  <a href="/">proservhomes.co</a> &nbsp;·&nbsp; Ocean &amp; Monmouth County, NJ &nbsp;·&nbsp; <a href="tel:7323858683">(732) 385-8683</a>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-logo"><img src="assets/logo-white.png" alt="ProServ Homes"></div>
+        <p class="footer-tagline">New Jersey's fastest-growing home services network.</p>
+      </div>
+      <nav class="footer-nav">
+        <div class="footer-nav-col">
+          <div class="footer-nav-label">Contractors</div>
+          <ul>
+            <li><a href="/contractor/apply.html">Apply Now</a></li>
+            <li><a href="/contractor/">Contractor Login</a></li>
+          </ul>
+        </div>
+        <div class="footer-nav-col">
+          <div class="footer-nav-label">Homeowners</div>
+          <ul>
+            <li><a href="/homeowner/">Book a Service</a></li>
+            <li><a href="/homeowner/">Homeowner Login</a></li>
+          </ul>
+        </div>
+        <div class="footer-nav-col">
+          <div class="footer-nav-label">Company</div>
+          <ul>
+            <li><a href="https://proservhomes.co">ProServ Homes</a></li>
+            <li><a href="mailto:hello@proservhomes.co">Contact Us</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2026–2027 ProServ Homes LLC. All rights reserved.</p>
+      <div class="footer-legal-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+      </div>
+    </div>
+  </div>
 </footer>
 
 </body>

@@ -93,25 +93,27 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
 .reqs li::before{content:'';flex-shrink:0;margin-top:3px;width:16px;height:16px;border-radius:50%;background:rgba(29,185,84,.15);border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8' viewBox='0 0 10 8'%3E%3Cpath d='M1 4l2.5 2.5L9 1' stroke='%231DB954' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center;}
 
 /* ── Footer ── */
-.site-footer{background:#060606;border-top:1px solid rgba(255,255,255,.08);padding:56px max(20px,env(safe-area-inset-left,0px)) calc(40px + env(safe-area-inset-bottom,0px));}
+.site-footer{background:#1a1a1a;border-top:1px solid rgba(255,255,255,.08);padding:56px max(20px,env(safe-area-inset-left,0px)) calc(40px + env(safe-area-inset-bottom,0px));}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]) .site-footer{background:#f0efed;border-top-color:rgba(0,0,0,.1);}}
+:root[data-theme="light"] .site-footer{background:#f0efed;border-top-color:rgba(0,0,0,.1);}
 .footer-inner{max-width:680px;margin:0 auto;}
 .footer-top{display:flex;flex-direction:column;align-items:flex-start;gap:32px;padding-bottom:40px;border-bottom:1px solid rgba(255,255,255,.07);}
 @media(min-width:580px){.footer-top{flex-direction:row;align-items:flex-start;justify-content:space-between;}}
 .footer-brand{}
-.footer-logo img{height:40px;width:auto;display:block;filter:brightness(.85);}
-.footer-tagline{font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5;max-width:220px;}
+.footer-logo img{height:56px;width:auto;display:block;filter:brightness(.85);}
+.footer-tagline{font-size:13px;color:var(--fg-3);margin-top:10px;line-height:1.5;max-width:220px;}
 .footer-nav{display:flex;gap:40px;flex-wrap:wrap;}
 .footer-nav-col{}
 .footer-nav-label{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--orange);margin-bottom:12px;}
 .footer-nav-col ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
-.footer-nav-col li a{font-size:14px;color:rgba(255,255,255,.45);text-decoration:none;transition:color .15s;}
-.footer-nav-col li a:hover{color:#fff;}
+.footer-nav-col li a{font-size:14px;color:var(--fg-2);text-decoration:none;transition:color .15s;}
+.footer-nav-col li a:hover{color:var(--fg);}
 .footer-bottom{padding-top:24px;display:flex;flex-direction:column;gap:6px;}
 @media(min-width:580px){.footer-bottom{flex-direction:row;align-items:center;justify-content:space-between;}}
-.footer-copy{font-size:12px;color:rgba(255,255,255,.2);letter-spacing:.02em;}
+.footer-copy{font-size:12px;color:var(--fg-3);letter-spacing:.02em;}
 .footer-legal{display:flex;gap:16px;}
-.footer-legal a{font-size:12px;color:rgba(255,255,255,.2);text-decoration:none;}
-.footer-legal a:hover{color:rgba(255,255,255,.5);}
+.footer-legal a{font-size:12px;color:var(--fg-3);text-decoration:none;}
+.footer-legal a:hover{color:var(--fg-2);}
 
 /* ── APPLICATION FORM ── */
 #formPage{display:none;padding:0 0 72px;}
@@ -293,7 +295,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
             <div class="footer-nav-label">Company</div>
             <ul>
               <li><a href="https://proservhomes.co" target="_blank">ProServ Homes</a></li>
-              <li><a href="mailto:pro@proservhomes.co">Contact Us</a></li>
+              <li><a href="mailto:hello@proservhomes.co">Contact Us</a></li>
             </ul>
           </div>
         </nav>
