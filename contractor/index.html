@@ -1552,9 +1552,189 @@ function cobUI(i) {
 function cobOpenPortal() {
   try { localStorage.setItem(_cobKey(), '1'); } catch(e) {}
   document.getElementById('cob').classList.remove('cob-on');
-  // enterApp should already have run; just ensure app shell is visible
+  // Check if profile setup has been completed
+  var profileDone = false;
+  try { profileDone = !!localStorage.getItem('ps_c_profile_done_' + (cc && cc.id || '')); } catch(e) {}
+  if (!profileDone) {
+    cpSetupShow();
+  } else {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('appShell').classList.remove('hidden');
+  }
+}
+
+function cpSetupEnterApp() {
+  try { localStorage.setItem('ps_c_profile_done_' + (cc && cc.id || ''), '1'); } catch(e) {}
+  document.getElementById('cp-setup').style.display = 'none';
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
+}
+
+var _cpPhotoFile = null;
+var _cpInsFile = null;
+var _cpServiceRanks = []; // [{name, rank}]
+
+var CP_SERVICES = [
+  'Lawn Care','Christmas Lights','Pressure Washing','Gutter Cleaning',
+  'Snow Removal','House Cleaning','Landscaping','Window Cleaning',
+  'Pest Control','Interior Painting','Exterior Painting','Deck & Fence'
+];
+
+function cpSetupShow() {
+  var el = document.getElementById('cp-setup');
+  if (!el) return cpSetupEnterApp();
+  // Pre-fill name/phone from cc
+  if (cc) {
+    var ni = document.getElementById('cp-name');
+    var pi = document.getElementById('cp-phone');
+    if (ni && cc.name) ni.value = cc.name;
+    if (pi && cc.phone) pi.value = cc.phone;
+  }
+  // Build service list
+  cpRenderServices();
+  el.style.display = 'flex';
+}
+
+function cpRenderServices() {
+  // Update slot indicators
+  for (var s = 1; s <= 5; s++) {
+    var slot = document.getElementById('cpsl'+s);
+    if (!slot) continue;
+    var r = _cpServiceRanks.find(function(x){return x.rank===s;});
+    if (r) { slot.classList.add('filled'); slot.title = r.name; }
+    else { slot.classList.remove('filled'); slot.title = ''; }
+  }
+  var wrap = document.getElementById('cp-svc-list');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  // Show ranked slots first (up to 5), then unranked services
+  var ranked = _cpServiceRanks.slice().sort(function(a,b){return a.rank-b.rank;});
+  var rankedNames = ranked.map(function(r){return r.name;});
+  // Ranked items
+  for (var i = 0; i < ranked.length; i++) {
+    wrap.appendChild(cpServiceTag(ranked[i].name, i+1, true));
+  }
+  // Unranked
+  CP_SERVICES.forEach(function(s) {
+    if (rankedNames.indexOf(s) === -1) {
+      wrap.appendChild(cpServiceTag(s, 0, false));
+    }
+  });
+}
+
+function cpServiceTag(name, rank, isRanked) {
+  var d = document.createElement('div');
+  d.className = 'cp-svc-tag' + (isRanked ? ' cp-svc-ranked' : '');
+  d.dataset.name = name;
+  if (isRanked) {
+    d.innerHTML = '<span class="cp-svc-num">'+rank+'</span><span class="cp-svc-label">'+name+'</span><button class="cp-svc-rm" onclick="cpRemoveService(\''+name+'\')">✕</button>';
+  } else {
+    d.innerHTML = '<span class="cp-svc-label">'+name+'</span><button class="cp-svc-add" onclick="cpAddService(\''+name+'\')">'+((_cpServiceRanks.length < 5) ? '+ Rank' : 'Full')+'</button>';
+  }
+  return d;
+}
+
+function cpAddService(name) {
+  if (_cpServiceRanks.length >= 5) return;
+  var already = _cpServiceRanks.find(function(r){return r.name===name;});
+  if (!already) {
+    _cpServiceRanks.push({name: name, rank: _cpServiceRanks.length + 1});
+  }
+  cpRenderServices();
+}
+
+function cpRemoveService(name) {
+  _cpServiceRanks = _cpServiceRanks.filter(function(r){return r.name!==name;});
+  // Re-number
+  _cpServiceRanks.forEach(function(r,i){r.rank=i+1;});
+  cpRenderServices();
+}
+
+function cpHandlePhoto(input) {
+  var f = input.files && input.files[0];
+  if (!f) return;
+  _cpPhotoFile = f;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var prev = document.getElementById('cp-photo-prev');
+    if (prev) { prev.src = e.target.result; prev.style.display = 'block'; }
+    var em = document.getElementById('cp-photo-emoji');
+    if (em) em.style.display = 'none';
+    var lbl = document.getElementById('cp-photo-lbl');
+    if (lbl) lbl.textContent = f.name;
+  };
+  reader.readAsDataURL(f);
+}
+
+function cpHandleIns(input) {
+  var f = input.files && input.files[0];
+  if (!f) return;
+  _cpInsFile = f;
+  var lbl = document.getElementById('cp-ins-lbl');
+  if (lbl) lbl.textContent = f.name;
+  var icon = document.getElementById('cp-ins-icon');
+  if (icon) { icon.textContent = '✓'; icon.style.color = 'var(--green)'; }
+}
+
+async function cpSaveProfile() {
+  var btn = document.getElementById('cp-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  var nameVal = (document.getElementById('cp-name') || {}).value || '';
+  var phoneVal = (document.getElementById('cp-phone') || {}).value || '';
+  var bioVal = (document.getElementById('cp-bio') || {}).value || '';
+
+  var photoUrl = null;
+  var insUrl = null;
+
+  try {
+    // Upload profile photo
+    if (_cpPhotoFile && _sb && cc && cc.id) {
+      var ext = _cpPhotoFile.name.split('.').pop();
+      var path = 'contractor/' + cc.id + '.' + ext;
+      var up = await _sb.storage.from('avatars').upload(path, _cpPhotoFile, {upsert: true, contentType: _cpPhotoFile.type});
+      if (!up.error) {
+        var pub = _sb.storage.from('avatars').getPublicUrl(path);
+        photoUrl = pub.data && pub.data.publicUrl;
+        // Save to auth metadata
+        await _sb.auth.updateUser({data:{contractor_avatar_url: photoUrl}});
+      }
+    }
+
+    // Upload insurance doc
+    if (_cpInsFile && _sb && cc && cc.id) {
+      var iext = _cpInsFile.name.split('.').pop();
+      var ipath = 'contractor/' + cc.id + '_insurance.' + iext;
+      var iup = await _sb.storage.from('documents').upload(ipath, _cpInsFile, {upsert: true, contentType: _cpInsFile.type});
+      if (!iup.error) {
+        var ipub = _sb.storage.from('documents').getPublicUrl(ipath);
+        insUrl = ipub.data && ipub.data.publicUrl;
+      }
+    }
+  } catch(e) {}
+
+  // Save to contractors table
+  if (_sb && cc && cc.id) {
+    var upd = {};
+    if (nameVal) upd.name = nameVal;
+    if (phoneVal) upd.phone = phoneVal;
+    if (bioVal) upd.bio = bioVal;
+    if (photoUrl) upd.photo_url = photoUrl;
+    if (insUrl) upd.insurance_url = insUrl;
+    if (_cpServiceRanks.length) {
+      upd.service_interests = JSON.stringify(_cpServiceRanks);
+    }
+    try { await _sb.from('contractors').update(upd).eq('id', cc.id); } catch(e) {}
+  }
+
+  // Update local cc
+  if (cc) {
+    if (nameVal) cc.name = nameVal;
+    if (phoneVal) cc.phone = phoneVal;
+    if (photoUrl) cc.photo_url = photoUrl;
+  }
+
+  cpSetupEnterApp();
 }
 
 // Call this from enterApp for first-time contractors
@@ -1593,6 +1773,119 @@ function cobShowIfNew() {
 #ios-install-modal .ios-close{display:block;width:100%;background:#2c2c2e;color:#fff;border:none;
   border-radius:12px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;margin-top:20px;}
 </style>
+<!-- Contractor Profile Setup -->
+<style>
+#cp-setup{display:none;position:fixed;inset:0;z-index:8000;background:#0d0d0d;flex-direction:column;align-items:center;overflow-y:auto;padding:24px 0 48px;}
+.cp-inner{width:100%;max-width:480px;padding:0 20px;}
+.cp-header{text-align:center;margin-bottom:32px;}
+.cp-header h2{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;text-transform:uppercase;letter-spacing:.04em;color:#fff;margin:0 0 6px;}
+.cp-header p{color:#888;font-size:14px;margin:0;}
+.cp-section{margin-bottom:28px;}
+.cp-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#666;margin-bottom:12px;}
+.cp-photo-wrap{display:flex;align-items:center;gap:16px;}
+.cp-photo-circle{width:72px;height:72px;border-radius:50%;background:#1e1e1e;border:2px dashed #333;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;flex-shrink:0;cursor:pointer;position:relative;}
+.cp-photo-circle img{width:100%;height:100%;object-fit:cover;display:none;}
+.cp-photo-info{flex:1;}
+.cp-photo-btn{display:inline-block;background:#1e1e1e;border:1.5px solid #333;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;color:#ccc;cursor:pointer;width:100%;text-align:center;}
+.cp-photo-name{font-size:12px;color:#555;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cp-input{width:100%;background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:12px;padding:13px 16px;font-size:15px;color:#fff;font-family:inherit;outline:none;box-sizing:border-box;transition:border-color .2s;}
+.cp-input:focus{border-color:#f07230;}
+.cp-textarea{resize:vertical;min-height:80px;}
+.cp-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.cp-field{display:flex;flex-direction:column;gap:6px;}
+.cp-field label{font-size:12px;color:#666;font-weight:600;}
+.cp-ins-wrap{display:flex;align-items:center;gap:12px;background:#1a1a1a;border:1.5px dashed #2a2a2a;border-radius:12px;padding:14px 16px;cursor:pointer;}
+.cp-ins-icon{font-size:22px;flex-shrink:0;}
+.cp-ins-text{flex:1;}
+.cp-ins-text strong{display:block;font-size:14px;color:#ccc;font-weight:600;}
+.cp-ins-text span{font-size:12px;color:#555;}
+/* Service ranking */
+.cp-svc-note{font-size:12px;color:#555;margin-bottom:12px;}
+.cp-svc-slots{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.cp-svc-slot{width:32px;height:32px;border-radius:50%;border:2px dashed #2a2a2a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#333;}
+.cp-svc-slot.filled{border-color:#f07230;background:rgba(240,114,48,.15);color:#f07230;}
+#cp-svc-list{display:flex;flex-direction:column;gap:8px;}
+.cp-svc-tag{display:flex;align-items:center;gap:10px;background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:10px;padding:10px 14px;}
+.cp-svc-tag.cp-svc-ranked{border-color:rgba(240,114,48,.4);background:rgba(240,114,48,.07);}
+.cp-svc-num{width:22px;height:22px;border-radius:50%;background:#f07230;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cp-svc-label{flex:1;font-size:14px;color:#ccc;}
+.cp-svc-add,.cp-svc-rm{background:none;border:1.5px solid #333;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;color:#888;cursor:pointer;}
+.cp-svc-add:hover{border-color:#f07230;color:#f07230;}
+.cp-svc-rm{color:#555;}
+.cp-save-btn{width:100%;padding:16px;background:var(--green,#2dba56);border:none;border-radius:14px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;text-transform:uppercase;letter-spacing:.04em;color:#fff;cursor:pointer;margin-top:8px;}
+.cp-save-btn:disabled{opacity:.5;}
+.cp-skip{display:block;text-align:center;margin-top:16px;font-size:13px;color:#444;cursor:pointer;text-decoration:underline;}
+</style>
+<div id="cp-setup">
+  <div class="cp-inner">
+    <div class="cp-header">
+      <h2>Complete Your Profile</h2>
+      <p>Help homeowners know who's coming to their door.</p>
+    </div>
+
+    <div class="cp-section">
+      <div class="cp-section-title">Profile Photo</div>
+      <div class="cp-photo-wrap">
+        <div class="cp-photo-circle" onclick="document.getElementById('cp-photo-input').click()">
+          <img id="cp-photo-prev" alt="">
+          <span id="cp-photo-emoji">📷</span>
+        </div>
+        <div class="cp-photo-info">
+          <label class="cp-photo-btn" for="cp-photo-input">Upload Photo</label>
+          <div class="cp-photo-name" id="cp-photo-lbl">No photo selected</div>
+        </div>
+      </div>
+      <input type="file" id="cp-photo-input" accept="image/*" style="display:none" onchange="cpHandlePhoto(this)">
+    </div>
+
+    <div class="cp-section">
+      <div class="cp-section-title">Your Info</div>
+      <div class="cp-row" style="margin-bottom:12px">
+        <div class="cp-field">
+          <label>Full Name</label>
+          <input class="cp-input" id="cp-name" type="text" placeholder="Jane Smith">
+        </div>
+        <div class="cp-field">
+          <label>Phone</label>
+          <input class="cp-input" id="cp-phone" type="tel" placeholder="(555) 000-0000">
+        </div>
+      </div>
+      <div class="cp-field">
+        <label>Short Bio (optional)</label>
+        <textarea class="cp-input cp-textarea" id="cp-bio" placeholder="Tell homeowners a little about yourself and your experience…"></textarea>
+      </div>
+    </div>
+
+    <div class="cp-section">
+      <div class="cp-section-title">Insurance Document</div>
+      <div class="cp-ins-wrap" onclick="document.getElementById('cp-ins-input').click()">
+        <div class="cp-ins-icon" id="cp-ins-icon">📄</div>
+        <div class="cp-ins-text">
+          <strong>Upload Proof of Insurance</strong>
+          <span id="cp-ins-lbl">PDF or image — tap to upload</span>
+        </div>
+      </div>
+      <input type="file" id="cp-ins-input" accept="image/*,.pdf" style="display:none" onchange="cpHandleIns(this)">
+    </div>
+
+    <div class="cp-section">
+      <div class="cp-section-title">Service Interests</div>
+      <div class="cp-svc-note">Pick up to 5 services you're most interested in, ranked #1 (top) to #5.</div>
+      <div class="cp-svc-slots" id="cp-svc-slots">
+        <div class="cp-svc-slot" id="cpsl1">1</div>
+        <div class="cp-svc-slot" id="cpsl2">2</div>
+        <div class="cp-svc-slot" id="cpsl3">3</div>
+        <div class="cp-svc-slot" id="cpsl4">4</div>
+        <div class="cp-svc-slot" id="cpsl5">5</div>
+      </div>
+      <div id="cp-svc-list"></div>
+    </div>
+
+    <button class="cp-save-btn" id="cp-save-btn" onclick="cpSaveProfile()">Save &amp; Enter Portal →</button>
+    <a class="cp-skip" onclick="cpSetupEnterApp()">Skip for now</a>
+  </div>
+</div>
+
 <div id="pwa-banner">
   <div class="pwa-icon">PS</div>
   <div class="pwa-text">
