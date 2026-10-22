@@ -1572,7 +1572,7 @@ function openSheet(id){
     +'<div class="sheet-actions">'
       +'<button class="sab sab-inv" onclick="downloadInvoice(openJobId)">⬇&nbsp; Invoice PDF</button>'
       +(j.status==='Paid'?'<button class="sab sab-paid" disabled>✓&nbsp; Paid</button>'
-        :(j.status==='Scheduled'||j.status==='Complete'?'<button class="sab sab-pay" onclick="payOnline(\''+j.id+'\')">💳&nbsp; Pay Online</button>':''))
+        :(j.status==='Scheduled'||j.status==='In Progress'||j.status==='Complete'?'<button class="sab sab-pay" onclick="payOnline(\''+j.id+'\')">💳&nbsp; Pay Online</button>':''))
     +'</div>'
     +'<button class="sheet-close" onclick="closeSheet()">Close</button>';
   document.getElementById('sheetOverlay').classList.add('open');
