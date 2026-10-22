@@ -823,9 +823,11 @@ async function uploadContractorPhoto(input){
     var publicUrl=pubRes&&pubRes.data&&pubRes.data.publicUrl;
     if(!publicUrl){alert('Could not get photo URL');return;}
     var displayUrl=publicUrl+'?t='+Date.now();
-    await _sb.auth.updateUser({data:{avatar_url:publicUrl}});
+    await _sb.auth.updateUser({data:{contractor_avatar_url:publicUrl}});
     try{localStorage.setItem('ps_ct_avatar_url',displayUrl);}catch(e){}
     _applyContractorAvatar(displayUrl);
+    // Save photo_url to contractors table so homeowner portal can display it
+    if(cc&&cc.id){_sb.from('contractors').update({photo_url:publicUrl}).eq('id',cc.id).then(function(){}).catch(function(){});}
     // Show success
     var sub=document.getElementById('ctAvSub');if(sub)sub.textContent='Photo updated ✓';setTimeout(function(){if(sub)sub.textContent='Tap photo to update';},2500);
   }catch(e){alert('Upload failed');}
@@ -847,7 +849,7 @@ async function enterApp(){
     // Load saved avatar
     var _savedCtAvatar=null;try{_savedCtAvatar=localStorage.getItem('ps_ct_avatar_url');}catch(e){}
     if(_savedCtAvatar){_applyContractorAvatar(_savedCtAvatar);}
-    else{_sb.auth.getUser().then(function(r){var u=r&&r.data&&r.data.user;var av=u&&u.user_metadata&&u.user_metadata.avatar_url;if(av){try{localStorage.setItem('ps_ct_avatar_url',av);}catch(e){}_applyContractorAvatar(av);}});}
+    else{_sb.auth.getUser().then(function(r){var u=r&&r.data&&r.data.user;var av=u&&u.user_metadata&&(u.user_metadata.contractor_avatar_url||u.user_metadata.avatar_url);if(av){try{localStorage.setItem('ps_ct_avatar_url',av);}catch(e){}_applyContractorAvatar(av);}});}
   }
   var now=new Date();document.getElementById('homeDateLine').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   rHome();rJobs();rEarn();rMs();rStripeStatus();

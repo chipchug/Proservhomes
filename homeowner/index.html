@@ -46,7 +46,7 @@
 .track-connector{flex:1;height:2px;background:var(--border-2);margin-top:-18px;position:relative;z-index:0;transition:background .3s}
 .track-connector.done{background:var(--green)}
 .track-tech{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border-2);border-radius:10px;padding:10px 12px}
-.track-tech-av{width:38px;height:38px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.track-tech-av{width:38px;height:38px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden}
 .track-tech-name{font-size:14px;font-weight:700;color:var(--fg)}
 .track-tech-sub{font-size:12px;color:var(--fg-2);margin-top:1px}
 .cal-nav{display:flex;gap:6px}
@@ -173,6 +173,7 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .review-cta{display:inline-block;background:#FBBC04;color:#1a1200;font-weight:700;font-size:12px;padding:7px 12px;border-radius:8px;text-decoration:none;white-space:nowrap}
 .review-dismiss{background:none;border:none;font-size:16px;color:var(--fg-3);cursor:pointer;padding:4px;line-height:1}
 .tl-dot.req{background:#4c6ef5;border-color:#4c6ef5}
+.tl-dot.active{background:var(--orange);border-color:var(--orange);box-shadow:0 0 0 3px rgba(242,99,16,0.25)}
 
 /* HISTORY TAB */
 .timeline{padding:16px 16px 0;position:relative}
@@ -742,7 +743,7 @@ var STRIPE_LINKS = {
   'Window Cleaning':     'https://buy.stripe.com/REPLACE_WINDOWS',
   'Christmas Lights':    'https://buy.stripe.com/REPLACE_LIGHTS',
 };
-function jr2l(r){return{id:r.id,svc:r.service||r.svc,date:r.date,time:r.time||'',addr:r.address||r.addr,price:Number(r.price)||0,status:r.status||'Scheduled',tech:r.tech||'ProServ Crew',notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}}
+function jr2l(r){return{id:r.id,svc:r.service||r.svc,date:r.date,time:r.time||'',addr:r.address||r.addr,price:Number(r.price)||0,status:r.status||'Scheduled',tech:r.tech||'ProServ Crew',contractorId:r.contractor_id||null,notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}}
 var _homePhone='';
 
 
@@ -874,11 +875,11 @@ function initApp(){
   _setText('hName', USER.first+' M.');
   // Avatar — show photo if previously uploaded, else initials
   var _savedAvatar = null;
-  try{_savedAvatar = localStorage.getItem('ps_avatar_url');}catch(e){}
+  try{_savedAvatar = localStorage.getItem('ps_hw_avatar_url');}catch(e){}
   if(_savedAvatar){ _applyAvatar(_savedAvatar); }
   else {
-    // Try auth user_metadata for avatar_url
-    if(_sb){_sb.auth.getUser().then(function(r){var u=r&&r.data&&r.data.user;var av=u&&u.user_metadata&&u.user_metadata.avatar_url;if(av){try{localStorage.setItem('ps_avatar_url',av);}catch(e){}_applyAvatar(av);}});}
+    // Try auth user_metadata for homeowner_avatar_url (isolated from contractor key)
+    if(_sb){_sb.auth.getUser().then(function(r){var u=r&&r.data&&r.data.user;var av=u&&u.user_metadata&&(u.user_metadata.homeowner_avatar_url||u.user_metadata.avatar_url);if(av){try{localStorage.setItem('ps_hw_avatar_url',av);}catch(e){}_applyAvatar(av);}});}
     _setText('hInit', USER.init);
     _setText('profAv', USER.init);
   }
@@ -943,14 +944,33 @@ function renderTracker(){
       +'<div class="track-connector"></div>'
       +'<div class="track-step"><div class="track-step-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="track-step-label">Done</div></div>'
     +'</div>'
-    // tech row
-    +'<div class="track-tech">'
-      +'<div class="track-tech-av">👷</div>'
-      +'<div><div class="track-tech-name">'+esc(active.tech||'ProServ Crew')+'</div>'
+    // tech row — photo filled in async below
+    +'<div class="track-tech" id="trackTechRow">'
+      +'<div class="track-tech-av" id="trackTechAv">👷</div>'
+      +'<div><div class="track-tech-name" id="trackTechName">'+esc(active.tech||'ProServ Crew')+'</div>'
         +'<div class="track-tech-sub">Your technician is on-site</div></div>'
     +'</div>'
     +'<div style="text-align:right;margin-top:12px;font-size:12px;font-weight:700;color:var(--orange);letter-spacing:.04em">Tap for details →</div>'
   +'</div>';
+  // Async: fetch contractor photo + name from DB
+  if(active.contractorId && _sb){
+    _sb.from('contractors').select('name,photo_url').eq('id',active.contractorId).limit(1).then(function(cr){
+      var ct = cr.data && cr.data[0];
+      if(!ct) return;
+      var nameEl = document.getElementById('trackTechName');
+      var avEl   = document.getElementById('trackTechAv');
+      if(nameEl && ct.name) nameEl.textContent = ct.name;
+      if(avEl){
+        if(ct.photo_url){
+          avEl.innerHTML = '<img src="'+esc(ct.photo_url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block">';
+          avEl.style.background = 'none';
+          avEl.style.fontSize = '0';
+        } else if(ct.name){
+          avEl.textContent = ct.name[0].toUpperCase();
+        }
+      }
+    });
+  }
   _startTrackRealtime(active.id);
 }
 
@@ -1072,8 +1092,8 @@ function renderHistory(){
   tl.innerHTML = JOBS.map(function(j,i){
     var d = new Date(j.date+'T12:00:00');
     var ds = d.toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
-    var dot = j.status==='Scheduled'?'sched':(j.status==='Requested'?'req':'done');
-    var pill = j.status==='Scheduled'?'<span class="pill pill-sched">Scheduled</span>':(j.status==='Requested'?'<span class="pill pill-req">Requested</span>':'<span class="pill pill-done">Complete</span>');
+    var dot = j.status==='Scheduled'?'sched':(j.status==='Requested'?'req':j.status==='In Progress'?'active':'done');
+    var pill = j.status==='Scheduled'?'<span class="pill pill-sched">Scheduled</span>':j.status==='Requested'?'<span class="pill pill-req">Requested</span>':j.status==='In Progress'?'<span class="pill" style="background:rgba(242,99,16,0.15);border:1.5px solid var(--orange);color:var(--orange)">In Progress</span>':j.status==='Paid'?'<span class="pill" style="background:var(--green-dim);border:1.5px solid var(--green);color:var(--green)">Paid ✓</span>':'<span class="pill pill-done">Complete</span>';
     var isLast = i===JOBS.length-1;
     var _tlCat = j.svc ? j.svc.split(/\s+[–—\-]+\s+/)[0].trim() : '';
     var _tlImg = SVC_IMAGES[_tlCat] || (function(){for(var k in SVC_IMAGES){if(j.svc&&j.svc.indexOf(k)===0)return SVC_IMAGES[k];}return '';})();
@@ -1740,8 +1760,8 @@ async function uploadProfilePhoto(input){
     if(!publicUrl){showToast('Could not get photo URL');return;}
     // Add cache-bust so UI refreshes even if same filename
     var displayUrl=publicUrl+'?t='+Date.now();
-    await _sb.auth.updateUser({data:{avatar_url:publicUrl}});
-    try{localStorage.setItem('ps_avatar_url',displayUrl);}catch(e){}
+    await _sb.auth.updateUser({data:{homeowner_avatar_url:publicUrl}});
+    try{localStorage.setItem('ps_hw_avatar_url',displayUrl);}catch(e){}
     _applyAvatar(displayUrl);
     showToast('Profile photo updated ✓');
   }catch(e){showToast('Upload failed');}
