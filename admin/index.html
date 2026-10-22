@@ -892,7 +892,7 @@ async function genPaymentLink(priceId,linkId,svcId,btn){
 }
 
 // Field mapping: local camelCase <-> DB snake_case
-function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,paymentLink:r.payment_link||'',status:r.status||'New',notes:r.notes||''}}
+function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,paymentLink:r.payment_link||'',status:r.status||'New',notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}}
 function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,email:j.email||'',address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,contractor_paid:!!j.contractorPaid,payment_link:j.paymentLink||'',status:j.status||'New',notes:j.notes||''}}
 function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',margin:Number(r.margin)||30}}
 function cl2r(c){return{id:c.id,name:c.name,phone:c.phone,email:c.email||'',specialty:c.specialty||c.spec||'',margin:c.margin||30}}
