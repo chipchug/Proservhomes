@@ -450,8 +450,28 @@ textarea{resize:vertical;min-height:80px}
           <span>ProServ Pro Applications</span>
           <button onclick="loadApplications()" style="background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:12px;padding:4px 8px">↻ Refresh</button>
         </div>
+        <!-- Status filter tabs -->
+        <div style="display:flex;gap:6px;padding:0 14px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <button id="appsFilter_pending" onclick="setAppsFilter('pending')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer">Pending</button>
+          <button id="appsFilter_approved" onclick="setAppsFilter('approved')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:transparent;color:var(--fg-2);cursor:pointer">Approved</button>
+          <button id="appsFilter_welcomed" onclick="setAppsFilter('welcomed')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:transparent;color:var(--fg-2);cursor:pointer">Onboarded</button>
+          <button id="appsFilter_denied" onclick="setAppsFilter('denied')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:transparent;color:var(--fg-2);cursor:pointer">Denied</button>
+          <button id="appsFilter_all" onclick="setAppsFilter('all')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:transparent;color:var(--fg-2);cursor:pointer">All</button>
+        </div>
         <div id="appsList" style="padding:0 14px 80px">
           <div style="padding:24px 0;text-align:center;color:var(--fg-3);font-size:13px">Loading applications…</div>
+        </div>
+      </div>
+
+      <!-- APPLICATION DETAIL MODAL -->
+      <div id="appDetailModal" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--bg);overflow-y:auto">
+        <div style="max-width:560px;margin:0 auto;padding:0 0 80px">
+          <div style="position:sticky;top:0;z-index:10;background:var(--bg);display:flex;align-items:center;justify-content:space-between;padding:16px 16px 12px;border-bottom:1px solid var(--border)">
+            <button onclick="closeAppDetail()" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--fg-2);font-size:14px;font-weight:700;cursor:pointer;padding:0">← Back</button>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3)">Application</span>
+            <div style="width:60px"></div>
+          </div>
+          <div id="appDetailBody" style="padding:20px 16px 0"></div>
         </div>
       </div>
 
@@ -1225,40 +1245,129 @@ async function loadApplications(){
     renderApplications();
   }catch(e){console.error('[loadApplications]',e);}
 }
+var _appsFilter='pending';
+function setAppsFilter(f){
+  _appsFilter=f;
+  var filters=['pending','approved','welcomed','denied','all'];
+  filters.forEach(function(k){
+    var btn=document.getElementById('appsFilter_'+k);
+    if(!btn)return;
+    var active=(k===f);
+    var activeColor=k==='denied'?'var(--red,#ef4444)':k==='approved'?'var(--green,#22c55e)':k==='welcomed'?'var(--blue,#3b82f6)':k==='all'?'var(--fg-2)':'var(--orange)';
+    btn.style.background=active?activeColor:'transparent';
+    btn.style.borderColor=active?activeColor:'var(--border)';
+    btn.style.color=active?'#fff':'var(--fg-2)';
+  });
+  renderApplications();
+}
 function renderApplications(){
   var el=document.getElementById('appsList');
   if(!el)return;
-  if(!_applications.length){el.innerHTML='<div style="padding:40px 0;text-align:center;color:var(--fg-3);font-size:14px">No applications yet</div>';return;}
-  el.innerHTML=_applications.map(function(a){
-    var statusColor={'pending':'var(--orange)','approved':'var(--green)','denied':'var(--red)','welcomed':'var(--blue,#3b82f6)'}[a.status]||'var(--fg-3)';
-    var photos=Array.isArray(a.photo_urls)?a.photo_urls:(a.photo_urls?JSON.parse(a.photo_urls):[]);
-    var services=Array.isArray(a.services)?a.services:(a.services?JSON.parse(a.services):[]);
+  var list=_appsFilter==='all'?_applications:_applications.filter(function(a){return a.status===_appsFilter});
+  if(!list.length){
+    var label=_appsFilter==='all'?'No applications yet':'No '+_appsFilter+' applications';
+    el.innerHTML='<div style="padding:40px 0;text-align:center;color:var(--fg-3);font-size:14px">'+label+'</div>';
+    return;
+  }
+  el.innerHTML=list.map(function(a){
+    var statusColor={'pending':'var(--orange)','approved':'var(--green,#22c55e)','denied':'var(--red,#ef4444)','welcomed':'var(--blue,#3b82f6)'}[a.status]||'var(--fg-3)';
+    var statusLabel={'pending':'Pending','approved':'Approved','denied':'Denied','welcomed':'Onboarded'}[a.status]||a.status;
+    var services=[];try{services=Array.isArray(a.services)?a.services:JSON.parse(a.services||'[]');}catch(e){}
     var dt=a.created_at?new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
-    return '<div class="fu-item" style="flex-direction:column;align-items:stretch;gap:0;padding:16px;margin-bottom:10px;border-radius:14px;background:var(--surface);border:1px solid var(--border)">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
-        +'<div><div style="font-size:16px;font-weight:800;letter-spacing:.01em">'+esc(a.name)+'</div>'
-        +'<div style="font-size:12px;color:var(--fg-3);margin-top:2px">'+esc(a.email)+(a.phone?' · '+esc(a.phone):'')+'</div></div>'
-        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
-          +'<span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:'+statusColor+'">'+a.status+'</span>'
-          +'<span style="font-size:11px;color:var(--fg-3)">'+dt+'</span>'
-        +'</div>'
+    return '<div onclick="openAppDetail(\''+a.id+'\')" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;margin-bottom:8px;border-radius:14px;background:var(--surface);border:1px solid var(--border);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .15s" onmouseenter="this.style.borderColor=\'var(--orange)\'" onmouseleave="this.style.borderColor=\'var(--border)\'">'
+      +'<div style="min-width:0;flex:1">'
+        +'<div style="font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(a.name)+'</div>'
+        +'<div style="font-size:12px;color:var(--fg-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(a.email)+(a.phone?' · '+esc(a.phone):'')+'</div>'
+        +(services.length?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px">'+services.slice(0,3).map(function(s){return'<span style="font-size:10px;font-weight:700;padding:2px 7px;background:rgba(242,99,16,.18);color:var(--orange);border-radius:20px">'+esc(s)+'</span>'}).join('')+(services.length>3?'<span style="font-size:10px;color:var(--fg-3);padding:2px 4px">+'+( services.length-3)+' more</span>':'')+'</div>':'')
       +'</div>'
-      +(services.length?'<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">'+services.map(function(s){return'<span style="font-size:11px;font-weight:700;padding:3px 8px;background:var(--orange);color:#fff;border-radius:20px">'+esc(s)+'</span>'}).join('')+'</div>':'')
-      +(a.bio?'<div style="font-size:13px;color:var(--fg-2);margin-bottom:8px;line-height:1.5">'+esc(a.bio)+'</div>':'')
-      +(a.qualifications?'<div style="font-size:12px;color:var(--fg-3);margin-bottom:8px"><strong>Qualifications:</strong> '+esc(a.qualifications)+'</div>':'')
-      +(a.experience?'<div style="font-size:12px;color:var(--fg-3);margin-bottom:8px"><strong>Experience:</strong> '+esc(a.experience)+'</div>':'')
-      +(photos.length?'<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px">'+photos.map(function(u){return'<a href="'+esc(u)+'" target="_blank"><img src="'+esc(u)+'" style="width:72px;height:72px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--border)"></a>'}).join('')+'</div>':'')
-      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">'
-        +(a.status==='pending'?
-          '<button onclick="appAction(\'deny\',\''+a.id+'\')" style="flex:1;min-width:100px;padding:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;color:var(--red);font-weight:700;font-size:13px;cursor:pointer">✕ Deny</button>'
-          +'<button onclick="appAction(\'approve\',\''+a.id+'\')" style="flex:2;min-width:120px;padding:10px;background:var(--orange);border:none;border-radius:10px;color:#fff;font-weight:800;font-size:13px;cursor:pointer">✓ Approve + Schedule Interview</button>'
-        :'')
-        +(a.status==='approved'?
-          '<button onclick="appAction(\'welcome\',\''+a.id+'\')" style="flex:1;padding:10px;background:var(--green,#22c55e);border:none;border-radius:10px;color:#fff;font-weight:800;font-size:13px;cursor:pointer">🎉 Send Welcome Email</button>'
-        :'')
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'
+        +'<span style="font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:'+statusColor+'">'+statusLabel+'</span>'
+        +'<span style="font-size:11px;color:var(--fg-3)">'+dt+'</span>'
+        +'<span style="font-size:18px;color:var(--fg-3)">›</span>'
       +'</div>'
     +'</div>';
   }).join('');
+}
+function openAppDetail(id){
+  var a=_applications.find(function(x){return x.id===id});
+  if(!a)return;
+  var modal=document.getElementById('appDetailModal');
+  var body=document.getElementById('appDetailBody');
+  if(!modal||!body)return;
+  var statusColor={'pending':'var(--orange)','approved':'var(--green,#22c55e)','denied':'var(--red,#ef4444)','welcomed':'var(--blue,#3b82f6)'}[a.status]||'var(--fg-3)';
+  var statusLabel={'pending':'Pending','approved':'Approved','denied':'Denied','welcomed':'Onboarded'}[a.status]||a.status;
+  var photos=[];try{photos=Array.isArray(a.photo_urls)?a.photo_urls:JSON.parse(a.photo_urls||'[]');}catch(e){}
+  var services=[];try{services=Array.isArray(a.services)?a.services:JSON.parse(a.services||'[]');}catch(e){}
+  var experience=[];try{experience=Array.isArray(a.experience)?a.experience:JSON.parse(a.experience||'[]');}catch(e){}
+  var dt=a.created_at?new Date(a.created_at).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}):'';
+  var dtRev=a.reviewed_at?new Date(a.reviewed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+  var html='';
+  // Header
+  html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px">'
+    +'<div>'
+      +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:28px;font-weight:900;text-transform:uppercase;line-height:1.1;letter-spacing:-.01em">'+esc(a.name)+'</div>'
+      +'<div style="font-size:13px;color:var(--fg-3);margin-top:4px">'+esc(a.email)+'</div>'
+      +(a.phone?'<div style="font-size:13px;color:var(--fg-3)">'+esc(a.phone)+'</div>':'')
+    +'</div>'
+    +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
+      +'<span style="font-size:12px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;padding:4px 10px;border-radius:20px;border:1.5px solid '+statusColor+';color:'+statusColor+'">'+statusLabel+'</span>'
+    +'</div>'
+  +'</div>';
+  // Meta
+  html+='<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;padding:12px 14px;background:var(--surface);border-radius:12px;border:1px solid var(--border)">'
+    +(dt?'<div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);margin-bottom:2px">Applied</div><div style="font-size:13px;font-weight:600">'+dt+'</div></div>':'')
+    +(dtRev?'<div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);margin-bottom:2px">Reviewed</div><div style="font-size:13px;font-weight:600">'+dtRev+'</div></div>':'')
+  +'</div>';
+  // Services
+  if(services.length){
+    html+='<div style="margin-bottom:18px"><div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Services Offered</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+services.map(function(s){return'<span style="font-size:13px;font-weight:700;padding:5px 12px;background:var(--orange);color:#fff;border-radius:20px">'+esc(s)+'</span>'}).join('')+'</div></div>';
+  }
+  // Bio
+  if(a.bio){html+='<div style="margin-bottom:18px"><div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">About</div><div style="font-size:14px;color:var(--fg-2);line-height:1.6">'+esc(a.bio)+'</div></div>';}
+  // Qualifications
+  if(a.qualifications){html+='<div style="margin-bottom:18px"><div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Qualifications</div><div style="font-size:14px;color:var(--fg-2);line-height:1.6">'+esc(a.qualifications)+'</div></div>';}
+  // Experience
+  if(experience.length){
+    html+='<div style="margin-bottom:18px"><div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Experience</div>';
+    experience.forEach(function(e){
+      if(typeof e==='object'&&e!==null){
+        html+='<div style="padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px">'
+          +(e.title?'<div style="font-size:14px;font-weight:800">'+esc(e.title)+'</div>':'')
+          +(e.company?'<div style="font-size:12px;color:var(--fg-3)">'+esc(e.company)+(e.years?' · '+esc(e.years)+' yrs':'')+'</div>':'')
+          +(e.description?'<div style="font-size:13px;color:var(--fg-2);margin-top:5px">'+esc(e.description)+'</div>':'')
+        +'</div>';
+      } else {
+        html+='<div style="font-size:14px;color:var(--fg-2);margin-bottom:6px">'+esc(String(e))+'</div>';
+      }
+    });
+    html+='</div>';
+  } else if(a.experience&&typeof a.experience==='string'){
+    html+='<div style="margin-bottom:18px"><div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Experience</div><div style="font-size:14px;color:var(--fg-2);line-height:1.6">'+esc(a.experience)+'</div></div>';
+  }
+  // Photos
+  if(photos.length){
+    html+='<div style="margin-bottom:20px"><div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:10px">Photos / Work Samples ('+photos.length+')</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">'+photos.map(function(u){return'<a href="'+esc(u)+'" target="_blank" style="display:block;aspect-ratio:1;overflow:hidden;border-radius:10px;border:1px solid var(--border)"><img src="'+esc(u)+'" style="width:100%;height:100%;object-fit:cover"></a>'}).join('')+'</div></div>';
+  }
+  // Action buttons
+  html+='<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">';
+  if(a.status==='pending'){
+    html+='<button onclick="appAction(\'approve\',\''+a.id+'\');closeAppDetail()" style="padding:14px;background:var(--orange);border:none;border-radius:12px;color:#fff;font-weight:800;font-size:15px;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">✓ Approve + Schedule Interview</button>';
+    html+='<button onclick="appAction(\'deny\',\''+a.id+'\');closeAppDetail()" style="padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--red,#ef4444);font-weight:700;font-size:15px;cursor:pointer">✕ Deny Application</button>';
+  }
+  if(a.status==='approved'){
+    html+='<button onclick="appAction(\'welcome\',\''+a.id+'\');closeAppDetail()" style="padding:14px;background:var(--green,#22c55e);border:none;border-radius:12px;color:#fff;font-weight:800;font-size:15px;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">🎉 Send Welcome Email</button>';
+  }
+  html+='</div>';
+  body.innerHTML=html;
+  modal.style.display='block';
+  document.body.style.overflow='hidden';
+}
+function closeAppDetail(){
+  var modal=document.getElementById('appDetailModal');
+  if(modal)modal.style.display='none';
+  document.body.style.overflow='';
 }
 async function appAction(action,id){
   var a=_applications.find(function(x){return x.id===id});

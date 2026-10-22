@@ -305,6 +305,8 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
       <p>Enter your email address to receive a sign-in code.</p>
       <div class="field"><label id="uniLabel">Email Address</label><input type="email" id="uniInput" placeholder="your@email.com" autocomplete="email" inputmode="email"></div>
       <button class="bf bfo" id="sendCodeBtn" onclick="sendCodeUnified()" style="margin-top:4px">Send Code</button>
+      <div id="sendCodeErr" style="display:none;margin-top:10px;padding:10px 12px;background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.35);border-radius:8px;color:#f87171;font-size:13px;line-height:1.4"></div>
+      <div style="margin-top:12px;text-align:center"><button onclick="_showOtpStep(document.getElementById('uniInput').value.trim().toLowerCase()||pp||'')" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:12px;cursor:pointer;text-decoration:underline;padding:0">Already have a code? Enter it →</button></div>
     </div>
     <div id="otpStep">
       <h2>Enter Code</h2>
@@ -755,6 +757,15 @@ function svcCfg(s){var m={'Pressure Washing':{bg:'linear-gradient(150deg,#0d1e2d
 
 var useEmailLogin=false;
 function _isEmail(v){return v.includes('@');}
+function _showOtpStep(email){
+  document.getElementById('phoneStep').style.display='none';
+  document.getElementById('otpStep').style.display='block';
+  document.getElementById('otpSub').textContent='We emailed a 6-digit code to '+email;
+  document.getElementById('demoHint').style.display='none';
+  document.getElementById('backBtn').textContent='← Change Email';
+  // focus code input
+  setTimeout(function(){var ci=document.getElementById('codeInput');if(ci)ci.focus();},100);
+}
 async function sendCodeUnified(){
   var raw=document.getElementById('uniInput').value.trim();
   if(!raw){toast('Enter your email address');return;}
@@ -765,15 +776,27 @@ async function sendCodeUnified(){
   try {
     var res=await _sb.auth.signInWithOtp({email:pp,options:{shouldCreateUser:true,emailRedirectTo:'https://proservhomes.co/contractor/'}});
     btn.disabled=false;btn.textContent='Send Code';
-    if(res.error){toast('Error: '+res.error.message);return;}
-    document.getElementById('phoneStep').style.display='none';
-    document.getElementById('otpStep').style.display='block';
-    document.getElementById('otpSub').textContent='We emailed a 6-digit code to '+pp;
-    document.getElementById('demoHint').style.display='none';
-    document.getElementById('backBtn').textContent='← Change Email';
+    if(res.error){
+      var msg=res.error.message||'';
+      // Rate limit: code was already sent — still show code entry
+      if(msg.toLowerCase().includes('rate limit')||msg.toLowerCase().includes('security purposes')||msg.toLowerCase().includes('already sent')){
+        toast('Code already sent — check your email');
+        _showOtpStep(pp);
+        return;
+      }
+      // Show error inline so it doesn't disappear
+      var errEl=document.getElementById('sendCodeErr');
+      if(errEl){errEl.textContent='Error: '+msg;errEl.style.display='block';}
+      else toast('Error: '+msg);
+      console.error('[PSC] signInWithOtp error',res.error);
+      return;
+    }
+    _showOtpStep(pp);
   } catch(err) {
     btn.disabled=false;btn.textContent='Send Code';
-    toast('Could not send code — '+(err.message||'check connection and try again'));
+    var errEl=document.getElementById('sendCodeErr');
+    if(errEl){errEl.textContent='Could not send code — '+(err.message||'check connection and try again');errEl.style.display='block';}
+    else toast('Could not send code — '+(err.message||'check connection and try again'));
     console.error('[PSC] sendCodeUnified error',err);
   }
 }
