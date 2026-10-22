@@ -520,7 +520,7 @@ function jr2l(r){
   var photos=r.photos&&Array.isArray(r.photos)?r.photos:[];
   if(!photos.length&&r.before_photo)photos.push({url:r.before_photo,path:'',label:'before'});
   if(!photos.length&&r.after_photo)photos.push({url:r.after_photo,path:'',label:'after'});
-  return{id:r.id,client:r.client,phone:r.phone,address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,status:r.status||'New',notes:r.notes||'',photos:photos,beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}
+  return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,status:r.status||'New',notes:r.notes||'',photos:photos,beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}
 }
 function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,status:j.status||'New',notes:j.notes||''}}
 function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',stripeAccountId:r.stripe_account_id||null,stripeOnboarded:!!r.stripe_onboarded,photo_url:r.photo_url||null,bio:r.bio||'',insurance_url:r.insurance_url||null,service_interests:r.service_interests||null}}

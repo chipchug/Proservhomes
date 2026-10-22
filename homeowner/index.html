@@ -20,15 +20,15 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:ital,wght@0,700;0,900;1,700;1,900&family=DM+Sans:wght@400;500;600&display=swap">
 <style>
-:root{--bg:#181818;--surface:#222;--surface-2:#2A2A2A;--surface-3:#333;--border:rgba(255,255,255,0.07);--border-2:rgba(255,255,255,0.13);--fg:#F0F2F5;--fg-2:#9A9FA8;--fg-3:#55595f;--orange:#F26310;--orange-hi:#FF7220;--orange-dim:rgba(242,99,16,0.14);--green:#1F9B2A;--green-hi:#25B531;--green-dim:rgba(31,155,42,0.14);--red:#E04040;--yellow:#E8A020;--blue:#3B82F6;color-scheme:dark;--cs:dark}
-:root[data-theme="light"]{--bg:#F2F4F7;--surface:#FFFFFF;--surface-2:#EBEBED;--surface-3:#E0E1E4;--border:rgba(0,0,0,0.09);--border-2:rgba(0,0,0,0.18);--fg:#111318;--fg-2:#6B7280;--fg-3:#9CA3AF;--orange:#E55B00;--orange-hi:#F26310;--orange-dim:rgba(242,99,16,0.1);--green:#167820;--green-hi:#1F9B2A;--green-dim:rgba(31,155,42,0.1);--red:#C93030;--yellow:#B87010;--blue:#2563EB;color-scheme:light;--cs:light}
+:root{--bg:#181818;--surface:#222;--surface-2:#2A2A2A;--surface-3:#333;--border:rgba(255,255,255,0.07);--border-2:rgba(255,255,255,0.13);--fg:#F0F2F5;--fg-2:#9A9FA8;--fg-3:#55595f;--orange:#F26310;--orange-hi:#FF7220;--orange-dim:rgba(242,99,16,0.14);--green:#1F9B2A;--green-hi:#25B531;--green-dim:rgba(31,155,42,0.14);--red:#E04040;--yellow:#E8A020;--blue:#3B82F6;--track-card-from:#1c2a1c;--track-card-to:#1a1a1a;--track-tech-bg:rgba(255,255,255,0.05);color-scheme:dark;--cs:dark}
+:root[data-theme="light"]{--bg:#F2F4F7;--surface:#FFFFFF;--surface-2:#EBEBED;--surface-3:#E0E1E4;--border:rgba(0,0,0,0.09);--border-2:rgba(0,0,0,0.18);--fg:#111318;--fg-2:#6B7280;--fg-3:#9CA3AF;--orange:#E55B00;--orange-hi:#F26310;--orange-dim:rgba(242,99,16,0.1);--green:#167820;--green-hi:#1F9B2A;--green-dim:rgba(31,155,42,0.1);--red:#C93030;--yellow:#B87010;--blue:#2563EB;--track-card-from:#e8f4e9;--track-card-to:#f0f7f0;--track-tech-bg:rgba(0,0,0,0.04);color-scheme:light;--cs:light}
 
 /* ── CALENDAR (homeowner schedule tab) ─────── */
 .cal-wrap{padding:16px 16px 0}
 .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .cal-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;letter-spacing:.03em;text-transform:uppercase}
 /* ── JOB TRACKING ────────────────────────────────────────────────────── */
-.track-card{background:linear-gradient(135deg,#1c2a1c 0%,#1a1a1a 100%);border:1.5px solid var(--green);border-radius:16px;padding:18px 16px;position:relative;overflow:hidden}
+.track-card{background:linear-gradient(135deg,var(--track-card-from) 0%,var(--track-card-to) 100%);border:1.5px solid var(--green);border-radius:16px;padding:18px 16px;position:relative;overflow:hidden}
 .track-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(31,155,42,0.12) 0%,transparent 60%);pointer-events:none}
 .track-pulse{display:inline-flex;align-items:center;gap:7px;background:rgba(31,155,42,0.18);border:1px solid rgba(31,155,42,0.4);border-radius:100px;padding:4px 12px 4px 8px;font-size:12px;font-weight:700;color:var(--green);letter-spacing:.04em;margin-bottom:14px}
 .track-pulse::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--green);animation:tpulse 1.6s ease-in-out infinite}
@@ -45,7 +45,7 @@
 .track-step.active .track-step-label{color:var(--orange)}
 .track-connector{flex:1;height:2px;background:var(--border-2);margin-top:-18px;position:relative;z-index:0;transition:background .3s}
 .track-connector.done{background:var(--green)}
-.track-tech{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border-2);border-radius:10px;padding:10px 12px}
+.track-tech{display:flex;align-items:center;gap:10px;background:var(--track-tech-bg);border:1px solid var(--border-2);border-radius:10px;padding:10px 12px}
 .track-tech-av{width:38px;height:38px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden}
 .track-tech-name{font-size:14px;font-weight:700;color:var(--fg)}
 .track-tech-sub{font-size:12px;color:var(--fg-2);margin-top:1px}
