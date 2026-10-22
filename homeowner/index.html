@@ -734,7 +734,7 @@ var STRIPE_LINKS = {
   'Window Cleaning':     'https://buy.stripe.com/REPLACE_WINDOWS',
   'Christmas Lights':    'https://buy.stripe.com/REPLACE_LIGHTS',
 };
-function jr2l(r){return{id:r.id,svc:r.service||r.svc,date:r.date,time:r.time||'',addr:r.address||r.addr,price:Number(r.price)||0,status:r.status||'Scheduled',tech:r.tech||'ProServ Crew',contractorId:r.contractor_id||null,notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}}
+function jr2l(r){return{id:r.id,svc:r.service||r.svc,date:r.date,time:r.time||'',addr:r.address||r.addr,price:Number(r.price)||0,status:r.status||'Scheduled',tech:r.tech||'ProServ Crew',contractorId:r.contractor_id||null,notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null,startedAt:r.started_at||null,completedAt:r.completed_at||null}}
 var _homePhone='';
 
 
@@ -1357,7 +1357,8 @@ function pickSvc(el, svc){ pickSvcTab(el, svc); } // backward compat
 function pickTier(el, name){ pickSvcTier(el, name, ''); } // backward compat
 
 // ─── PHOTO UPLOAD FOR REQUESTS ───────────────────────────────────────────
-function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';}
+function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
+function fmtTs(s){if(!s)return'—';var d=new Date(s);return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}
 var _reqPhotos = [null, null, null]; // base64 strings per slot
 function pickReqPhoto(idx){
   // If already has photo, show remove option
@@ -1610,8 +1611,10 @@ function openSheet(id){
   document.getElementById('sheetBody').innerHTML = ''
     +'<div class="sheet-row"><div class="sr-label">Date</div><div class="sr-val">'+ds+'</div></div>'
     +'<div class="sheet-row"><div class="sr-label">Time</div><div class="sr-val">'+j.time+'</div></div>'
+    +(j.startedAt?'<div class="sheet-row"><div class="sr-label">Started</div><div class="sr-val">'+fmtTs(j.startedAt)+'</div></div>':'')
+    +(j.completedAt?'<div class="sheet-row"><div class="sr-label">Completed</div><div class="sr-val">'+fmtTs(j.completedAt)+'</div></div>':'')
     +'<div class="sheet-row"><div class="sr-label">Address</div><div class="sr-val">'+j.addr+'</div></div>'
-    +'<div class="sheet-row"><div class="sr-label">Technician</div><div class="sr-val">'+j.tech+'</div></div>'
+    +'<div class="sheet-row" id="sheetTechRow"><div class="sr-label">Technician</div><div class="sr-val" id="sheetTechVal"><div style="display:flex;align-items:center;gap:10px"><div class="track-tech" id="sheetTechAv" style="width:32px;height:32px;font-size:12px;flex-shrink:0"></div><span id="sheetTechName">'+esc(j.tech)+'</span></div></div></div>'
     +(j.notes?'<div class="sheet-row"><div class="sr-label">Notes</div><div class="sr-val">'+j.notes+'</div></div>':'')
     +'<div class="sheet-price-row"><div style="font-size:13px;color:var(--fg-2)">Service Total</div><div class="sheet-total">$<span>'+j.price+'</span></div></div>'
     +photosHtml
@@ -1624,6 +1627,22 @@ function openSheet(id){
     +'<button class="sheet-close" onclick="closeSheet()">Close</button>';
   document.getElementById('sheetOverlay').classList.add('open');
   document.getElementById('detSheet').classList.add('open');
+  // Async contractor lookup — same as renderTracker()
+  var avEl=document.getElementById('sheetTechAv');
+  var nameEl=document.getElementById('sheetTechName');
+  if(avEl){avEl.textContent=(j.tech||'P')[0].toUpperCase();}
+  if(j.contractorId && _sb){
+    _sb.from('contractors').select('name,photo_url').eq('id',j.contractorId).limit(1).then(function(cr){
+      if(cr.data&&cr.data.length){
+        var ct=cr.data[0];
+        if(nameEl) nameEl.textContent=ct.name||j.tech;
+        if(avEl){
+          if(ct.photo_url){avEl.innerHTML='<img src="'+ct.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';avEl.style.padding='0';}
+          else{avEl.textContent=(ct.name||j.tech||'P')[0].toUpperCase();}
+        }
+      }
+    }).catch(function(){});
+  }
 }
 function closeSheet(){
   document.getElementById('sheetOverlay').classList.remove('open');

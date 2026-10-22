@@ -385,6 +385,26 @@ async function buildEmails(payload: EmailPayload, adminEmail?: string): Promise<
     return msgs;
   }
 
+  // ── payment_reminder ─────────────────────────────────────────────────────
+  if (event === "payment_reminder") {
+    const amount = job?.amount ? formatCurrency(job.amount) : "the balance";
+    const svc = job?.service ?? "your recent service";
+    if (homeowner?.email) {
+      msgs.push({
+        to: homeowner.email,
+        recipient: "homeowner",
+        subject: `⏰ Payment reminder — ${svc} · ProServ Homes`,
+        html: emailHtml({
+          headline: "Your invoice is ready",
+          body: `Hi ${homeowner?.name ?? "there"}, just a friendly reminder that your payment of <strong>${amount}</strong> for <strong>${svc}</strong> is outstanding. You can pay securely online using the link below.`,
+          ctaUrl: "https://proservhomes.co/homeowner/",
+          ctaLabel: "Pay Now",
+        }),
+      });
+    }
+    return msgs;
+  }
+
   // ── payout_request ────────────────────────────────────────────────────────
   if (event === "payout_request") {
     if (adminEmail) {

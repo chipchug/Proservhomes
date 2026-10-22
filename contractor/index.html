@@ -520,7 +520,7 @@ function jr2l(r){
   var photos=r.photos&&Array.isArray(r.photos)?r.photos:[];
   if(!photos.length&&r.before_photo)photos.push({url:r.before_photo,path:'',label:'before'});
   if(!photos.length&&r.after_photo)photos.push({url:r.after_photo,path:'',label:'after'});
-  return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,status:r.status||'New',notes:r.notes||'',photos:photos,beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}
+  return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,status:r.status||'New',notes:r.notes||'',photos:photos,beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null,startedAt:r.started_at||null,completedAt:r.completed_at||null}
 }
 function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,status:j.status||'New',notes:j.notes||''}}
 function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',stripeAccountId:r.stripe_account_id||null,stripeOnboarded:!!r.stripe_onboarded,photo_url:r.photo_url||null,bio:r.bio||'',insurance_url:r.insurance_url||null,service_interests:r.service_interests||null}}
@@ -965,6 +965,8 @@ function openS(id){
   h+='<div class="sb-svc">'+esc(j.service)+'</div>';
   h+='<div class="sb-f"><div class="sb-l">Client</div><div class="sb-v">'+esc(j.client)+'</div></div>';
   h+='<div class="sb-f"><div class="sb-l">Date</div><div class="sb-v">'+fd(j.date)+'</div></div>';
+  if(j.startedAt){h+='<div class="sb-f"><div class="sb-l">Started</div><div class="sb-v">'+fmtTs(j.startedAt)+'</div></div>';}
+  if(j.completedAt){h+='<div class="sb-f"><div class="sb-l">Completed</div><div class="sb-v">'+fmtTs(j.completedAt)+'</div></div>';}
   h+='<div class="sb-f"><div class="sb-l">Your Pay</div><div class="sb-pay">$'+Number(j.contractorPay||0).toLocaleString()+'</div></div>';
   if(j.notes) h+='<div class="sb-f"><div class="sb-l">Notes from Nick</div><div class="snote">'+esc(j.notes)+'</div></div>';
   h+='<div class="sb-links"><a class="sl" href="'+mu+'" target="_blank"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Directions</a>';
@@ -1187,7 +1189,11 @@ async function setSt(id,st){
   }
   var i=jobs.findIndex(function(x){return x.id===id});if(i<0)return;
   jobs[i].status=st;
-  await _sb.from('jobs').update({status:st}).eq('id',id);
+  var tsUpdate={status:st};
+  var now=new Date().toISOString();
+  if(st==='In Progress'){tsUpdate.started_at=now;jobs[i].startedAt=now;}
+  if(st==='Complete'){tsUpdate.completed_at=now;jobs[i].completedAt=now;}
+  await _sb.from('jobs').update(tsUpdate).eq('id',id);
   closeS();rHome();rJobs();rEarn();rMs();
   toast(st==='In Progress'?'Job started 🔧':'Job complete ✅');
   // Notify admin when contractor starts a job (with before photos)
@@ -1209,6 +1215,7 @@ function rMs(){var j=mj();var dn=j.filter(function(x){return x.status==='Complet
 
 function sbadge(s){var mp={'New':'badge-new','Scheduled':'badge-sched','In Progress':'badge-prog','Complete':'badge-done','Invoiced':'badge-inv'};return'<span class="badge '+(mp[s]||'badge-inv')+'">'+s+'</span>'}
 function fd(s){if(!s)return'—';var d=new Date(s+'T12:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+function fmtTs(s){if(!s)return'—';var d=new Date(s);return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
 
@@ -1992,30 +1999,31 @@ function cobShowIfNew() {
 .cp-photo-info{flex:1;}
 .cp-photo-btn{display:inline-block;background:#1e1e1e;border:1.5px solid #333;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;color:#ccc;cursor:pointer;width:100%;text-align:center;}
 .cp-photo-name{font-size:12px;color:#555;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cp-input{width:100%;background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:12px;padding:13px 16px;font-size:15px;color:#fff;font-family:inherit;outline:none;box-sizing:border-box;transition:border-color .2s;}
-.cp-input:focus{border-color:#f07230;}
+.cp-input{width:100%;background:var(--surface-2);border:1.5px solid var(--border-2);border-radius:12px;padding:13px 16px;font-size:15px;color:var(--fg);font-family:inherit;outline:none;box-sizing:border-box;transition:border-color .2s;}
+.cp-input::placeholder{color:var(--fg-3);}
+.cp-input:focus{border-color:var(--orange);}
 .cp-textarea{resize:vertical;min-height:80px;}
 .cp-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .cp-field{display:flex;flex-direction:column;gap:6px;}
-.cp-field label{font-size:12px;color:#666;font-weight:600;}
-.cp-ins-wrap{display:flex;align-items:center;gap:12px;background:#1a1a1a;border:1.5px dashed #2a2a2a;border-radius:12px;padding:14px 16px;cursor:pointer;}
+.cp-field label{font-size:12px;color:var(--fg-2);font-weight:600;}
+.cp-ins-wrap{display:flex;align-items:center;gap:12px;background:var(--surface-2);border:1.5px dashed var(--border-2);border-radius:12px;padding:14px 16px;cursor:pointer;}
 .cp-ins-icon{font-size:22px;flex-shrink:0;}
 .cp-ins-text{flex:1;}
-.cp-ins-text strong{display:block;font-size:14px;color:#ccc;font-weight:600;}
-.cp-ins-text span{font-size:12px;color:#555;}
+.cp-ins-text strong{display:block;font-size:14px;color:var(--fg);font-weight:600;}
+.cp-ins-text span{font-size:12px;color:var(--fg-3);}
 /* Service ranking */
-.cp-svc-note{font-size:12px;color:#555;margin-bottom:12px;}
+.cp-svc-note{font-size:12px;color:var(--fg-3);margin-bottom:12px;}
 .cp-svc-slots{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
-.cp-svc-slot{width:32px;height:32px;border-radius:50%;border:2px dashed #2a2a2a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#333;}
+.cp-svc-slot{width:32px;height:32px;border-radius:50%;border:2px dashed var(--border-2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--fg-3);}
 .cp-svc-slot.filled{border-color:#f07230;background:rgba(240,114,48,.15);color:#f07230;}
 #cp-svc-list{display:flex;flex-direction:column;gap:8px;}
-.cp-svc-tag{display:flex;align-items:center;gap:10px;background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:10px;padding:10px 14px;}
+.cp-svc-tag{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1.5px solid var(--border-2);border-radius:10px;padding:10px 14px;}
 .cp-svc-tag.cp-svc-ranked{border-color:rgba(240,114,48,.4);background:rgba(240,114,48,.07);}
 .cp-svc-num{width:22px;height:22px;border-radius:50%;background:#f07230;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.cp-svc-label{flex:1;font-size:14px;color:#ccc;}
-.cp-svc-add,.cp-svc-rm{background:none;border:1.5px solid #333;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;color:#888;cursor:pointer;}
+.cp-svc-label{flex:1;font-size:14px;color:var(--fg);}
+.cp-svc-add,.cp-svc-rm{background:none;border:1.5px solid var(--border-2);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--fg-2);cursor:pointer;}
 .cp-svc-add:hover{border-color:#f07230;color:#f07230;}
-.cp-svc-rm{color:#555;}
+.cp-svc-rm{color:var(--fg-3);}
 .cp-save-btn{width:100%;padding:16px;background:var(--green,#2dba56);border:none;border-radius:14px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;text-transform:uppercase;letter-spacing:.04em;color:#fff;cursor:pointer;margin-top:8px;}
 .cp-save-btn:disabled{opacity:.5;}
 .cp-skip{display:block;text-align:center;margin-top:16px;font-size:13px;color:#444;cursor:pointer;text-decoration:underline;}
