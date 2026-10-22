@@ -851,9 +851,16 @@ function backToPhone(){
   document.getElementById('otpIn').value='';
 }
 function doLogout(){
-  _sb.auth.signOut().finally(function(){
-    window.location.href='https://proservhomes.co/homeowner/';
-  });
+  try {
+    localStorage.clear();
+    sessionStorage.clear();
+  } catch(e){}
+  var redirect = function(){ window.location.href='https://proservhomes.co/homeowner/'; };
+  if(_sb && _sb.auth){
+    _sb.auth.signOut().then(redirect).catch(redirect);
+  } else {
+    redirect();
+  }
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────
