@@ -44,13 +44,23 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
 
 /* ── LANDING ── */
 #landingPage{}
-.hero{background:linear-gradient(160deg,#1a0a00 0%,#111 60%,#0d0d0d 100%);padding:56px 20px 64px;text-align:center;position:relative;overflow:hidden;}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(242,99,16,.25) 0%,transparent 70%);pointer-events:none;}
-.hero-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--orange);margin-bottom:14px;}
+.hero{position:relative;overflow:hidden;min-height:100svh;display:flex;flex-direction:column;}
+.hero-photo{position:absolute;inset:0;background:url('lifestyle-hero.jpg') center/cover no-repeat;z-index:0;}
+.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.35) 40%,rgba(0,0,0,.72) 100%);}
+.hero-topbar{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:18px 20px 0;}
+.hero-logo img{height:44px;width:auto;display:block;}
+.hero-apply-btn{display:inline-flex;align-items:center;background:var(--green);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:11px 22px;border-radius:50px;text-decoration:none;cursor:pointer;border:none;transition:opacity .15s;white-space:nowrap;}
+.hero-apply-btn:hover{opacity:.88;}
+.hero-content{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px 64px;text-align:center;}
+.hero-company{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:20px;}
+.hero-prologo{margin:0 auto 10px;}
+.hero-prologo img{height:clamp(56px,14vw,100px);width:auto;filter:drop-shadow(0 2px 12px rgba(0,0,0,.5));}
+.hero-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px;}
+.hero-company-name{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:20px;}
 .hero-title{font-family:'Barlow Condensed',sans-serif;font-size:clamp(38px,9vw,64px);font-weight:900;line-height:1.0;letter-spacing:-.01em;color:#fff;margin-bottom:18px;}
 .hero-title span{color:var(--orange);}
-.hero-sub{font-size:17px;line-height:1.65;color:rgba(255,255,255,.7);max-width:520px;margin:0 auto 36px;}
-.hero-cta{display:inline-block;background:var(--orange);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:16px 36px;border-radius:50px;text-decoration:none;cursor:pointer;border:none;transition:opacity .15s;}
+.hero-sub{font-size:17px;line-height:1.65;color:rgba(255,255,255,.75);max-width:520px;margin:0 auto 36px;}
+.hero-cta{display:inline-block;background:var(--green);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:16px 36px;border-radius:50px;text-decoration:none;cursor:pointer;border:none;transition:opacity .15s;}
 .hero-cta:hover{opacity:.88;}
 
 .section{padding:48px 20px;max-width:680px;margin:0 auto;}
@@ -127,10 +137,20 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
 <div id="landingPage">
 
   <div class="hero">
-    <div class="hero-eyebrow">Now Accepting Applications</div>
-    <h1 class="hero-title">Become a<br><span>ProServ Pro</span></h1>
-    <p class="hero-sub">Join New Jersey's fastest-growing home services network. Set your own schedule, get jobs sent straight to your phone, and keep more of what you earn.</p>
-    <button class="hero-cta" onclick="showForm()">Apply Now — It's Free</button>
+    <div class="hero-photo"></div>
+    <div class="hero-topbar">
+      <div class="hero-logo">
+        <a href="/contractor/"><img src="/assets/logo-white.png" alt="ProServ Homes"></a>
+      </div>
+      <button class="hero-apply-btn" onclick="showForm()">Apply to Join</button>
+    </div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">Now Accepting Applications</div>
+      <div class="hero-prologo"><img src="proserv-pro-logo.png" alt="ProServ Pro"></div>
+      <div class="hero-company-name">A ProServ Homes Network</div>
+      <p class="hero-sub">Join New Jersey's fastest-growing home services network. Set your own schedule, get jobs sent straight to your phone, and keep more of what you earn.</p>
+      <button class="hero-cta" onclick="showForm()">Apply Now — It's Free</button>
+    </div>
   </div>
 
   <div class="perks">
@@ -185,7 +205,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
   </div>
 
   <div class="apply-bottom">
-    <button class="hero-cta" onclick="showForm()">Start Your Application</button>
+    <button class="hero-cta" onclick="showForm()" style="background:var(--green)">Start Your Application</button>
     <p>Takes about 5 minutes · We review every application personally</p>
   </div>
 
