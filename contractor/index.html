@@ -427,6 +427,46 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
           <div class="ct-av-name" id="ctAvName">Contractor</div>
           <div class="ct-av-sub" id="ctAvSub">Tap photo to update</div>
         </div>
+        <!-- Editable Profile Info -->
+        <div style="padding:0 16px 4px" id="profileInfoSection">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:10px">Your Info</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div>
+              <div style="font-size:11px;color:var(--fg-3);font-weight:600;margin-bottom:5px">Name</div>
+              <input id="pf-name" class="cp-input" type="text" placeholder="Full Name" style="font-size:14px;padding:10px 12px">
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--fg-3);font-weight:600;margin-bottom:5px">Phone</div>
+              <input id="pf-phone" class="cp-input" type="tel" placeholder="(555) 000-0000" style="font-size:14px;padding:10px 12px">
+            </div>
+          </div>
+          <div style="margin-bottom:10px">
+            <div style="font-size:11px;color:var(--fg-3);font-weight:600;margin-bottom:5px">Bio</div>
+            <textarea id="pf-bio" class="cp-input cp-textarea" placeholder="A little about you and your experience…" style="font-size:14px;padding:10px 12px;min-height:70px"></textarea>
+          </div>
+          <!-- Insurance -->
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px;margin-top:4px">Insurance</div>
+          <div class="cp-ins-wrap" onclick="document.getElementById('pf-ins-input').click()" style="margin-bottom:10px">
+            <div class="cp-ins-icon" id="pf-ins-icon">📄</div>
+            <div class="cp-ins-text">
+              <strong id="pf-ins-title">Upload Proof of Insurance</strong>
+              <span id="pf-ins-lbl">PDF or image — tap to upload</span>
+            </div>
+          </div>
+          <input type="file" id="pf-ins-input" accept="image/*,.pdf" style="display:none" onchange="pfHandleIns(this)">
+          <!-- Service Interests -->
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:6px;margin-top:4px">Service Interests <span style="font-size:10px;color:var(--fg-3);font-weight:400;text-transform:none">(ranked #1–5)</span></div>
+          <div class="cp-svc-slots" id="pf-svc-slots">
+            <div class="cp-svc-slot" id="pfsl1">1</div>
+            <div class="cp-svc-slot" id="pfsl2">2</div>
+            <div class="cp-svc-slot" id="pfsl3">3</div>
+            <div class="cp-svc-slot" id="pfsl4">4</div>
+            <div class="cp-svc-slot" id="pfsl5">5</div>
+          </div>
+          <div id="pf-svc-list" style="margin-bottom:12px"></div>
+          <button onclick="pfSaveProfile()" id="pf-save-btn" style="width:100%;padding:13px;background:var(--green,#2dba56);border:none;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:17px;text-transform:uppercase;letter-spacing:.04em;color:#fff;cursor:pointer;margin-bottom:4px">Save Changes</button>
+        </div>
+
         <!-- Bank Account / Stripe Connect -->
         <div style="padding:16px 16px 0">
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:10px">Bank Account</div>
@@ -483,7 +523,7 @@ function jr2l(r){
   return{id:r.id,client:r.client,phone:r.phone,address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,status:r.status||'New',notes:r.notes||'',photos:photos,beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}
 }
 function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,status:j.status||'New',notes:j.notes||''}}
-function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',stripeAccountId:r.stripe_account_id||null,stripeOnboarded:!!r.stripe_onboarded}}
+function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',stripeAccountId:r.stripe_account_id||null,stripeOnboarded:!!r.stripe_onboarded,photo_url:r.photo_url||null,bio:r.bio||'',insurance_url:r.insurance_url||null,service_interests:r.service_interests||null}}
 
 var SEED_CONTRACTORS=[{id:'c1',name:'Jake R.',phone:'(732) 555-1234',specialty:'General'}];
 var SEED_JOBS=[
@@ -859,7 +899,7 @@ async function enterApp(){
   if(typeof cobShowIfNew==='function') cobShowIfNew();
 }
 
-function swTab(n,el){['Home','Jobs','Earnings','Profile'].forEach(function(t){var el2=document.getElementById('tab'+t);if(el2)el2.classList.remove('active')});var tp=document.getElementById('tab'+n);if(tp)tp.classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;if(n==='Jobs'){var jb=document.getElementById('ctJobsBadge');if(jb){jb.classList.add('hidden');jb.textContent='';}}}
+function swTab(n,el){['Home','Jobs','Earnings','Profile'].forEach(function(t){var el2=document.getElementById('tab'+t);if(el2)el2.classList.remove('active')});var tp=document.getElementById('tab'+n);if(tp)tp.classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;if(n==='Jobs'){var jb=document.getElementById('ctJobsBadge');if(jb){jb.classList.add('hidden');jb.textContent='';}}if(n==='Profile'){pfLoadProfile();}}}
 function _updateJobsBadge(){var newJ=mj().filter(function(j){return j.status==='New'||j.status==='Scheduled'});var badge=document.getElementById('ctJobsBadge');if(!badge)return;if(newJ.length){badge.textContent=newJ.length;badge.classList.remove('hidden');}else{badge.classList.add('hidden');}}
 function mj(){return jobs.filter(function(j){return cc&&j.contractorId===cc.id})}
 
@@ -1575,24 +1615,51 @@ var _cpInsFile = null;
 var _cpServiceRanks = []; // [{name, rank}]
 
 var CP_SERVICES = [
-  'Lawn Care','Christmas Lights','Pressure Washing','Gutter Cleaning',
-  'Snow Removal','House Cleaning','Landscaping','Window Cleaning',
-  'Pest Control','Interior Painting','Exterior Painting','Deck & Fence'
+  'Gutter Cleaning','Pressure Washing','Christmas Lights','Snow Removal',
+  'Dryer Vent','Fence Install','Concrete','Pavers','Window Cleaning'
 ];
 
 function cpSetupShow() {
   var el = document.getElementById('cp-setup');
   if (!el) return cpSetupEnterApp();
-  // Pre-fill name/phone from cc
-  if (cc) {
-    var ni = document.getElementById('cp-name');
-    var pi = document.getElementById('cp-phone');
-    if (ni && cc.name) ni.value = cc.name;
-    if (pi && cc.phone) pi.value = cc.phone;
-  }
-  // Build service list
-  cpRenderServices();
+  cpLoadExistingData();
   el.style.display = 'flex';
+}
+
+function cpLoadExistingData() {
+  if (!cc) return;
+  var ni = document.getElementById('cp-name');
+  var pi = document.getElementById('cp-phone');
+  var bi = document.getElementById('cp-bio');
+  if (ni && cc.name) ni.value = cc.name;
+  if (pi && cc.phone) pi.value = cc.phone;
+  if (bi && cc.bio) bi.value = cc.bio;
+  // Show existing photo
+  if (cc.photo_url) {
+    var prev = document.getElementById('cp-photo-prev');
+    var em = document.getElementById('cp-photo-emoji');
+    if (prev) { prev.src = cc.photo_url; prev.style.display = 'block'; }
+    if (em) em.style.display = 'none';
+    var lbl = document.getElementById('cp-photo-lbl');
+    if (lbl) lbl.textContent = 'Current photo loaded';
+  }
+  // Show existing insurance
+  if (cc.insurance_url) {
+    var ilbl = document.getElementById('cp-ins-lbl');
+    var iicon = document.getElementById('cp-ins-icon');
+    if (ilbl) ilbl.textContent = 'Insurance on file ✓';
+    if (iicon) { iicon.textContent = '✓'; iicon.style.color = 'var(--green)'; }
+  }
+  // Load existing service interests
+  if (cc.service_interests) {
+    try {
+      var si = typeof cc.service_interests === 'string' ? JSON.parse(cc.service_interests) : cc.service_interests;
+      if (Array.isArray(si)) {
+        _cpServiceRanks = si.slice().sort(function(a,b){return a.rank-b.rank;});
+      }
+    } catch(e) {}
+  }
+  cpRenderServices();
 }
 
 function cpRenderServices() {
@@ -1735,6 +1802,143 @@ async function cpSaveProfile() {
   }
 
   cpSetupEnterApp();
+}
+
+// ── In-app Profile Editor ──────────────────────────────────────────────────
+var _pfServiceRanks = [];
+var _pfInsFile = null;
+
+function pfLoadProfile() {
+  if (!cc) return;
+  var ni = document.getElementById('pf-name');
+  var pi = document.getElementById('pf-phone');
+  var bi = document.getElementById('pf-bio');
+  if (ni) ni.value = cc.name || '';
+  if (pi) pi.value = cc.phone || '';
+  if (bi) bi.value = cc.bio || '';
+  // Insurance
+  if (cc.insurance_url) {
+    var t = document.getElementById('pf-ins-title');
+    var l = document.getElementById('pf-ins-lbl');
+    var ic = document.getElementById('pf-ins-icon');
+    if (t) t.textContent = 'Insurance on file';
+    if (l) l.textContent = 'Tap to replace';
+    if (ic) { ic.textContent = '✓'; ic.style.color = 'var(--green)'; }
+  }
+  // Service interests
+  _pfServiceRanks = [];
+  if (cc.service_interests) {
+    try {
+      var si = typeof cc.service_interests === 'string' ? JSON.parse(cc.service_interests) : cc.service_interests;
+      if (Array.isArray(si)) _pfServiceRanks = si.slice().sort(function(a,b){return a.rank-b.rank;});
+    } catch(e) {}
+  }
+  pfRenderServices();
+}
+
+function pfRenderServices() {
+  for (var s = 1; s <= 5; s++) {
+    var slot = document.getElementById('pfsl'+s);
+    if (!slot) continue;
+    var r = _pfServiceRanks.find(function(x){return x.rank===s;});
+    if (r) { slot.classList.add('filled'); slot.title = r.name; }
+    else { slot.classList.remove('filled'); slot.title = ''; }
+  }
+  var wrap = document.getElementById('pf-svc-list');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  var ranked = _pfServiceRanks.slice().sort(function(a,b){return a.rank-b.rank;});
+  var rankedNames = ranked.map(function(r){return r.name;});
+  for (var i = 0; i < ranked.length; i++) {
+    wrap.appendChild(pfServiceTag(ranked[i].name, i+1, true));
+  }
+  CP_SERVICES.forEach(function(s) {
+    if (rankedNames.indexOf(s) === -1) {
+      wrap.appendChild(pfServiceTag(s, 0, false));
+    }
+  });
+}
+
+function pfServiceTag(name, rank, isRanked) {
+  var d = document.createElement('div');
+  d.className = 'cp-svc-tag' + (isRanked ? ' cp-svc-ranked' : '');
+  if (isRanked) {
+    d.innerHTML = '<span class="cp-svc-num">'+rank+'</span><span class="cp-svc-label">'+name+'</span><button class="cp-svc-rm" onclick="pfRemoveService(\''+name+'\')">✕</button>';
+  } else {
+    d.innerHTML = '<span class="cp-svc-label">'+name+'</span><button class="cp-svc-add" onclick="pfAddService(\''+name+'\')">' + (_pfServiceRanks.length < 5 ? '+ Rank' : 'Full') + '</button>';
+  }
+  return d;
+}
+
+function pfAddService(name) {
+  if (_pfServiceRanks.length >= 5) return;
+  if (!_pfServiceRanks.find(function(r){return r.name===name;})) {
+    _pfServiceRanks.push({name: name, rank: _pfServiceRanks.length + 1});
+  }
+  pfRenderServices();
+}
+
+function pfRemoveService(name) {
+  _pfServiceRanks = _pfServiceRanks.filter(function(r){return r.name!==name;});
+  _pfServiceRanks.forEach(function(r,i){r.rank=i+1;});
+  pfRenderServices();
+}
+
+function pfHandleIns(input) {
+  var f = input.files && input.files[0];
+  if (!f) return;
+  _pfInsFile = f;
+  var lbl = document.getElementById('pf-ins-lbl');
+  var icon = document.getElementById('pf-ins-icon');
+  var title = document.getElementById('pf-ins-title');
+  if (lbl) lbl.textContent = f.name;
+  if (title) title.textContent = 'Insurance Selected';
+  if (icon) { icon.textContent = '✓'; icon.style.color = 'var(--green)'; }
+}
+
+async function pfSaveProfile() {
+  var btn = document.getElementById('pf-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  var nameVal = (document.getElementById('pf-name') || {}).value || '';
+  var phoneVal = (document.getElementById('pf-phone') || {}).value || '';
+  var bioVal = (document.getElementById('pf-bio') || {}).value || '';
+
+  var insUrl = cc && cc.insurance_url || null;
+
+  try {
+    if (_pfInsFile && _sb && cc && cc.id) {
+      var iext = _pfInsFile.name.split('.').pop();
+      var ipath = 'contractor/' + cc.id + '_insurance.' + iext;
+      var iup = await _sb.storage.from('documents').upload(ipath, _pfInsFile, {upsert: true, contentType: _pfInsFile.type});
+      if (!iup.error) {
+        var ipub = _sb.storage.from('documents').getPublicUrl(ipath);
+        insUrl = ipub.data && ipub.data.publicUrl;
+      }
+    }
+  } catch(e) {}
+
+  if (_sb && cc && cc.id) {
+    var upd = {name: nameVal, phone: phoneVal, bio: bioVal};
+    if (insUrl) upd.insurance_url = insUrl;
+    if (_pfServiceRanks.length) upd.service_interests = JSON.stringify(_pfServiceRanks);
+    try { await _sb.from('contractors').update(upd).eq('id', cc.id); } catch(e) {}
+  }
+
+  // Update local cc
+  if (cc) {
+    if (nameVal) cc.name = nameVal;
+    if (phoneVal) cc.phone = phoneVal;
+    cc.bio = bioVal;
+    if (insUrl) cc.insurance_url = insUrl;
+    if (_pfServiceRanks.length) cc.service_interests = JSON.stringify(_pfServiceRanks);
+    // Update displayed name
+    var an = document.getElementById('ctAvName');
+    if (an) an.textContent = nameVal.toUpperCase();
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Saved ✓'; setTimeout(function(){ btn.textContent = 'Save Changes'; }, 2500); }
+  _pfInsFile = null;
 }
 
 // Call this from enterApp for first-time contractors
