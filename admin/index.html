@@ -1333,7 +1333,8 @@ function renderHomeowners(){
   el.innerHTML=_homeowners.map(function(h){
     var init=(h.name||h.email||'?')[0].toUpperCase();
     var jc=jobs.filter(function(j){return j.email&&j.email.toLowerCase()===(h.email||'').toLowerCase()}).length;
-    return'<div class="ct-card" onclick="openHwDetail(\''+esc(h.email||'')+'\')"><div class="ct-av" style="background:var(--green)">'+init+'</div>'
+    var hwAvHtml=h.photo_url?'<div class="ct-av" style="padding:0;overflow:hidden;background:var(--green)"><img src="'+esc(h.photo_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>':'<div class="ct-av" style="background:var(--green)">'+init+'</div>';
+    return'<div class="ct-card" onclick="openHwDetail(\''+esc(h.email||'')+'\')">'+hwAvHtml
       +'<div class="ct-body"><div class="ct-name">'+esc(h.name||h.email||'Unknown')+'</div>'
       +'<div class="ct-spec">'+esc(h.email||'')+(h.phone?'  ·  '+esc(h.phone):'')+'</div>'
       +(h.address?'<div class="ct-spec" style="color:var(--fg-3);font-size:11px">'+esc(h.address)+'</div>':'')

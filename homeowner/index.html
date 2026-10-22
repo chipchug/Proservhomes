@@ -1778,6 +1778,8 @@ async function uploadProfilePhoto(input){
     // Add cache-bust so UI refreshes even if same filename
     var displayUrl=publicUrl+'?t='+Date.now();
     await _sb.auth.updateUser({data:{homeowner_avatar_url:publicUrl}});
+    // Also persist to homeowners table so admin can display the photo
+    if(USER.email){await _sb.from('homeowners').update({photo_url:publicUrl}).eq('email',USER.email);}
     try{localStorage.setItem('ps_hw_avatar_url',displayUrl);}catch(e){}
     _applyAvatar(displayUrl);
     showToast('Profile photo updated ✓');
