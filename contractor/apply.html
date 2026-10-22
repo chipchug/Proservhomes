@@ -46,17 +46,16 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
 #landingPage{}
 .hero{position:relative;overflow:hidden;min-height:100svh;display:flex;flex-direction:column;}
 .hero-photo{position:absolute;inset:0;background:url('lifestyle-hero.jpg') center/cover no-repeat;z-index:0;}
-.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.80) 0%,rgba(0,0,0,.30) 45%,rgba(18,80,40,.85) 100%);}
+.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.70) 45%,rgba(10,55,22,.94) 100%);}
 .hero-topbar{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:18px 20px 0;}
 .hero-logo img{height:44px;width:auto;display:block;}
-.hero-apply-btn{display:inline-flex;align-items:center;background:var(--green);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:13px 24px;border-radius:12px;text-decoration:none;cursor:pointer;border:none;transition:opacity .15s;white-space:nowrap;}
-.hero-apply-btn:hover{opacity:.88;}
 .hero-content{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px 64px;text-align:center;}
 .hero-company{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:20px;}
 .hero-prologo{margin:0 auto 10px;}
 .hero-prologo img{height:clamp(56px,14vw,100px);width:auto;filter:drop-shadow(0 2px 12px rgba(0,0,0,.5));}
-.hero-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px;}
+.hero-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:10px;}
 .hero-company-name{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:20px;}
+.hero-become{font-family:'Barlow Condensed',sans-serif;font-size:clamp(52px,14vw,96px);font-weight:900;line-height:.95;letter-spacing:-.01em;text-transform:uppercase;color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.6);margin-bottom:8px;}
 .hero-title{font-family:'Barlow Condensed',sans-serif;font-size:clamp(38px,9vw,64px);font-weight:900;line-height:1.0;letter-spacing:-.01em;color:#fff;margin-bottom:18px;}
 .hero-title span{color:var(--orange);}
 .hero-sub{font-size:17px;line-height:1.65;color:rgba(255,255,255,.75);max-width:520px;margin:0 auto 36px;}
@@ -142,11 +141,11 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
       <div class="hero-logo">
         <a href="/contractor/"><img src="/assets/logo-white.png" alt="ProServ Homes"></a>
       </div>
-      <button class="hero-apply-btn" onclick="showForm()">Apply to Join</button>
     </div>
     <div class="hero-content">
       <div class="hero-eyebrow">Now Accepting Applications</div>
-      <div class="hero-title">Become a<br><span style="display:inline-flex;align-items:center;justify-content:center;margin-top:4px"><img src="proserv-pro-logo.png" alt="ProServ Pro" style="height:clamp(52px,13vw,92px);width:auto;filter:drop-shadow(0 2px 14px rgba(0,0,0,.6));vertical-align:middle"></span></div>
+      <div class="hero-become">Become a</div>
+      <div style="margin-bottom:10px"><img src="proserv-pro-logo.png" alt="ProServ Pro" style="height:clamp(52px,13vw,88px);width:auto;filter:drop-shadow(0 2px 16px rgba(0,0,0,.7))"></div>
       <div class="hero-company-name">A ProServ Homes Network</div>
       <p class="hero-sub">Join New Jersey's fastest-growing home services network. Set your own schedule, get jobs sent straight to your phone, and keep more of what you earn.</p>
       <button class="hero-cta" onclick="showForm()">Apply Now — It's Free</button>
