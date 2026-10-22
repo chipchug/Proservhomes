@@ -864,13 +864,14 @@ function initApp(){
   function _setText(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
   _setText('greetName', g+', '+USER.first);
   _setText('hName', USER.first+' M.');
-  // Avatar — show photo if previously uploaded, else initials
+  // Avatar — scoped to this user's email to prevent cross-account bleed
+  var _avatarKey = 'ps_hw_avatar_' + (USER.email||'').toLowerCase();
   var _savedAvatar = null;
-  try{_savedAvatar = localStorage.getItem('ps_hw_avatar_url');}catch(e){}
+  try{_savedAvatar = localStorage.getItem(_avatarKey);}catch(e){}
   if(_savedAvatar){ _applyAvatar(_savedAvatar); }
   else {
-    // Try auth user_metadata for homeowner_avatar_url (isolated from contractor key)
-    if(_sb){_sb.auth.getUser().then(function(r){var u=r&&r.data&&r.data.user;var av=u&&u.user_metadata&&(u.user_metadata.homeowner_avatar_url||u.user_metadata.avatar_url);if(av){try{localStorage.setItem('ps_hw_avatar_url',av);}catch(e){}_applyAvatar(av);}});}
+    // Fetch from auth metadata (homeowner_avatar_url only — never pull Google's avatar_url which can belong to any Google account)
+    if(_sb){_sb.auth.getUser().then(function(r){var u=r&&r.data&&r.data.user;var av=u&&u.user_metadata&&u.user_metadata.homeowner_avatar_url;if(av){try{localStorage.setItem(_avatarKey,av);}catch(e){}_applyAvatar(av);}});}
     _setText('hInit', USER.init);
     _setText('profAv', USER.init);
   }
@@ -906,54 +907,64 @@ function renderTracker(){
   var wrap = document.getElementById('liveTrackWrap');
   if(!wrap) return;
   var active = JOBS.find(function(j){return j.status==='In Progress';});
-  if(!active){
+  // Also keep card visible for most recent Complete job that hasn't been paid
+  var justDone = !active && JOBS.find(function(j){return j.status==='Complete';});
+  if(!active && !justDone){
     wrap.style.display='none';
     wrap.innerHTML='';
     _stopTrackRealtime();
     return;
   }
+  var _job = active || justDone;
+  var _isDone = !active && !!justDone;
   wrap.style.display='block';
-  var d = active.date ? new Date(active.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) : '';
-  var timeStr = active.time ? ' · '+active.time : '';
+  var d = _job.date ? new Date(_job.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) : '';
+  var timeStr = _job.time ? ' · '+_job.time : '';
   // Service image lookup
-  var _cat = active.svc ? active.svc.split(/\s+[–—\-]+\s+/)[0].trim() : '';
+  var _cat = _job.svc ? _job.svc.split(/\s+[–—\-]+\s+/)[0].trim() : '';
   var _img = SVC_IMAGES[_cat] || (function(){
-    if(!active.svc) return '';
-    var sv = active.svc.toLowerCase();
-    // prefix match
-    for(var k in SVC_IMAGES){if(active.svc.indexOf(k)===0)return SVC_IMAGES[k];}
-    // case-insensitive substring match
+    if(!_job.svc) return '';
+    var sv = _job.svc.toLowerCase();
+    for(var k in SVC_IMAGES){if(_job.svc.indexOf(k)===0)return SVC_IMAGES[k];}
     for(var k in SVC_IMAGES){if(sv.indexOf(k.toLowerCase())>=0)return SVC_IMAGES[k];}
-    // SVC_DATA tier/addon name match
     if(typeof SVC_DATA!=='undefined'){for(var cat in SVC_DATA){var sd=SVC_DATA[cat];var all=(sd.tiers||[]).concat(sd.addons||[]);for(var i=0;i<all.length;i++){if(sv.indexOf((all[i].name||'').toLowerCase())>=0&&SVC_IMAGES[cat])return SVC_IMAGES[cat];}}}
     return '';
   })();
   var _imgHtml = _img ? '<div style="margin:-18px -16px 16px -16px;height:150px;overflow:hidden;border-radius:14px 14px 0 0"><img src="'+_img+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></div>' : '';
-  // steps: Scheduled(done), In Progress(active), Complete(pending)
-  wrap.innerHTML = '<div class="track-card" onclick="openSheet(\''+active.id+'\')" style="cursor:pointer">'
+  // stepper: all 3 done when complete, middle active when in progress
+  var step2cls = _isDone ? 'done' : 'active';
+  var step3cls = _isDone ? 'done' : '';
+  var conn2cls = _isDone ? 'done' : '';
+  var step2icon = _isDone
+    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'
+    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+  var pulseLbl = _isDone ? '✅ Job Complete' : '🔧 In Progress';
+  var pulseStyle = _isDone ? 'background:var(--green-dim);color:var(--green);border:1.5px solid var(--green)' : '';
+  var ctaHtml = _isDone
+    ? '<button onclick="openSheet(\''+_job.id+'\')" style="width:100%;margin-top:14px;padding:13px;border-radius:11px;border:none;background:var(--green);color:#fff;font-family:\'Barlow Condensed\',sans-serif;font-size:16px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">⭐ Review &amp; Pay →</button>'
+    : '<div style="text-align:right;margin-top:12px;font-size:12px;font-weight:700;color:var(--orange);letter-spacing:.04em">Tap for details →</div>';
+  wrap.innerHTML = '<div class="track-card">'
     +_imgHtml
-    +'<div class="track-pulse">🔧 In Progress</div>'
-    +'<div class="track-job-title">'+esc(active.svc)+'</div>'
-    +'<div class="track-meta">'+esc(d)+esc(timeStr)+(active.addr?(' · '+esc(active.addr)):'')+'</div>'
-    // stepper
+    +'<div class="track-pulse" style="'+pulseStyle+'">'+pulseLbl+'</div>'
+    +'<div class="track-job-title">'+esc(_job.svc)+'</div>'
+    +'<div class="track-meta">'+esc(d)+esc(timeStr)+(_job.addr?(' · '+esc(_job.addr)):'')+'</div>'
     +'<div class="track-steps">'
       +'<div class="track-step done"><div class="track-step-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="track-step-label">Scheduled</div></div>'
       +'<div class="track-connector done"></div>'
-      +'<div class="track-step active"><div class="track-step-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="track-step-label">Working</div></div>'
-      +'<div class="track-connector"></div>'
-      +'<div class="track-step"><div class="track-step-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="track-step-label">Done</div></div>'
+      +'<div class="track-step '+step2cls+'"><div class="track-step-dot">'+step2icon+'</div><div class="track-step-label">Working</div></div>'
+      +'<div class="track-connector '+conn2cls+'"></div>'
+      +'<div class="track-step '+step3cls+'"><div class="track-step-dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div><div class="track-step-label">Done</div></div>'
     +'</div>'
-    // tech row — photo filled in async below
     +'<div class="track-tech" id="trackTechRow">'
       +'<div class="track-tech-av" id="trackTechAv">👷</div>'
-      +'<div><div class="track-tech-name" id="trackTechName">'+esc(active.tech||'ProServ Crew')+'</div>'
-        +'<div class="track-tech-sub">Your technician is on-site</div></div>'
+      +'<div><div class="track-tech-name" id="trackTechName">'+esc(_job.tech||'ProServ Crew')+'</div>'
+        +'<div class="track-tech-sub">'+(_isDone?'Job completed':'Your technician is on-site')+'</div></div>'
     +'</div>'
-    +'<div style="text-align:right;margin-top:12px;font-size:12px;font-weight:700;color:var(--orange);letter-spacing:.04em">Tap for details →</div>'
+    +ctaHtml
   +'</div>';
   // Async: fetch contractor photo + name from DB
-  if(active.contractorId && _sb){
-    _sb.from('contractors').select('name,photo_url').eq('id',active.contractorId).limit(1).then(function(cr){
+  if(_job.contractorId && _sb){
+    _sb.from('contractors').select('name,photo_url').eq('id',_job.contractorId).limit(1).then(function(cr){
       var ct = cr.data && cr.data[0];
       if(!ct) return;
       var nameEl = document.getElementById('trackTechName');
@@ -970,7 +981,7 @@ function renderTracker(){
       }
     });
   }
-  _startTrackRealtime(active.id);
+  if(active) _startTrackRealtime(_job.id);
 }
 
 function _startTrackRealtime(jobId){
@@ -1005,7 +1016,9 @@ function _startBroadRealtime(email){
 function renderHome(){
   renderTracker();
   var active = JOBS.find(function(j){return j.status==='In Progress';});
+  var _justDoneHome = !active && JOBS.find(function(j){return j.status==='Complete';});
   if(active){document.getElementById('greetSub').textContent='Your '+active.svc+' is in progress right now.';}
+  else if(_justDoneHome){document.getElementById('greetSub').textContent='Your '+_justDoneHome.svc+' is complete — review &amp; pay below.';}
   var next = JOBS.find(function(j){return j.status==='Scheduled';});
   var wrap = document.getElementById('nextSvcWrap');
   if(next){
@@ -1780,7 +1793,7 @@ async function uploadProfilePhoto(input){
     await _sb.auth.updateUser({data:{homeowner_avatar_url:publicUrl}});
     // Also persist to homeowners table so admin can display the photo
     if(USER.email){await _sb.from('homeowners').update({photo_url:publicUrl}).eq('email',USER.email);}
-    try{localStorage.setItem('ps_hw_avatar_url',displayUrl);}catch(e){}
+    try{localStorage.setItem('ps_hw_avatar_'+(USER.email||'').toLowerCase(),displayUrl);}catch(e){}
     _applyAvatar(displayUrl);
     showToast('Profile photo updated ✓');
   }catch(e){showToast('Upload failed');}
