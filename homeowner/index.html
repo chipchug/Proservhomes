@@ -636,23 +636,19 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <button onclick="savePropEdit()" style="width:100%;margin-top:4px;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">Save Property Info</button>
       </div>
 
-      <!-- PAYMENT METHOD -->
+      <!-- PAYMENT & BILLING -->
       <div class="sec-pad" style="padding-bottom:6px;padding-top:20px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="sec-hd" style="margin:0">Payment Method</div>
-          <button onclick="openPaymentEdit()" style="background:none;border:none;font-size:12px;font-weight:700;color:var(--orange);cursor:pointer;padding:4px 0">Update</button>
-        </div>
+        <div class="sec-hd" style="margin:0">Billing</div>
       </div>
       <div class="prof-list" style="margin-bottom:0">
-        <div class="prof-item">
-          <div class="pi-left"><div class="pi-icon">💳</div>
-            <div><div class="pi-lbl">Card on File</div><div class="pi-sub" id="profPayment">Visa •••• 4821</div></div>
+        <div class="prof-item" id="lastPaymentRow" style="display:none">
+          <div class="pi-left"><div class="pi-icon">✅</div>
+            <div><div class="pi-lbl">Last Payment</div><div class="pi-sub" id="lastPaymentSub"></div></div>
           </div>
-          <span style="font-size:11px;color:var(--green);font-weight:700">Active</span>
         </div>
         <div class="prof-item" style="background:var(--orange-dim);border-radius:10px;margin:4px 0">
-          <div class="pi-left"><div class="pi-icon">🔐</div>
-            <div><div class="pi-lbl" style="color:var(--orange)">Update via Stripe</div><div class="pi-sub">Secure · takes 30 seconds</div></div>
+          <div class="pi-left"><div class="pi-icon">💳</div>
+            <div><div class="pi-lbl" style="color:var(--orange)">Manage Payment Method</div><div class="pi-sub">Update card, view receipts · via Stripe</div></div>
           </div>
           <button onclick="openPaymentEdit()" style="background:var(--orange);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">Open →</button>
         </div>
@@ -1504,11 +1500,22 @@ function loadPropData(){
   if(p.notes) {var el=document.getElementById('vPropNotes'); if(el) el.textContent=p.notes;}
 }
 
-// ─── PAYMENT METHOD ───────────────────────────────────────────────────────
+// ─── BILLING ───────────────────────────────────────────────────────────────
 function openPaymentEdit(){
-  // Opens Stripe Customer Portal (replace REPLACE_STRIPE_PORTAL with real URL)
   var url = 'https://billing.stripe.com/p/login/8x29AU3KcdhB2pAa6b9fW00';
   window.open(url, '_blank');
+}
+function renderBillingRow(){
+  var completed = JOBS.filter(function(j){return j.status==='Complete';});
+  completed.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  var last = completed[0];
+  var row = document.getElementById('lastPaymentRow');
+  var sub = document.getElementById('lastPaymentSub');
+  if(last && row && sub){
+    var d = last.date ? new Date(last.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+    sub.textContent = (last.svc||'Service') + (d ? '  ·  ' + d : '') + (last.price ? '  ·  $' + Number(last.price).toFixed(2) : '');
+    row.style.display = '';
+  }
 }
 
 // ─── MARK REVIEWED ───────────────────────────────────────────────────────
@@ -1626,6 +1633,9 @@ function switchTab(t){
         try{renderHistory();}catch(e){}
       });
     }
+  }
+  if(t==='profile'){
+    try{renderBillingRow();}catch(e){}
   }
 }
 
