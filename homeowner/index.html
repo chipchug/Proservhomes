@@ -1309,6 +1309,7 @@ function pickSvc(el, svc){ pickSvcTab(el, svc); } // backward compat
 function pickTier(el, name){ pickSvcTier(el, name, ''); } // backward compat
 
 // ─── PHOTO UPLOAD FOR REQUESTS ───────────────────────────────────────────
+function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';}
 var _reqPhotos = [null, null, null]; // base64 strings per slot
 function pickReqPhoto(idx){
   // If already has photo, show remove option
