@@ -918,7 +918,14 @@ function renderTracker(){
   // Service image lookup
   var _cat = active.svc ? active.svc.split(/\s+[–—\-]+\s+/)[0].trim() : '';
   var _img = SVC_IMAGES[_cat] || (function(){
-    for(var k in SVC_IMAGES){if(active.svc&&active.svc.indexOf(k)===0)return SVC_IMAGES[k];}
+    if(!active.svc) return '';
+    var sv = active.svc.toLowerCase();
+    // prefix match
+    for(var k in SVC_IMAGES){if(active.svc.indexOf(k)===0)return SVC_IMAGES[k];}
+    // case-insensitive substring match
+    for(var k in SVC_IMAGES){if(sv.indexOf(k.toLowerCase())>=0)return SVC_IMAGES[k];}
+    // SVC_DATA tier/addon name match
+    if(typeof SVC_DATA!=='undefined'){for(var cat in SVC_DATA){var sd=SVC_DATA[cat];var all=(sd.tiers||[]).concat(sd.addons||[]);for(var i=0;i<all.length;i++){if(sv.indexOf((all[i].name||'').toLowerCase())>=0&&SVC_IMAGES[cat])return SVC_IMAGES[cat];}}}
     return '';
   })();
   var _imgHtml = _img ? '<div style="margin:-18px -16px 16px -16px;height:150px;overflow:hidden;border-radius:14px 14px 0 0"><img src="'+_img+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></div>' : '';
