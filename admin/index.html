@@ -587,10 +587,29 @@ textarea{resize:vertical;min-height:80px}
 
 <!-- ADD CONTRACTOR MODAL -->
 <div class="overlay hidden" id="ctModal">
-  <div class="modal">
+  <div class="modal" style="max-height:88vh;overflow-y:auto">
     <div class="modal-pill"></div>
-    <div class="modal-title" id="ctModalTitle">Add Contractor</div>
+    <div class="modal-title" id="ctModalTitle">Contractor</div>
     <input type="hidden" id="ctEditId">
+
+    <!-- Profile section: uploaded by contractor -->
+    <div id="ctProfileSection" style="display:none">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+        <div id="ctPhotoWrap" style="width:64px;height:64px;border-radius:50%;overflow:hidden;background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:var(--orange)" id="ctAv"></div>
+        <div>
+          <div style="font-size:17px;font-weight:700" id="ctProfileName"></div>
+          <div style="font-size:13px;color:var(--fg-3)" id="ctProfileEmail"></div>
+        </div>
+      </div>
+      <div id="ctBioWrap" style="display:none;background:var(--surface-2);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--fg-2);margin-bottom:10px;line-height:1.5" id="ctBio"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px" id="ctInterestsWrap"></div>
+      <div id="ctInsuranceWrap" style="display:none;margin-bottom:4px">
+        <a id="ctInsuranceLink" href="#" target="_blank" style="font-size:13px;color:var(--orange);font-weight:600;text-decoration:none">📄 View Insurance Document</a>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+      <div style="font-size:11px;font-weight:700;color:var(--fg-3);letter-spacing:.06em;margin-bottom:10px">ADMIN CONTROLS</div>
+    </div>
+
     <div class="field"><label>Name</label><input id="ctName" placeholder="Full name"></div>
     <div class="field"><label>Phone</label><input type="tel" id="ctPhone" placeholder="(732) 555-0000" maxlength="14"></div>
     <div class="field"><label>Email</label><input type="email" id="ctEmail" placeholder="contractor@email.com"></div>
@@ -601,6 +620,49 @@ textarea{resize:vertical;min-height:80px}
       <button class="mbtn mbtn-sec" onclick="closeModal('ctModal')">Cancel</button>
     </div>
     <div style="margin-top:10px"><button class="mbtn mbtn-del" id="delCtBtn" onclick="deleteContractor()" style="width:100%">Remove Contractor</button></div>
+  </div>
+</div>
+
+<!-- Homeowner detail sheet -->
+<div class="overlay hidden" id="hwModal">
+  <div class="modal" style="max-height:88vh;overflow-y:auto">
+    <div class="modal-pill"></div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+      <div style="width:54px;height:54px;border-radius:50%;background:var(--green);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff" id="hwAv"></div>
+      <div>
+        <div style="font-size:17px;font-weight:700" id="hwName"></div>
+        <div style="font-size:13px;color:var(--fg-3)" id="hwEmail"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:var(--surface-2);border-radius:10px;padding:11px 13px">
+        <div style="font-size:11px;color:var(--fg-3);font-weight:600;letter-spacing:.05em;margin-bottom:3px">PHONE</div>
+        <div style="font-size:14px;font-weight:600" id="hwPhone">—</div>
+      </div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:11px 13px">
+        <div style="font-size:11px;color:var(--fg-3);font-weight:600;letter-spacing:.05em;margin-bottom:3px">TOTAL JOBS</div>
+        <div style="font-size:14px;font-weight:600" id="hwJobs">0</div>
+      </div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:11px 13px;grid-column:1/-1">
+        <div style="font-size:11px;color:var(--fg-3);font-weight:600;letter-spacing:.05em;margin-bottom:3px">ADDRESS</div>
+        <div style="font-size:14px;font-weight:600" id="hwAddr">—</div>
+      </div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:11px 13px">
+        <div style="font-size:11px;color:var(--fg-3);font-weight:600;letter-spacing:.05em;margin-bottom:3px">HOME TYPE</div>
+        <div style="font-size:14px;font-weight:600" id="hwHomeType">—</div>
+      </div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:11px 13px">
+        <div style="font-size:11px;color:var(--fg-3);font-weight:600;letter-spacing:.05em;margin-bottom:3px">SQ FT</div>
+        <div style="font-size:14px;font-weight:600" id="hwSqft">—</div>
+      </div>
+    </div>
+    <div id="hwNotesWrap" style="display:none;background:var(--orange-dim);border-radius:10px;padding:11px 13px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--orange);font-weight:700;letter-spacing:.05em;margin-bottom:4px">NOTES FOR TECHS</div>
+      <div style="font-size:13px" id="hwNotes"></div>
+    </div>
+    <div style="margin-top:4px">
+      <button class="mbtn mbtn-sec" onclick="closeModal('hwModal')" style="width:100%">Close</button>
+    </div>
   </div>
 </div>
 
@@ -894,7 +956,7 @@ async function genPaymentLink(priceId,linkId,svcId,btn){
 // Field mapping: local camelCase <-> DB snake_case
 function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,paymentLink:r.payment_link||'',status:r.status||'New',notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}}
 function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,email:j.email||'',address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,contractor_paid:!!j.contractorPaid,payment_link:j.paymentLink||'',status:j.status||'New',notes:j.notes||''}}
-function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',margin:Number(r.margin)||30}}
+function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',margin:Number(r.margin)||30,photo_url:r.photo_url||null,bio:r.bio||'',insurance_url:r.insurance_url||null,service_interests:r.service_interests||null}}
 function cl2r(c){return{id:c.id,name:c.name,phone:c.phone,email:c.email||'',specialty:c.specialty||c.spec||'',margin:c.margin||30}}
 
 var SEED_JOBS=[
@@ -1271,7 +1333,7 @@ function renderHomeowners(){
   el.innerHTML=_homeowners.map(function(h){
     var init=(h.name||h.email||'?')[0].toUpperCase();
     var jc=jobs.filter(function(j){return j.email&&j.email.toLowerCase()===(h.email||'').toLowerCase()}).length;
-    return'<div class="ct-card"><div class="ct-av" style="background:var(--green)">'+init+'</div>'
+    return'<div class="ct-card" onclick="openHwDetail(\''+esc(h.email||'')+'\')"><div class="ct-av" style="background:var(--green)">'+init+'</div>'
       +'<div class="ct-body"><div class="ct-name">'+esc(h.name||h.email||'Unknown')+'</div>'
       +'<div class="ct-spec">'+esc(h.email||'')+(h.phone?'  ·  '+esc(h.phone):'')+'</div>'
       +(h.address?'<div class="ct-spec" style="color:var(--fg-3);font-size:11px">'+esc(h.address)+'</div>':'')
@@ -1279,7 +1341,60 @@ function renderHomeowners(){
   }).join('');
 }
 function openAddContractor(){_editCtId=null;document.getElementById('ctEditId').value='';document.getElementById('ctName').value='';document.getElementById('ctPhone').value='';document.getElementById('ctEmail').value='';document.getElementById('ctSpec').value='';document.getElementById('ctMargin').value='30';document.getElementById('ctModalTitle').textContent='Add Contractor';document.getElementById('delCtBtn').classList.add('hidden');document.getElementById('ctModal').classList.remove('hidden')}
-function openEditCtx(id){var c=contractors.find(function(x){return x.id===id});if(!c)return;_editCtId=id;document.getElementById('ctEditId').value=id;document.getElementById('ctName').value=c.name||'';document.getElementById('ctPhone').value=c.phone||'';document.getElementById('ctEmail').value=c.email||'';document.getElementById('ctSpec').value=c.spec||c.specialty||'';document.getElementById('ctMargin').value=String(c.margin||30);document.getElementById('ctModalTitle').textContent='Edit Contractor';document.getElementById('delCtBtn').classList.remove('hidden');document.getElementById('ctModal').classList.remove('hidden')}
+function openEditCtx(id){
+  var c=contractors.find(function(x){return x.id===id});if(!c)return;
+  _editCtId=id;
+  document.getElementById('ctEditId').value=id;
+  document.getElementById('ctName').value=c.name||'';
+  document.getElementById('ctPhone').value=c.phone||'';
+  document.getElementById('ctEmail').value=c.email||'';
+  document.getElementById('ctSpec').value=c.spec||c.specialty||'';
+  document.getElementById('ctMargin').value=String(c.margin||30);
+  document.getElementById('ctModalTitle').textContent=c.name||'Contractor';
+  document.getElementById('delCtBtn').classList.remove('hidden');
+  // Profile section — show contractor-uploaded info
+  var ps=document.getElementById('ctProfileSection');
+  var hasProfile=!!(c.photo_url||c.bio||c.insurance_url||(c.service_interests&&c.service_interests.length));
+  if(ps) ps.style.display=hasProfile?'':'none';
+  // Avatar
+  var av=document.getElementById('ctPhotoWrap');
+  if(av){
+    if(c.photo_url){av.innerHTML='<img src="'+c.photo_url+'" style="width:100%;height:100%;object-fit:cover">';}
+    else{av.textContent=(c.name||'?')[0].toUpperCase();}
+  }
+  var pn=document.getElementById('ctProfileName'); if(pn) pn.textContent=c.name||'';
+  var pe=document.getElementById('ctProfileEmail'); if(pe) pe.textContent=c.email||'';
+  // Bio
+  var bw=document.getElementById('ctBioWrap'); var bt=document.getElementById('ctBio');
+  if(bw&&bt){bw.style.display=c.bio?'':'none';bt.textContent=c.bio||'';}
+  // Service interests
+  var iw=document.getElementById('ctInterestsWrap');
+  if(iw){
+    var si=Array.isArray(c.service_interests)?c.service_interests:[];
+    iw.innerHTML=si.length?si.map(function(s,i){return'<span style="background:var(--surface-2);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600"><span style="color:var(--orange);margin-right:4px">'+(i+1)+'.</span>'+esc(s)+'</span>';}).join(''):'';
+  }
+  // Insurance
+  var insw=document.getElementById('ctInsuranceWrap'); var insl=document.getElementById('ctInsuranceLink');
+  if(insw&&insl){insw.style.display=c.insurance_url?'':'none';insl.href=c.insurance_url||'#';}
+  document.getElementById('ctModal').classList.remove('hidden');
+}
+function openHwDetail(email){
+  var h=_homeowners.find(function(x){return(x.email||'').toLowerCase()===(email||'').toLowerCase()});
+  if(!h)return;
+  var jc=jobs.filter(function(j){return(j.email||'').toLowerCase()===(h.email||'').toLowerCase()}).length;
+  var init=(h.name||h.email||'?')[0].toUpperCase();
+  document.getElementById('hwAv').textContent=init;
+  document.getElementById('hwName').textContent=h.name||h.email||'Homeowner';
+  document.getElementById('hwEmail').textContent=h.email||'';
+  document.getElementById('hwPhone').textContent=h.phone||'—';
+  document.getElementById('hwJobs').textContent=jc+' job'+(jc===1?'':'s');
+  document.getElementById('hwAddr').textContent=h.address||'—';
+  document.getElementById('hwHomeType').textContent=h.home_type||'—';
+  document.getElementById('hwSqft').textContent=h.sqft?h.sqft+' sq ft':'—';
+  var nw=document.getElementById('hwNotesWrap'); var nt=document.getElementById('hwNotes');
+  if(nw&&nt){nw.style.display=h.tech_notes?'':'none';nt.textContent=h.tech_notes||'';}
+  document.getElementById('hwModal').classList.remove('hidden');
+}
 async function saveContractor(){var name=document.getElementById('ctName').value.trim();if(!name){showToast('Name required');return}var id=_editCtId||('c'+Date.now());var i=contractors.findIndex(function(x){return x.id===id});var margin=Number(document.getElementById('ctMargin').value)||30;var c={id:id,name:name,phone:document.getElementById('ctPhone').value,email:document.getElementById('ctEmail').value.trim().toLowerCase(),specialty:document.getElementById('ctSpec').value,spec:document.getElementById('ctSpec').value,margin:margin,jobs:0};if(i>=0)contractors[i]=c;else contractors.push(c);await _sb.from('contractors').upsert([cl2r(c)]);populateContractorSelect();renderContractors();closeModal('ctModal');showToast(name+' saved')}
 async function deleteContractor(){var id=document.getElementById('ctEditId').value;if(!id)return;contractors=contractors.filter(function(c){return c.id!==id});await _sb.from('contractors').delete().eq('id',id);populateContractorSelect();renderContractors();closeModal('ctModal');showToast('Contractor removed')}
 
