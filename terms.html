@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terms of Service – ProServ Homes</title>
+<link rel="icon" type="image/png" href="favicon.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #F8F8F6; --surface: #FFFFFF;
+  --fg: #111210; --fg-mid: #3A3D38; --fg-soft: #72756E;
+  --orange: #F26310; --green: #1F9B2A;
+  --border: rgba(0,0,0,0.09);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151714; --surface: #1E211C;
+    --fg: #F2F2EE; --fg-mid: #C0C4BB; --fg-soft: #7A8075;
+    --orange: #FF7220; --green: #28C034;
+    --border: rgba(255,255,255,0.10);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #151714; --surface: #1E211C;
+  --fg: #F2F2EE; --fg-mid: #C0C4BB; --fg-soft: #7A8075;
+  --orange: #FF7220; --green: #28C034;
+  --border: rgba(255,255,255,0.10);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* NAV */
+.site-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 max(20px, env(safe-area-inset-left, 0px));
+}
+.nav-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+.nav-logo img { height: 44px; width: auto; display: block; }
+.nav-back {
+  font-size: 13px;
+  color: var(--fg-soft);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color .15s;
+}
+.nav-back:hover { color: var(--orange); }
+
+/* HERO */
+.page-hero {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 56px max(20px, env(safe-area-inset-left, 0px)) 48px;
+}
+.page-hero-inner {
+  max-width: 860px;
+  margin: 0 auto;
+}
+.page-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 14px;
+}
+.page-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(36px, 6vw, 56px);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -.01em;
+  line-height: 1;
+  color: var(--fg);
+  margin-bottom: 16px;
+}
+.page-meta {
+  font-size: 14px;
+  color: var(--fg-soft);
+}
+
+/* CONTENT */
+.legal-body {
+  padding: 56px max(20px, env(safe-area-inset-left, 0px)) 80px;
+}
+.legal-inner {
+  max-width: 860px;
+  margin: 0 auto;
+}
+.legal-section {
+  margin-bottom: 48px;
+}
+.legal-section h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fg);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.legal-section p {
+  font-size: 15px;
+  color: var(--fg-mid);
+  margin-bottom: 14px;
+  max-width: 720px;
+}
+.legal-section ul {
+  padding-left: 20px;
+  margin-bottom: 14px;
+}
+.legal-section ul li {
+  font-size: 15px;
+  color: var(--fg-mid);
+  margin-bottom: 8px;
+}
+.legal-section a {
+  color: var(--orange);
+  text-decoration: none;
+}
+.legal-section a:hover { text-decoration: underline; }
+
+/* FOOTER */
+.site-footer {
+  background: #1a1a1a;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding: 32px max(20px, env(safe-area-inset-left, 0px));
+  text-align: center;
+}
+.footer-copy {
+  font-size: 12px;
+  color: rgba(255,255,255,.3);
+}
+.footer-links-sm {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.footer-links-sm a {
+  font-size: 12px;
+  color: rgba(255,255,255,.3);
+  text-decoration: none;
+}
+.footer-links-sm a:hover { color: rgba(255,255,255,.6); }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><img src="assets/logo-color.png" alt="ProServ Homes"></a>
+    <a href="/" class="nav-back">← Back to Home</a>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <p class="page-label">Legal</p>
+    <h1 class="page-title">Terms of Service</h1>
+    <p class="page-meta">Effective Date: October 23, 2026 &nbsp;·&nbsp; ProServ Homes LLC · Ocean & Monmouth County, NJ</p>
+  </div>
+</div>
+
+<div class="legal-body">
+  <div class="legal-inner">
+
+    <div class="legal-section">
+      <h2>1. Agreement to Terms</h2>
+      <p>By accessing or using the ProServ Homes website at <a href="https://proservhomes.co">proservhomes.co</a> or by requesting, scheduling, or receiving any services from ProServ Homes LLC ("ProServ Homes," "we," "us," or "our"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our website or services.</p>
+      <p>These Terms apply to all visitors, homeowners, service requestors, and contractors who access or use our platform.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>2. Services Provided</h2>
+      <p>ProServ Homes is a home services platform operating in Ocean and Monmouth County, New Jersey. We offer and coordinate the following services:</p>
+      <ul>
+        <li>Gutter Cleaning</li>
+        <li>Pressure Washing</li>
+        <li>Fence Installation</li>
+        <li>Concrete Work</li>
+        <li>Paver Installation</li>
+        <li>Christmas Light Installation & Removal</li>
+        <li>Dryer Vent Cleaning</li>
+        <li>Snow Removal</li>
+      </ul>
+      <p>ProServ Homes coordinates and dispatches licensed, insured independent contractors to perform services on behalf of homeowners. We reserve the right to add, modify, or discontinue any service at any time without prior notice.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>3. Service Requests and Scheduling</h2>
+      <p>By submitting a service request through our website or by contacting us directly, you authorize ProServ Homes to contact you by phone, text message, or email regarding your request. Standard messaging and data rates may apply.</p>
+      <p>Service availability is subject to crew scheduling, weather conditions, and other factors. ProServ Homes will make reasonable efforts to fulfill scheduled appointments but does not guarantee specific arrival times.</p>
+      <p>You must provide accurate property information, including address and scope of work, at the time of booking. Misrepresentation of the scope of work may result in revised pricing or cancellation of service.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>4. Pricing and Payment</h2>
+      <p>All quoted prices are estimates based on the information provided at the time of booking. Final pricing may vary based on actual conditions observed on site. You will be notified of any significant pricing changes prior to work commencing.</p>
+      <p>Payment is due upon completion of service unless otherwise agreed upon in writing. ProServ Homes reserves the right to charge a cancellation fee for appointments cancelled with less than 24 hours' notice.</p>
+      <p>ProServ Homes is not responsible for any additional costs, damages, or liabilities arising from pre-existing property conditions that were not disclosed at the time of booking.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>5. Independent Contractors</h2>
+      <p>All work is performed by independent contractors, not employees of ProServ Homes LLC. Each contractor dispatched through our platform carries their own general liability insurance at a minimum of $1,000,000 per occurrence / $2,000,000 aggregate coverage.</p>
+      <p>ProServ Homes acts as a coordinator and is not liable for the acts, omissions, or negligence of independent contractors, except to the extent required by applicable New Jersey law.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>6. Property Access and Conditions</h2>
+      <p>By scheduling service, you confirm that you are the property owner or an authorized representative of the property owner, and that you grant ProServ Homes and its contractors permission to access the property to perform the requested services.</p>
+      <p>You are responsible for ensuring the work area is reasonably accessible, including removing personal property, vehicles, or obstructions that may interfere with service. ProServ Homes is not responsible for damage to items left in the work area.</p>
+      <p>ProServ Homes reserves the right to decline or discontinue service if site conditions are deemed unsafe or if the scope of work materially differs from the original request.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>7. Satisfaction and Service Guarantee</h2>
+      <p>If you are not satisfied with a completed service, you must notify ProServ Homes within 48 hours of service completion. We will make a reasonable effort to address your concern at no additional charge. This guarantee does not apply to issues arising from pre-existing property conditions, acts of nature, or homeowner-directed work.</p>
+      <p>Our satisfaction guarantee does not constitute a warranty against future damage or degradation to your property.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>8. Limitation of Liability</h2>
+      <p>To the fullest extent permitted by applicable law, ProServ Homes LLC shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to property damage, loss of use, or loss of profits, arising out of or related to our services or these Terms.</p>
+      <p>Our total liability to you for any claim arising from services rendered shall not exceed the amount actually paid by you to ProServ Homes for the specific service giving rise to the claim.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>9. Intellectual Property</h2>
+      <p>All content on proservhomes.co, including text, graphics, logos, and images, is the property of ProServ Homes LLC and is protected by applicable intellectual property laws. You may not reproduce, distribute, or create derivative works from any content on this site without our prior written consent.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>10. Governing Law</h2>
+      <p>These Terms shall be governed by and construed in accordance with the laws of the State of New Jersey, without regard to its conflict of law provisions. Any disputes arising from these Terms or our services shall be resolved in the courts of Ocean County, New Jersey.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>11. Changes to These Terms</h2>
+      <p>We reserve the right to update or modify these Terms of Service at any time. Changes will be posted on this page with an updated effective date. Continued use of our website or services following any changes constitutes your acceptance of the revised Terms.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>12. Contact Us</h2>
+      <p>If you have any questions about these Terms of Service, please contact us:</p>
+      <ul>
+        <li>Email: <a href="mailto:hello@proservhomes.co">hello@proservhomes.co</a></li>
+        <li>Phone: <a href="tel:7323858683">(732) 385-8683</a></li>
+        <li>Service Area: Ocean & Monmouth County, New Jersey</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<footer class="site-footer">
+  <p class="footer-copy">© 2026–2027 ProServ Homes LLC · Ocean & Monmouth County NJ</p>
+  <div class="footer-links-sm">
+    <a href="/privacy.html">Privacy Policy</a>
+    <a href="/terms.html">Terms of Service</a>
+    <a href="/">Home</a>
+  </div>
+</footer>
+
+</body>
+</html>

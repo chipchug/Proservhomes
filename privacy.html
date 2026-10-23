@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy Policy – ProServ Homes</title>
+<link rel="icon" type="image/png" href="favicon.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #F8F8F6; --surface: #FFFFFF;
+  --fg: #111210; --fg-mid: #3A3D38; --fg-soft: #72756F;
+  --orange: #F26310; --green: #1F9B2A;
+  --border: rgba(0,0,0,0.09);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151714; --surface: #1E211C;
+    --fg: #F2F2EE; --fg-mid: #C0C4BB; --fg-soft: #7A8075;
+    --orange: #FF7220; --green: #28C034;
+    --border: rgba(255,255,255,0.10);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #151714; --surface: #1E211C;
+  --fg: #F2F2EE; --fg-mid: #C0C4BB; --fg-soft: #7A8075;
+  --orange: #FF7220; --green: #28C034;
+  --border: rgba(255,255,255,0.10);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* NAV */
+.site-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 max(20px, env(safe-area-inset-left, 0px));
+}
+.nav-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+.nav-logo img { height: 44px; width: auto; display: block; }
+.nav-back {
+  font-size: 13px;
+  color: var(--fg-soft);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color .15s;
+}
+.nav-back:hover { color: var(--orange); }
+
+/* HERO */
+.page-hero {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 56px max(20px, env(safe-area-inset-left, 0px)) 48px;
+}
+.page-hero-inner {
+  max-width: 860px;
+  margin: 0 auto;
+}
+.page-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 14px;
+}
+.page-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(36px, 6vw, 56px);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -.01em;
+  line-height: 1;
+  color: var(--fg);
+  margin-bottom: 16px;
+}
+.page-meta {
+  font-size: 14px;
+  color: var(--fg-soft);
+}
+
+/* CONTENT */
+.legal-body {
+  padding: 56px max(20px, env(safe-area-inset-left, 0px)) 80px;
+}
+.legal-inner {
+  max-width: 860px;
+  margin: 0 auto;
+}
+.legal-section {
+  margin-bottom: 48px;
+}
+.legal-section h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fg);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.legal-section p {
+  font-size: 15px;
+  color: var(--fg-mid);
+  margin-bottom: 14px;
+  max-width: 720px;
+}
+.legal-section ul {
+  padding-left: 20px;
+  margin-bottom: 14px;
+}
+.legal-section ul li {
+  font-size: 15px;
+  color: var(--fg-mid);
+  margin-bottom: 8px;
+}
+.legal-section a {
+  color: var(--orange);
+  text-decoration: none;
+}
+.legal-section a:hover { text-decoration: underline; }
+
+/* FOOTER */
+.site-footer {
+  background: #1a1a1a;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding: 32px max(20px, env(safe-area-inset-left, 0px));
+  text-align: center;
+}
+.footer-copy {
+  font-size: 12px;
+  color: rgba(255,255,255,.3);
+}
+.footer-links-sm {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.footer-links-sm a {
+  font-size: 12px;
+  color: rgba(255,255,255,.3);
+  text-decoration: none;
+}
+.footer-links-sm a:hover { color: rgba(255,255,255,.6); }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo"><img src="assets/logo-color.png" alt="ProServ Homes"></a>
+    <a href="/" class="nav-back">← Back to Home</a>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <p class="page-label">Legal</p>
+    <h1 class="page-title">Privacy Policy</h1>
+    <p class="page-meta">Effective Date: October 23, 2026 &nbsp;·&nbsp; ProServ Homes LLC · Ocean & Monmouth County, NJ</p>
+  </div>
+</div>
+
+<div class="legal-body">
+  <div class="legal-inner">
+
+    <div class="legal-section">
+      <h2>1. Introduction</h2>
+      <p>ProServ Homes LLC ("ProServ Homes," "we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website at <a href="https://proservhomes.co">proservhomes.co</a> or use our home services platform.</p>
+      <p>By using our website or services, you agree to the collection and use of information in accordance with this policy. If you do not agree, please do not use our website or services.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>2. Information We Collect</h2>
+      <p>We may collect the following categories of personal information:</p>
+      <ul>
+        <li><strong>Contact Information:</strong> Name, email address, phone number, and mailing address.</li>
+        <li><strong>Property Information:</strong> Service address, property type, and description of work requested.</li>
+        <li><strong>Communications:</strong> Messages, emails, or other correspondence you send us, including service requests and support inquiries.</li>
+        <li><strong>Device and Usage Data:</strong> IP address, browser type, operating system, referring URLs, pages viewed, and the date and time of your visit.</li>
+        <li><strong>Payment Information:</strong> If applicable, billing information collected and processed through secure third-party payment processors. We do not store full payment card numbers on our systems.</li>
+        <li><strong>Location Data:</strong> General geographic location derived from your IP address, or more precise location if you provide it when requesting services.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h2>3. How We Collect Information</h2>
+      <p>We collect information in the following ways:</p>
+      <ul>
+        <li><strong>Directly from you</strong> when you fill out a service request form, contact us by phone or email, or otherwise voluntarily provide information.</li>
+        <li><strong>Automatically</strong> through cookies, web beacons, and similar tracking technologies when you visit our website.</li>
+        <li><strong>From third-party services</strong> such as analytics providers, advertising platforms, and communication tools we use to operate our business.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h2>4. How We Use Your Information</h2>
+      <p>We use the information we collect for the following purposes:</p>
+      <ul>
+        <li>To provide, schedule, and coordinate home services you have requested.</li>
+        <li>To communicate with you about your service requests, including confirmations and follow-up via phone, text message (SMS), or email.</li>
+        <li>To send you promotional materials, special offers, and updates about our services — you may opt out at any time.</li>
+        <li>To process payments and prevent fraudulent transactions.</li>
+        <li>To improve our website, services, and customer experience.</li>
+        <li>To comply with applicable laws, regulations, and legal obligations.</li>
+        <li>To protect the rights, safety, and property of ProServ Homes, our contractors, our customers, and the public.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h2>5. Text Message (SMS) Communications</h2>
+      <p>By providing your phone number and submitting a service request, you consent to receive text messages (SMS) from ProServ Homes regarding your request, scheduling updates, and service follow-ups. Standard messaging and data rates may apply.</p>
+      <p>You may opt out of SMS communications at any time by replying STOP to any message you receive from us. After opting out, you may still receive non-promotional transactional messages directly related to an active service request.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>6. Sharing Your Information</h2>
+      <p>We do not sell your personal information. We may share your information with:</p>
+      <ul>
+        <li><strong>Independent Contractors:</strong> Contractors dispatched through our platform will receive your name, service address, and contact information necessary to perform the requested work.</li>
+        <li><strong>Service Providers:</strong> Third-party vendors who assist us in operating our website, processing payments, sending communications, or conducting our business — bound by confidentiality agreements.</li>
+        <li><strong>Legal Authorities:</strong> When required to do so by law, court order, or other governmental authority, or when we believe disclosure is necessary to protect our rights or the safety of others.</li>
+        <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of all or a portion of our assets, your information may be transferred as part of that transaction.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h2>7. Cookies and Tracking Technologies</h2>
+      <p>We use cookies and similar tracking technologies to enhance your experience on our website, analyze site traffic, and understand where our visitors are coming from. Cookies are small data files stored on your device.</p>
+      <p>You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent. However, some features of our website may not function properly without cookies.</p>
+      <p>We may use third-party analytics and advertising services (such as Google Analytics and Google Ads) that collect information about your use of our website. These services have their own privacy policies governing the use of your information.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>8. Data Retention</h2>
+      <p>We retain your personal information for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required or permitted by law. Service records may be retained for up to seven (7) years for business and legal purposes.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>9. Data Security</h2>
+      <p>We take reasonable administrative, technical, and physical measures to protect your personal information from unauthorized access, use, alteration, or disclosure. However, no method of transmission over the internet or method of electronic storage is 100% secure, and we cannot guarantee absolute security.</p>
+      <p>If you have reason to believe that your interaction with us is no longer secure, please contact us immediately at <a href="mailto:hello@proservhomes.co">hello@proservhomes.co</a>.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>10. Your Rights and Choices</h2>
+      <p>Depending on your location, you may have certain rights with respect to your personal information, including:</p>
+      <ul>
+        <li><strong>Access:</strong> The right to request a copy of the personal information we hold about you.</li>
+        <li><strong>Correction:</strong> The right to request that we correct inaccurate or incomplete information.</li>
+        <li><strong>Deletion:</strong> The right to request that we delete your personal information, subject to certain legal exceptions.</li>
+        <li><strong>Opt-Out of Marketing:</strong> The right to opt out of receiving promotional communications from us at any time by following the unsubscribe instructions in any email, replying STOP to any SMS, or contacting us directly.</li>
+      </ul>
+      <p>To exercise any of these rights, please contact us at <a href="mailto:hello@proservhomes.co">hello@proservhomes.co</a>. We will respond to your request within a reasonable timeframe.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>11. Children's Privacy</h2>
+      <p>Our services are not directed to individuals under the age of 18. We do not knowingly collect personal information from children. If you believe we have inadvertently collected information from a child under 18, please contact us immediately and we will take steps to delete such information.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>12. Third-Party Links</h2>
+      <p>Our website may contain links to third-party websites. This Privacy Policy does not apply to those websites, and we are not responsible for their privacy practices. We encourage you to review the privacy policies of any third-party sites you visit.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>13. New Jersey Privacy Rights</h2>
+      <p>If you are a New Jersey resident, you may have additional rights under applicable state privacy law. ProServ Homes is committed to honoring those rights. For inquiries specific to New Jersey privacy rights, please contact us at the information below.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>14. Changes to This Policy</h2>
+      <p>We reserve the right to update or modify this Privacy Policy at any time. Changes will be posted on this page with an updated effective date. We encourage you to review this policy periodically. Continued use of our website or services after any changes constitutes your acceptance of the revised policy.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>15. Contact Us</h2>
+      <p>If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:</p>
+      <ul>
+        <li>Email: <a href="mailto:hello@proservhomes.co">hello@proservhomes.co</a></li>
+        <li>Phone: <a href="tel:7323858683">(732) 385-8683</a></li>
+        <li>Service Area: Ocean & Monmouth County, New Jersey</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<footer class="site-footer">
+  <p class="footer-copy">© 2026–2027 ProServ Homes LLC · Ocean & Monmouth County NJ</p>
+  <div class="footer-links-sm">
+    <a href="/privacy.html">Privacy Policy</a>
+    <a href="/terms.html">Terms of Service</a>
+    <a href="/">Home</a>
+  </div>
+</footer>
+
+</body>
+</html>
