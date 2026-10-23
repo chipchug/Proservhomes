@@ -66,30 +66,30 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
 .scroll-arrow:hover{opacity:1;}
 .hero-cta:hover{opacity:.88;}
 
-/* ── Perks section ── */
-.perks-wrap{background:#0a0a0a;padding:64px 0 72px;border-top:1px solid rgba(255,255,255,.07);}
-.perks-header{text-align:center;padding:0 max(20px,env(safe-area-inset-left,0px));margin-bottom:44px;max-width:min(1080px,92vw);margin-left:auto;margin-right:auto;}
-.perks-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);margin-bottom:8px;}
-.perks-headline{font-family:'Barlow Condensed',sans-serif;font-size:clamp(36px,9vw,56px);font-weight:900;line-height:1.05;text-transform:uppercase;color:#fff;letter-spacing:-.01em;}
-/* Perks grid — 2-col mobile → 3-col desktop, always an even 3×2 */
-.perks{display:grid;grid-template-columns:1fr;gap:1px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);width:100%;max-width:100%;}
-@media(min-width:640px){.perks{grid-template-columns:repeat(3,1fr);max-width:min(1080px,92vw);margin:0 auto;}}
-/* Title/body scale for desktop card width */
-@media(min-width:640px){
-  .perk-title{font-size:clamp(20px,2.4vw,30px);}
-  .perk-body{font-size:14px;line-height:1.6;}
-  .perk-body-wrap{padding:20px 22px 26px;}
-  .perks-wrap{padding:80px 0 96px;}
-  .perks-header{margin-bottom:52px;}
+/* ── Feature sections (Apple-style alternating panels) ── */
+.perks-wrap{background:#080808;border-top:1px solid rgba(255,255,255,.07);}
+.perks-header{text-align:center;padding:80px max(20px,env(safe-area-inset-left,0px)) 64px;max-width:min(800px,92vw);margin-left:auto;margin-right:auto;}
+.perks-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);margin-bottom:10px;}
+.perks-headline{font-family:'Barlow Condensed',sans-serif;font-size:clamp(36px,9vw,64px);font-weight:900;line-height:1.0;text-transform:uppercase;color:#fff;letter-spacing:-.01em;}
+.feature-list{width:100%;}
+.feature-item{display:flex;flex-direction:column;border-top:1px solid rgba(255,255,255,.06);}
+@media(min-width:820px){
+  .feature-item{flex-direction:row;min-height:520px;}
+  .feature-item:nth-child(even){flex-direction:row-reverse;}
 }
-.perk{background:#0a0a0a;padding:0;border:none;position:relative;overflow:hidden;}
-.perk::after{content:'';position:absolute;inset:0;border:1px solid rgba(255,255,255,.07);}
-.perk-img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;margin-bottom:0;}
-.perk-body-wrap{padding:24px 24px 32px;}
-.perk-title{font-family:'Barlow Condensed',sans-serif;font-size:clamp(32px,8vw,56px);font-weight:900;letter-spacing:.01em;text-transform:uppercase;color:#fff;margin-bottom:6px;line-height:1.0;}
-.perk-body{font-size:17px;color:rgba(255,255,255,.52);line-height:1.65;}
-.perk-accent{display:block;width:24px;height:2px;background:var(--green);margin-bottom:12px;border-radius:2px;}
-.perk{background:#0a0a0a;padding:0;}
+.feature-img-wrap{flex-shrink:0;overflow:hidden;line-height:0;}
+.feature-img-wrap img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;transition:transform .6s ease;}
+@media(min-width:820px){
+  .feature-img-wrap{width:58%;}
+  .feature-img-wrap img{width:100%;height:100%;aspect-ratio:auto;}
+}
+.feature-item:hover .feature-img-wrap img{transform:scale(1.025);}
+.feature-text{display:flex;flex-direction:column;justify-content:center;padding:44px max(28px,env(safe-area-inset-left,0px)) 48px;}
+@media(min-width:820px){.feature-text{width:42%;padding:64px 68px;}}
+.feature-num{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.2);margin-bottom:22px;}
+.feature-accent{display:block;width:28px;height:2px;background:var(--green);margin-bottom:18px;border-radius:2px;}
+.feature-title{font-family:'Barlow Condensed',sans-serif;font-size:clamp(44px,6vw,80px);font-weight:900;letter-spacing:-.01em;text-transform:uppercase;color:#fff;line-height:.98;margin-bottom:18px;}
+.feature-body{font-size:16px;color:rgba(255,255,255,.48);line-height:1.75;max-width:380px;}
 
 /* ── Requirements section ── */
 .standard-wrap{background:#050505;padding:64px 0 0;border-top:1px solid rgba(255,255,255,.07);}
@@ -210,53 +210,59 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
       <div class="perks-eyebrow">Why ProServ Pro</div>
       <div class="perks-headline">Built for Pros<br>Who Mean Business</div>
     </div>
-    <div class="perks">
-      <div class="perk">
-        <img class="perk-img" src="img/perk-backed-by-proserv.jpg" alt="Jobs come to you" loading="lazy">
-        <div class="perk-body-wrap">
-          <span class="perk-accent"></span>
-          <div class="perk-title">Jobs come to you</div>
-          <div class="perk-body">Receive job requests instantly. First Pro to accept wins — no bidding wars.</div>
+    <div class="feature-list">
+      <div class="feature-item">
+        <div class="feature-img-wrap"><img src="img/perk-backed-by-proserv.jpg" alt="Jobs come to you" loading="lazy"></div>
+        <div class="feature-text">
+          <span class="feature-num">01</span>
+          <span class="feature-accent"></span>
+          <div class="feature-title">Jobs come<br>to you</div>
+          <div class="feature-body">Receive job requests the moment they're available. First Pro to accept wins — no bidding wars, no chasing leads.</div>
         </div>
       </div>
-      <div class="perk">
-        <img class="perk-img" src="img/perk-fast-payouts.jpg" alt="Fast payouts" loading="lazy">
-        <div class="perk-body-wrap">
-          <span class="perk-accent"></span>
-          <div class="perk-title">Fast payouts</div>
-          <div class="perk-body">Request your earnings any time. Direct deposit, no waiting for checks.</div>
+      <div class="feature-item">
+        <div class="feature-img-wrap"><img src="img/perk-fast-payouts.jpg" alt="Fast payouts" loading="lazy"></div>
+        <div class="feature-text">
+          <span class="feature-num">02</span>
+          <span class="feature-accent"></span>
+          <div class="feature-title">Fast<br>payouts</div>
+          <div class="feature-body">Request your earnings any time. Direct deposit, no waiting on checks, no invoice chasing.</div>
         </div>
       </div>
-      <div class="perk">
-        <img class="perk-img" src="img/perk-your-schedule.jpg" alt="Your schedule" loading="lazy">
-        <div class="perk-body-wrap">
-          <span class="perk-accent"></span>
-          <div class="perk-title">Your schedule</div>
-          <div class="perk-body">Accept or pass on any job. Work as much or as little as you want.</div>
+      <div class="feature-item">
+        <div class="feature-img-wrap"><img src="img/perk-your-schedule.jpg" alt="Your schedule" loading="lazy"></div>
+        <div class="feature-text">
+          <span class="feature-num">03</span>
+          <span class="feature-accent"></span>
+          <div class="feature-title">Your<br>schedule</div>
+          <div class="feature-body">Accept or pass on any job. Work as much or as little as you want — you're always in control.</div>
         </div>
       </div>
-      <div class="perk">
-        <img class="perk-img" src="img/perk-real-homeowners.jpg" alt="Real homeowners" loading="lazy">
-        <div class="perk-body-wrap">
-          <span class="perk-accent"></span>
-          <div class="perk-title">Real homeowners</div>
-          <div class="perk-body">Every job is a vetted NJ homeowner. No commercial jobs, no drama.</div>
+      <div class="feature-item">
+        <div class="feature-img-wrap"><img src="img/perk-real-homeowners.jpg" alt="Real homeowners" loading="lazy"></div>
+        <div class="feature-text">
+          <span class="feature-num">04</span>
+          <span class="feature-accent"></span>
+          <div class="feature-title">Real<br>homeowners</div>
+          <div class="feature-body">Every job is a vetted NJ homeowner. No commercial sites, no problem clients, no drama.</div>
         </div>
       </div>
-      <div class="perk">
-        <img class="perk-img" src="img/perk-build-your-rep.jpg" alt="Build your rep" loading="lazy">
-        <div class="perk-body-wrap">
-          <span class="perk-accent"></span>
-          <div class="perk-title">Build your rep</div>
-          <div class="perk-body">5-star reviews stay attached to your profile. Earn more as you grow.</div>
+      <div class="feature-item">
+        <div class="feature-img-wrap"><img src="img/perk-build-your-rep.jpg" alt="Build your rep" loading="lazy"></div>
+        <div class="feature-text">
+          <span class="feature-num">05</span>
+          <span class="feature-accent"></span>
+          <div class="feature-title">Build<br>your rep</div>
+          <div class="feature-body">5-star reviews stay attached to your profile. The better you do, the more you earn.</div>
         </div>
       </div>
-      <div class="perk">
-        <img class="perk-img" src="img/perk-jobs-come-to-you.jpg" alt="Backed by ProServ" loading="lazy">
-        <div class="perk-body-wrap">
-          <span class="perk-accent"></span>
-          <div class="perk-title">Backed by ProServ</div>
-          <div class="perk-body">We handle billing, scheduling, and support so you can focus on the work.</div>
+      <div class="feature-item">
+        <div class="feature-img-wrap"><img src="img/perk-jobs-come-to-you.jpg" alt="Backed by ProServ" loading="lazy"></div>
+        <div class="feature-text">
+          <span class="feature-num">06</span>
+          <span class="feature-accent"></span>
+          <div class="feature-title">Backed by<br>ProServ</div>
+          <div class="feature-body">We handle billing, scheduling, and customer support so you can stay focused on the work.</div>
         </div>
       </div>
     </div>
