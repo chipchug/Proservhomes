@@ -54,7 +54,9 @@ body {
   justify-content: space-between;
   height: 64px;
 }
-.nav-logo img { height: 44px; width: auto; display: block; }
+.nav-logo img { height: 44px; width: auto; display: block; filter: invert(1); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .nav-logo img { filter: none; } }
+:root[data-theme="dark"] .nav-logo img { filter: none; }
 .nav-back {
   font-size: 13px;
   color: var(--fg-soft);
@@ -172,7 +174,7 @@ body {
 
 <nav class="site-nav">
   <div class="nav-inner">
-    <a href="/" class="nav-logo"><img src="assets/logo-color.png" alt="ProServ Homes"></a>
+    <a href="/" class="nav-logo"><img src="assets/logo-white.png" alt="ProServ Homes"></a>
     <a href="/" class="nav-back">← Back to Home</a>
   </div>
 </nav>
