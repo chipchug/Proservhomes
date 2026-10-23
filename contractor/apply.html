@@ -125,7 +125,9 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
 .footer-legal a:hover{color:var(--fg-2);}
 
 /* ── APPLICATION FORM ── */
-#formPage{display:none;padding:0 0 72px;}
+#formModal{background:rgba(0,0,0,.65);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;transition:opacity .3s ease;}
+#formModal.open{opacity:1;}
+#formPage{padding:0 0 72px;background:var(--bg);}
 .form-hero{background:linear-gradient(160deg,#1a0a00 0%,#111 100%);padding:40px 20px 36px;text-align:center;}
 .form-hero h1{font-family:'Barlow Condensed',sans-serif;font-size:clamp(28px,7vw,44px);font-weight:900;color:#fff;margin-bottom:8px;}
 .form-hero p{font-size:14px;color:rgba(255,255,255,.6);}
@@ -322,8 +324,10 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
 </div><!-- /landingPage -->
 
 
-<!-- ═══════════════════ APPLICATION FORM ═══════════════════ -->
-<div id="formPage">
+<!-- ═══════════════════ APPLICATION FORM MODAL ═══════════════════ -->
+<div id="formModal" style="display:none;position:fixed;inset:0;z-index:200;overflow-y:auto;-webkit-overflow-scrolling:touch;" onclick="handleModalClick(event)">
+<div id="formPage" onclick="event.stopPropagation()" style="position:relative;margin:40px auto 40px;max-width:680px;width:calc(100% - 32px);border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6);">
+  <button id="formCloseBtn" onclick="closeForm()" aria-label="Close application" style="position:absolute;top:14px;right:14px;z-index:10;width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);">×</button>
 
   <div class="form-hero">
     <h1>ProServ Pro Application</h1>
@@ -398,6 +402,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
 
   </div>
 </div><!-- /formPage -->
+</div><!-- /formModal -->
 
 <!-- ═══════════════════ SUCCESS POPUP ═══════════════════ -->
 <div class="popup-overlay" id="successPopup">
@@ -419,10 +424,18 @@ var _photoFiles=[];
 var _expCount=0;
 
 function showForm(){
-  document.getElementById('landingPage').style.display='none';
-  document.getElementById('formPage').style.display='block';
-  window.scrollTo(0,0);
+  var modal=document.getElementById('formModal');
+  modal.style.display='block';
+  document.body.style.overflow='hidden';
+  requestAnimationFrame(function(){modal.classList.add('open');});
+  modal.scrollTop=0;
 }
+function closeForm(){
+  var modal=document.getElementById('formModal');
+  modal.classList.remove('open');
+  setTimeout(function(){modal.style.display='none';document.body.style.overflow='';},300);
+}
+function handleModalClick(e){if(e.target===document.getElementById('formModal'))closeForm();}
 
 function toggleSvc(el){el.classList.toggle('selected');}
 
