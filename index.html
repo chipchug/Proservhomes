@@ -687,31 +687,86 @@ h2 {
   margin-inline: auto;
   margin-bottom: 40px;
 }
+/* Carousel wrapper */
+.reviews-carousel-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.reviews-carousel {
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
 .reviews-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-@media (max-width: 900px) {
-  .reviews-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 580px) {
-  .reviews-grid { grid-template-columns: 1fr; }
+  display: flex;
+  transition: transform .45s cubic-bezier(.4,0,.2,1);
+  will-change: transform;
 }
 .review-card {
   background: var(--review-card-bg);
   border-radius: 20px;
-  padding: 28px 24px 22px;
+  padding: 36px 32px 28px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-  transition: transform .18s ease, box-shadow .18s ease;
+  transition: box-shadow .18s ease;
+  flex: 0 0 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 .review-card:hover {
-  transform: translateY(-3px);
   box-shadow: 0 6px 28px rgba(0,0,0,0.12);
+}
+/* Arrow buttons */
+.reviews-arrow {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--review-card-bg);
+  border: 1.5px solid var(--review-border);
+  color: var(--fg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, border-color .15s, transform .12s;
+  z-index: 2;
+}
+.reviews-arrow:hover {
+  background: var(--review-border);
+  border-color: #4285F4;
+  transform: scale(1.08);
+}
+.reviews-arrow svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+/* Dots */
+.reviews-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+.reviews-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--review-border);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background .2s, transform .2s;
+}
+.reviews-dot.active {
+  background: #4285F4;
+  transform: scale(1.3);
 }
 .review-google-logo {
   display: flex;
@@ -857,6 +912,7 @@ h2 {
 .footer-social-link{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10);color:rgba(255,255,255,.65);font-size:12px;font-weight:500;text-decoration:none;transition:background .15s,color .15s;}
 .footer-social-link:hover{background:rgba(255,255,255,.13);color:#fff;}
 .footer-social-link svg{width:14px;height:14px;flex-shrink:0;}
+.footer-social-link img{width:16px;height:16px;flex-shrink:0;object-fit:contain;}
 
 /* ════════════════════════════════════════
    PRICING ESTIMATOR
@@ -2276,7 +2332,12 @@ h2 {
     <div class="eyebrow reviews-eyebrow">What Homeowners Say</div>
     <h2 class="reviews-heading">5.0 ★ on Google</h2>
     <p class="reviews-sub">Real reviews from real customers across Ocean &amp; Monmouth County NJ.</p>
-    <div class="reviews-grid">
+    <div class="reviews-carousel-wrap">
+      <button class="reviews-arrow" id="rev-prev" aria-label="Previous review">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="reviews-carousel">
+    <div class="reviews-grid" id="reviews-track">
 
       <!-- Review 1 -->
       <div class="review-card">
@@ -2365,7 +2426,13 @@ h2 {
         </div>
       </div>
 
-    </div>
+    </div><!-- /#reviews-track -->
+      </div><!-- /.reviews-carousel -->
+      <button class="reviews-arrow" id="rev-next" aria-label="Next review">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div><!-- /.reviews-carousel-wrap -->
+    <div class="reviews-dots" id="reviews-dots"></div>
     <div class="reviews-cta">
       <a href="https://maps.app.goo.gl/6cJ3hFg3Bf2BSVUP6" target="_blank" rel="noopener" class="reviews-google-link">
         <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
@@ -2449,19 +2516,19 @@ h2 {
     <div class="footer-social">
       <span class="footer-social-label">Find us on</span>
       <a class="footer-social-link" href="https://maps.app.goo.gl/6cJ3hFg3Bf2BSVUP6" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        <img src="assets/icon-google.png" alt="Google">
         Google
       </a>
       <a class="footer-social-link" href="https://www.facebook.com/profile.php?id=61595791230628" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        <img src="assets/icon-facebook.png" alt="Facebook">
         Facebook
       </a>
       <a class="footer-social-link" href="https://www.yelp.com/biz/pro-serv-jackson-township" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.16 12.73l-4.703 1.13c-.53.13-.96-.4-.7-.88l2.453-4.288c.26-.46.89-.4 1.07.1l2.25 3.16c.35.49.1 1.12-.37 1.24zm-1.89 4.384l-4.36 2.05c-.49.23-1.01-.15-.92-.68l.8-4.774c.09-.53.7-.73 1.07-.35l3.55 2.72c.46.35.35 1.02-.14 1.03zm-5.3 5.19l.13-4.83c.01-.54.63-.83 1.04-.5l3.71 2.83c.41.31.33.95-.13 1.15l-3.84 1.99c-.46.24-1.01-.11-.91-.64zM8.3 22.86l2.38-4.1c.27-.46.9-.42 1.1.07l1.71 4.57c.2.49-.25 1-.77.93L9.08 23.8c-.52-.07-.78-.66-.5-1.08zm-4.07-3.6l3.71-2.82c.42-.32 1.01.02 1.02.55l.1 4.82c.01.53-.5.89-.99.71l-3.67-1.36c-.49-.18-.6-.82-.17-1.15zm-2.1-6.17l4.42 1.91c.5.22.55.9.08 1.18l-4.2 2.46c-.47.27-1.03-.04-1.04-.59l-.02-4.37c0-.56.51-.89.96-.69l-.2.1zm2.89-5.9l2.24 4.3c.25.48-.18 1.02-.72.91L1.8 10.83c-.54-.09-.77-.71-.44-1.14L3.5 7.42c.33-.43.96-.43 1.24.03l.28.44zm6.99-.66L11 11.38c-.02.55-.64.84-1.04.49L5.8 7.93c-.4-.35-.32-.99.14-1.19L9.95 4.9c.46-.2 1 .14.99.69l-.03.49-.03-.24.2-.17z"/></svg>
+        <img src="assets/icon-yelp.png" alt="Yelp">
         Yelp
       </a>
       <a class="footer-social-link" href="https://nextdoor.com/page/chipchug-st-augustine-fl/" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 1.504a4.15 4.15 0 0 0-3.592-2.065 4.148 4.148 0 0 0-3.592 2.065L6.438 8.248A6.62 6.62 0 0 1 12 5.438a6.62 6.62 0 0 1 5.562 2.81zm-9.124 1.72l1.97 1.504a1.68 1.68 0 0 0-.084.516 1.674 1.674 0 0 0 3.348 0 1.68 1.68 0 0 0-.084-.516l1.97-1.504a4.145 4.145 0 0 1 .614 2.22 4.155 4.155 0 0 1-8.31 0 4.145 4.145 0 0 1 .576-2.22z"/></svg>
+        <img src="assets/icon-nextdoor.png" alt="Nextdoor">
         Nextdoor
       </a>
     </div>
@@ -2625,6 +2692,57 @@ h2 {
   }
 
   setInterval(nextSlide, 4000);
+})();
+</script>
+
+<script>
+/* ── Reviews Carousel ── */
+(function() {
+  var track  = document.getElementById('reviews-track');
+  var dotsEl = document.getElementById('reviews-dots');
+  if (!track) return;
+
+  var cards  = track.querySelectorAll('.review-card');
+  var total  = cards.length;
+  var current = 0;
+  var timer;
+  var INTERVAL = 3000;
+
+  /* Build dots */
+  for (var i = 0; i < total; i++) {
+    var d = document.createElement('button');
+    d.className = 'reviews-dot' + (i === 0 ? ' active' : '');
+    d.setAttribute('aria-label', 'Go to review ' + (i + 1));
+    (function(idx) { d.addEventListener('click', function() { goTo(idx); resetTimer(); }); })(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(idx) {
+    current = (idx + total) % total;
+    track.style.transform = 'translateX(-' + (current * 100) + '%)';
+    dotsEl.querySelectorAll('.reviews-dot').forEach(function(d, i) {
+      d.classList.toggle('active', i === current);
+    });
+  }
+
+  function next() { goTo(current + 1); }
+  function prev() { goTo(current - 1); }
+
+  document.getElementById('rev-next').addEventListener('click', function() { next(); resetTimer(); });
+  document.getElementById('rev-prev').addEventListener('click', function() { prev(); resetTimer(); });
+
+  /* Auto-play */
+  function startTimer() { timer = setInterval(next, INTERVAL); }
+  function resetTimer()  { clearInterval(timer); startTimer(); }
+
+  /* Pause on hover */
+  var wrap = track.closest('.reviews-carousel-wrap');
+  if (wrap) {
+    wrap.addEventListener('mouseenter', function() { clearInterval(timer); });
+    wrap.addEventListener('mouseleave', startTimer);
+  }
+
+  startTimer();
 })();
 </script>
 </body>
