@@ -237,8 +237,12 @@ def login_facebook(page, context):
             break
         except Exception:
             continue
-    page.wait_for_load_state("networkidle", timeout=40000)
-    human_delay(3, 5)
+    # Wait for load — Facebook never fully reaches networkidle, so just wait for domcontentloaded
+    try:
+        page.wait_for_load_state("domcontentloaded", timeout=15000)
+    except Exception:
+        pass
+    human_delay(4, 6)
     # Check for 2FA prompt
     if "checkpoint" in page.url or "two_step" in page.url:
         raise RuntimeError("Facebook 2FA checkpoint — complete login manually, then re-run to save cookies")
