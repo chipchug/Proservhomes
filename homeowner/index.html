@@ -1532,7 +1532,7 @@ async function openPaymentEdit(){
     if(!email){showToast('No email on file');return;}
     var res=await fetch(SURL+'/functions/v1/create-portal-session',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
       body:JSON.stringify({email:email,return_url:'https://proservhomes.co/homeowner/'})
     });
     var data=await res.json();
