@@ -1540,17 +1540,19 @@ function openJobDetail(id){
   }
   document.getElementById('detContent').innerHTML=h;document.getElementById('detModal').classList.remove('hidden')
 }
-async function updateStatus(id,st){var i=jobs.findIndex(function(x){return x.id===id});if(i<0)return;var prev=jobs[i].status;jobs[i].status=st;await _sb.from('jobs').update({status:st}).eq('id',id);renderDashboard();renderJobsTable();renderBooks();closeModal('detModal');showToast('Status: '+st);
+async function updateStatus(id,st){var i=jobs.findIndex(function(x){return x.id===id});if(i<0)return;var prev=jobs[i].status;jobs[i].status=st;
+// Build update payload — stamp completed_at when marking Complete so cron can find it
+var updatePayload={status:st};
+if(st==='Complete'&&prev!=='Complete'){updatePayload.completed_at=new Date().toISOString();updatePayload.gg_followup_sent=false;}
+await _sb.from('jobs').update(updatePayload).eq('id',id);
+renderDashboard();renderJobsTable();renderBooks();closeModal('detModal');showToast('Status: '+st);
 // SMS on key status changes
 var evtMap={Complete:'job_completed',Cancelled:'job_cancelled'};
 if(evtMap[st]&&evtMap[st]!==evtMap[prev]){var jj=jobs[i];var ct=contractors.find(function(c){return c.id===jj.contractorId});sendSmsNotification({event:evtMap[st],job:{id:jj.id,service:jj.service,address:jj.address,scheduled_date:jj.date,amount:jj.price},homeowner:{name:jj.client,phone:jj.phone||null,email:jj.email||null},contractor:ct?{name:ct.name,phone:ct.phone||null,email:ct.email||null}:null});
-// 24hr gutter guard upsell follow-up for gutter cleaning jobs
-if(st==='Complete'&&jj.service&&jj.service.toLowerCase().indexOf('gutter')>-1&&jj.phone){
-var firstName=jj.client.split(' ')[0];
-var ggMsg='Hi '+firstName+'! Your gutters look great 🌿 One thing — gutter guards can stop leaves from clogging them again, saving you the annual cleaning. We install them starting at $299. Interested? Just reply YES and we\'ll call you. — ProServ Homes';
-setTimeout(function(){sendSmsNotification({event:'review_request',job:{id:jj.id,service:jj.service,address:jj.address,scheduled_date:jj.date,amount:jj.price},homeowner:{name:jj.client,phone:jj.phone||null,email:jj.email||null},custom_message:ggMsg});},86400000); // 24 hours
-showToast('⏰ Gutter guard follow-up SMS scheduled for 24h');
-}}}
+// Gutter guard 24hr follow-up is handled by the Supabase cron edge function
+// (gutter-guard-followup) — no setTimeout needed. completed_at is now set above.
+if(st==='Complete'&&jj.service&&jj.service.toLowerCase().indexOf('gutter')>-1&&jj.phone){showToast('🌿 Job complete — gutter guard follow-up queued for 24h');}
+}}
 
 function openNewJob(){_editJobId=null;buildSvcSelect('jSvc');document.getElementById('jEditId').value='';document.getElementById('jClient').value='';document.getElementById('jPhone').value='';document.getElementById('jEmail').value='';document.getElementById('jAddr').value='';document.getElementById('jDate').value='';document.getElementById('jStatus').value='New';document.getElementById('jPrice').value='';document.getElementById('jPay').value='';document.getElementById('jPayNote').textContent='';document.getElementById('jPayLink').value='';document.getElementById('jCtPaid').checked=false;document.getElementById('jNotes').value='';document.getElementById('jobModalTitle').textContent='New Job';document.getElementById('delJobBtn').classList.add('hidden');updateSmsPreview();document.getElementById('jobModal').classList.remove('hidden')}
 function openEditJob(id){var j=jobs.find(function(x){return x.id===id});if(!j)return;closeModal('detModal');_editJobId=id;buildSvcSelect('jSvc');document.getElementById('jEditId').value=id;document.getElementById('jClient').value=j.client||'';document.getElementById('jPhone').value=j.phone||'';document.getElementById('jEmail').value=j.email||'';document.getElementById('jAddr').value=j.address||'';document.getElementById('jDate').value=j.date||'';document.getElementById('jSvc').value=j.service||'';document.getElementById('jStatus').value=j.status||'New';document.getElementById('jPrice').value=j.price||'';document.getElementById('jPay').value=j.contractorPay||'';document.getElementById('jPayNote').textContent='';document.getElementById('jPayLink').value=j.paymentLink||'';document.getElementById('jCtPaid').checked=!!j.contractorPaid;document.getElementById('jNotes').value=j.notes||'';document.getElementById('jContractor').value=j.contractorId||'';document.getElementById('jobModalTitle').textContent='Edit Job';document.getElementById('delJobBtn').classList.remove('hidden');updateSmsPreview();document.getElementById('jobModal').classList.remove('hidden')}
