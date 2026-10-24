@@ -661,7 +661,7 @@ h2 {
 /* ── REVIEWS SECTION ── */
 .reviews-section {
   padding-block: clamp(56px,9vw,96px);
-  background: var(--bg-alt);
+  background: #111210;
 }
 .reviews-eyebrow {
   color: var(--brand-green);
@@ -677,11 +677,11 @@ h2 {
   font-size: clamp(1.8rem,4vw,2.6rem);
   font-weight: 900;
   margin-bottom: 10px;
-  color: var(--fg);
+  color: #fff;
 }
 .reviews-sub {
   text-align: center;
-  color: var(--fg-muted);
+  color: rgba(255,255,255,0.6);
   font-size: 1rem;
   max-width: 52ch;
   margin-inline: auto;
@@ -846,17 +846,18 @@ h2 {
   align-items: center;
   gap: 8px;
   padding: 10px 22px;
-  border: 1.5px solid var(--review-border);
+  border: 1.5px solid rgba(255,255,255,0.18);
   border-radius: 30px;
   font-size: 0.88rem;
   font-weight: 600;
-  color: var(--fg);
+  color: rgba(255,255,255,0.8);
   text-decoration: none;
-  transition: background .15s, border-color .15s;
+  transition: background .15s, border-color .15s, color .15s;
 }
 .reviews-google-link:hover {
-  background: var(--review-card-bg);
+  background: rgba(255,255,255,0.07);
   border-color: #4285F4;
+  color: #fff;
 }
 
 /* Review CSS variables — light */
