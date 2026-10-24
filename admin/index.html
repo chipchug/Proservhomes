@@ -1834,19 +1834,24 @@ async function sendReviewRequest(jobId){
   var firstName=j.client.split(' ')[0];
   var reviewLink='https://maps.app.goo.gl/6cJ3hFg3Bf2BSVUP6';
   var body='Hi '+firstName+'! Thanks for choosing ProServ Homes 🏠 Mind leaving us a quick Google review? It takes 30 seconds and helps us a ton: '+reviewLink+' — we really appreciate it!';
+  var payload={event:'review_request',job:{id:j.id,service:j.service,address:j.address,scheduled_date:j.date,amount:j.price},homeowner:{name:j.client,phone:j.phone||null,email:j.email||null},custom_message:body};
+  var headers={'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY};
   try{
-    var r=await fetch(SURL+'/functions/v1/send-sms',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
-      body:JSON.stringify({event:'review_request',job:{id:j.id,service:j.service,address:j.address,scheduled_date:j.date,amount:j.price},homeowner:{name:j.client,phone:j.phone||null,email:j.email||null},custom_message:body})
-    });
-    if(r.ok){
-      showToast('⭐ Review request sent to '+esc(j.client));
+    var promises=[
+      fetch(SURL+'/functions/v1/send-sms',{method:'POST',headers:headers,body:JSON.stringify(payload)})
+    ];
+    // Also send email if homeowner has an email address
+    if(j.email){promises.push(fetch(SURL+'/functions/v1/send-email',{method:'POST',headers:headers,body:JSON.stringify(payload)}));}
+    var results=await Promise.allSettled(promises);
+    var smsOk=results[0].status==='fulfilled'&&results[0].value.ok;
+    if(smsOk||results.some(function(r){return r.status==='fulfilled'&&r.value.ok})){
+      var channels=(j.email?'text + email':'text');
+      showToast('⭐ Review request sent ('+channels+') to '+esc(j.client));
       if(btn){btn.disabled=true;btn.innerHTML='✓ Review Request Sent';btn.style.opacity='0.6';}
       // Log in Supabase so we don't double-send
       await _sb.from('jobs').update({review_requested:true}).eq('id',jobId);
     } else {
-      showToast('SMS failed — check Twilio');
+      showToast('Send failed — check Twilio/Resend');
       if(btn){btn.disabled=false;btn.innerHTML='⭐ Request Google Review';}
     }
   }catch(e){

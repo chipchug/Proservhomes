@@ -44,6 +44,8 @@ In Railway → your service → **Variables**, add:
 | `TWILIO_AUTH_TOKEN` | Your Twilio Auth Token |
 | `TWILIO_FROM_NUMBER` | Your Twilio number e.g. `+17325551234` |
 | `ALERT_PHONE` | Your cell number e.g. `+17325559999` |
+| `ALERT_EMAIL` | Your email address for lead alerts e.g. `nick@proservhomes.co` |
+| `RESEND_API_KEY` | Resend API key (same one used by Supabase edge functions) — email alerts optional but recommended |
 | `FB_EMAIL` | Your Facebook login email |
 | `FB_PASSWORD` | Your Facebook password |
 

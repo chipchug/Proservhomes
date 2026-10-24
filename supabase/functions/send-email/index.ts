@@ -429,6 +429,110 @@ async function buildEmails(payload: EmailPayload, adminEmail?: string): Promise<
     return msgs;
   }
 
+  // ── review_request ────────────────────────────────────────────────────────
+  if (event === "review_request") {
+    const firstName = homeowner?.name?.split(" ")[0] ?? "there";
+    const reviewUrl = "https://maps.app.goo.gl/6cJ3hFg3Bf2BSVUP6";
+    if (homeowner?.email) {
+      msgs.push({
+        to: homeowner.email,
+        recipient: "homeowner",
+        subject: `${firstName}, mind leaving us a quick review? ⭐`,
+        html: emailHtml({
+          headline: `Thanks for choosing ProServ Homes, ${firstName}!`,
+          body: `We hope you're thrilled with the work we did. If you have 30 seconds, leaving us a Google review would mean the world — it helps our small local team get discovered by more homeowners in your area.`,
+          ctaUrl: reviewUrl,
+          ctaLabel: "⭐ Leave a Google Review",
+          extraHtml: `<p style="margin-top:12px;font-size:13px;color:#999">It takes less than 30 seconds — just click the button above and give us a star rating.</p>`,
+        }),
+      });
+    }
+    // Admin copy so Nick knows the request was sent
+    if (adminEmail) {
+      msgs.push({
+        to: adminEmail,
+        recipient: "admin",
+        subject: `⭐ Review request sent — ${homeowner?.name ?? "Homeowner"}`,
+        html: emailHtml({
+          headline: "Review request sent",
+          body: `A Google review request was sent to <strong>${homeowner?.name ?? "the homeowner"}</strong>${homeowner?.email ? ` at ${homeowner.email}` : ""}.${jobLine ? `<br><br>${jobLine}` : ""}`,
+          ctaUrl: "https://proservhomes.co/admin/",
+          ctaLabel: "Open Admin Portal",
+        }),
+      });
+    }
+    return msgs;
+  }
+
+  // ── gutter_guard_upsell ───────────────────────────────────────────────────
+  if (event === "gutter_guard_upsell") {
+    const firstName = homeowner?.name?.split(" ")[0] ?? "there";
+    if (homeowner?.email) {
+      msgs.push({
+        to: homeowner.email,
+        recipient: "homeowner",
+        subject: `${firstName}, want to never clean gutters again? 🛡️`,
+        html: emailHtml({
+          headline: "Your gutters look great — keep them that way.",
+          body: `Now that your gutters are clean, there's one easy upgrade that means you'll <em>never</em> have to clean them again: <strong>gutter guards</strong>.<br><br>Gutter guards keep leaves, pine needles, and debris out — so water always flows freely and you skip the annual cleaning. We install them starting at <strong>$299</strong> and back them with a 5-year warranty.`,
+          ctaUrl: "https://proservhomes.co",
+          ctaLabel: "Reply YES — I'm Interested",
+          extraHtml: `
+            <div style="margin-top:20px;padding:16px 18px;background:#f8fff8;border-radius:10px;border:1px solid #d4edda">
+              <p style="margin:0 0 8px;font-weight:700;font-size:14px;color:#1F9B2A">Why gutter guards?</p>
+              <ul style="margin:0;padding-left:18px;font-size:14px;color:#555;line-height:2">
+                <li>Never clean gutters again</li>
+                <li>Prevent water damage &amp; foundation issues</li>
+                <li>5-year installation warranty</li>
+                <li>Installed same day as cleaning when scheduled together</li>
+                <li>Starting at just $299</li>
+              </ul>
+            </div>
+            <p style="margin-top:16px;font-size:13px;color:#888">Just reply to this email or call us and we'll give you an exact price based on your home's linear footage.</p>`,
+        }),
+      });
+    }
+    if (adminEmail) {
+      msgs.push({
+        to: adminEmail,
+        recipient: "admin",
+        subject: `🛡️ Gutter guard follow-up sent — ${homeowner?.name ?? "Homeowner"}`,
+        html: emailHtml({
+          headline: "24hr gutter guard follow-up sent",
+          body: `A gutter guard upsell email was automatically sent to <strong>${homeowner?.name ?? "the homeowner"}</strong>${homeowner?.email ? ` (${homeowner.email})` : ""} 24 hours after job completion.${jobLine ? `<br><br>${jobLine}` : ""}`,
+          ctaUrl: "https://proservhomes.co/admin/",
+          ctaLabel: "Open Admin Portal",
+        }),
+      });
+    }
+    return msgs;
+  }
+
+  // ── fb_lead_alert ─────────────────────────────────────────────────────────
+  if (event === "fb_lead_alert") {
+    const lead = (payload as any).lead as { group: string; snippet: string; url: string; keywords: string } | undefined;
+    if (adminEmail) {
+      msgs.push({
+        to: adminEmail,
+        recipient: "admin",
+        subject: `🏠 New Facebook Lead — ${lead?.keywords ?? "Service request"}`,
+        html: emailHtml({
+          headline: "New Facebook group lead!",
+          body: `Someone in a local NJ Facebook group is looking for a service you offer.`,
+          jobDetails: [
+            lead?.group    ? `<strong>Group:</strong> ${lead.group}` : null,
+            lead?.keywords ? `<strong>Keywords matched:</strong> ${lead.keywords}` : null,
+            lead?.snippet  ? `<strong>Post:</strong> "${lead.snippet}…"` : null,
+          ].filter(Boolean).join("<br>"),
+          ctaUrl: lead?.url ?? "https://www.facebook.com",
+          ctaLabel: "View Facebook Post →",
+          extraHtml: `<p style="margin-top:12px;font-size:13px;color:#888">Respond quickly — these leads book within hours. Reply to the post or send a DM through Facebook.</p>`,
+        }),
+      });
+    }
+    return msgs;
+  }
+
   // ── payout_request ────────────────────────────────────────────────────────
   if (event === "payout_request") {
     if (adminEmail) {
