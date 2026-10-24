@@ -1536,8 +1536,9 @@ async function openPaymentEdit(){
       body:JSON.stringify({email:email,return_url:'https://proservhomes.co/homeowner/'})
     });
     var data=await res.json();
+    console.log('[billing-portal] response',JSON.stringify(data));
     if(data&&data.url){window.open(data.url,'_blank');}
-    else{showToast('Could not open billing portal — try again');}
+    else{showToast('Error: '+(data&&data.error?data.error:'try again'));}
   }catch(e){
     console.error('[billing-portal]',e);
     showToast('Could not connect to billing service');
