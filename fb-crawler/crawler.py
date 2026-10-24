@@ -233,7 +233,7 @@ def run_crawler():
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(
-            headless=True,
+            headless=False,
             args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-blink-features=AutomationControlled"],
         )
         context = browser.new_context(
