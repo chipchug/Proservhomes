@@ -56,13 +56,14 @@ interface PersonInfo {
 }
 
 interface SmsPayload {
-  event: "job_booked" | "job_accepted" | "job_completed" | "job_cancelled" | "otp" | "payout_request";
+  event: "job_booked" | "job_accepted" | "job_completed" | "job_cancelled" | "otp" | "payout_request" | "review_request" | "payment_reminder";
   job?: JobInfo;
   homeowner?: PersonInfo;
   contractor?: PersonInfo;
   amount?: number;
   otp_code?: string;
   recipient_phone?: string;
+  custom_message?: string; // used by review_request to pass fully-formed SMS body
 }
 
 async function sendTwilioSms(
@@ -193,6 +194,28 @@ function buildMessages(payload: SmsPayload): Array<{ to: string; body: string; r
     return msgs;
   }
 
+  if (event === "review_request") {
+    // → Homeowner: custom review request message
+    const phone = homeowner?.phone ?? payload.recipient_phone;
+    const body = payload.custom_message;
+    if (phone && body) {
+      msgs.push({ to: phone, recipient: "homeowner", body });
+    }
+    return msgs;
+  }
+
+  if (event === "payment_reminder") {
+    // → Homeowner: payment nudge
+    if (homeowner?.phone) {
+      msgs.push({
+        to: homeowner.phone,
+        recipient: "homeowner",
+        body: `Hi ${homeowner.name ?? "there"}! Just a reminder — your ProServ Homes invoice is still open.\n\n${jobLine}${job?.amount ? `\nAmount due: ${formatCurrency(job.amount)}` : ""}\n\nPay securely: https://proservhomes.co/homeowner/`,
+      });
+    }
+    return msgs;
+  }
+
   if (event === "job_cancelled") {
     // → Homeowner: cancelled
     if (homeowner?.phone) {
@@ -251,6 +274,8 @@ Deno.serve(async (req) => {
         job_completed: "🎉 JOB COMPLETED",
         job_cancelled: "❌ JOB CANCELLED",
         payout_request: "💰 PAYOUT REQUEST",
+        review_request: "⭐ REVIEW REQUEST SENT",
+        payment_reminder: "💳 PAYMENT REMINDER SENT",
       };
       const label = eventLabel[event] ?? event.toUpperCase();
 

@@ -1,0 +1,10 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "python crawler.py"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# Cron: run every 20 minutes
+# Set this in Railway dashboard → Cron Jobs: "*/20 * * * *"

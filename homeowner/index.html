@@ -255,6 +255,25 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .logout-btn{margin:8px 16px 0;width:calc(100% - 32px);padding:13px;border-radius:11px;border:none;background:var(--surface-2);color:var(--red);font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;letter-spacing:.05em;cursor:pointer}
 
 /* BOTTOM SHEET */
+/* GUTTER GUARD UPSELL */
+.gg-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+.gg-overlay.hidden{display:none}
+.gg-modal{background:var(--surface);border-radius:22px 22px 0 0;width:100%;max-width:480px;padding:24px 20px max(28px,env(safe-area-inset-bottom,0px));animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.gg-badge{display:inline-block;background:var(--orange);color:#fff;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:100px;margin-bottom:12px}
+.gg-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;line-height:1.1;margin-bottom:8px}
+.gg-sub{font-size:14px;color:var(--fg-2);line-height:1.5;margin-bottom:16px}
+.gg-price-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+.gg-price-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-3);margin-bottom:4px}
+.gg-price{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--green)}
+.gg-price-note{font-size:11px;color:var(--fg-3);margin-top:2px}
+.gg-img{font-size:40px}
+.gg-perks{margin-bottom:18px}
+.gg-perk{font-size:14px;color:var(--fg-2);padding:5px 0;border-bottom:1px solid var(--border)}
+.gg-perk:last-child{border-bottom:none}
+.gg-btn-yes{width:100%;padding:15px;border-radius:13px;border:none;background:var(--green);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:.04em;cursor:pointer;margin-bottom:10px}
+.gg-btn-no{width:100%;padding:11px;border-radius:13px;border:none;background:transparent;color:var(--fg-3);font-size:14px;cursor:pointer}
+
 .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
 .sheet-overlay.open{opacity:1;pointer-events:all}
 .sheet{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;padding:0 0 max(24px,env(safe-area-inset-bottom,0px));z-index:51;transform:translateY(100%);transition:transform .25s ease;max-height:85vh;overflow-y:auto}
@@ -711,6 +730,31 @@ body::before{content:'';position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+<!-- GUTTER GUARD UPSELL MODAL -->
+<div class="gg-overlay hidden" id="ggOverlay" onclick="if(event.target===this)closeGgModal()">
+  <div class="gg-modal">
+    <div class="gg-badge">🛡️ ADD-ON OFFER</div>
+    <div class="gg-title">Want gutter guards<br>while we're up there?</div>
+    <div class="gg-sub">Skip the annual cleaning. Gutter guards stop leaves &amp; debris before they clog — installed same day as your cleaning.</div>
+    <div class="gg-price-row">
+      <div>
+        <div class="gg-price-label">Gutter Guards</div>
+        <div class="gg-price">From <strong>$299</strong></div>
+        <div class="gg-price-note">Price based on linear footage · we'll confirm at visit</div>
+      </div>
+      <div class="gg-img">🏠</div>
+    </div>
+    <div class="gg-perks">
+      <div class="gg-perk">✓ Never clean gutters again</div>
+      <div class="gg-perk">✓ Prevent water damage &amp; foundation issues</div>
+      <div class="gg-perk">✓ 5-year warranty on guards</div>
+      <div class="gg-perk">✓ Installed same day as your cleaning</div>
+    </div>
+    <button class="gg-btn-yes" onclick="addGutterGuard()">Yes, Add Gutter Guards! →</button>
+    <button class="gg-btn-no" onclick="closeGgModal()">No thanks, just the cleaning</button>
+  </div>
+</div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -1456,9 +1500,57 @@ async function submitRequest(){
       email:req.homeowner_email||USER.email||null
     }
   });
-  showToast('✓ Quote request sent — we\'ll be in touch!');
+  // Store last request ID for upsell add-on
+  _lastReqId = req.id;
+  _lastReqPhone = req.homeowner_phone || USER.phone || null;
+  _lastReqName = USER.name || 'there';
+
   if(emailEl)emailEl.value='';
   resetReqPhotos();
+
+  // Show gutter guard upsell for gutter cleaning bookings
+  if(req.service && req.service.toLowerCase().indexOf('gutter')>-1){
+    showGgModal();
+  } else {
+    showToast('✓ Quote request sent — we\'ll be in touch!');
+    switchTab('home');
+  }
+}
+
+// ─── GUTTER GUARD UPSELL ─────────────────────────────────────────────────
+var _lastReqId = null;
+var _lastReqPhone = null;
+var _lastReqName = 'there';
+
+function showGgModal(){
+  document.getElementById('ggOverlay').classList.remove('hidden');
+}
+function closeGgModal(){
+  document.getElementById('ggOverlay').classList.add('hidden');
+  showToast('✓ Quote request sent — we\'ll be in touch!');
+  switchTab('home');
+}
+async function addGutterGuard(){
+  // Add a note to the existing job request so admin knows about the upsell
+  if(_lastReqId && _sb){
+    try{
+      await _sb.from('job_requests').update({
+        notes: 'UPSELL: Customer interested in gutter guards — confirm price at visit.',
+        has_upsell: true,
+        upsell_type: 'Gutter Guards'
+      }).eq('id', _lastReqId);
+    }catch(e){console.warn('[upsell] update failed',e);}
+  }
+  // Send Nick an SMS alert about the upsell
+  var ggPayload = {
+    event:'job_booked',
+    job:{id:_lastReqId,service:'Gutter Cleaning + Gutter Guards UPSELL',address:'(see request)',scheduled_date:''},
+    homeowner:{name:_lastReqName,phone:_lastReqPhone||null},
+    custom_message:'🛡️ UPSELL ALERT — '+_lastReqName+' added gutter guards to their quote request #'+_lastReqId+'. Confirm price at visit.'
+  };
+  sendSmsNotification(ggPayload);
+  document.getElementById('ggOverlay').classList.add('hidden');
+  showToast('🛡️ Added! We\'ll quote guards at the visit.');
   switchTab('home');
 }
 
