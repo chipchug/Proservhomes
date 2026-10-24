@@ -243,9 +243,11 @@ def login_facebook(page, context):
     except Exception:
         pass
     human_delay(4, 6)
-    # Check for 2FA prompt
-    if "checkpoint" in page.url or "two_step" in page.url:
-        raise RuntimeError("Facebook 2FA checkpoint — complete login manually, then re-run to save cookies")
+    # Check for 2FA / checkpoint — pause and let user complete it manually
+    if "checkpoint" in page.url or "two_step" in page.url or "login" in page.url:
+        print("\n⚠️  Facebook needs verification. Complete it in the browser window, then come back here.")
+        input("Press Enter once you're fully logged into Facebook and can see your feed... ")
+        human_delay(2, 3)
     if "login" in page.url:
         raise RuntimeError("Facebook login failed — check FB_EMAIL / FB_PASSWORD")
     print("[fb] login OK")
