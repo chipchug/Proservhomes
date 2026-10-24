@@ -1024,7 +1024,7 @@ async function genPaymentLink(priceId,linkId,svcId,btn){
 // Field mapping: local camelCase <-> DB snake_case
 function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,paymentLink:r.payment_link||'',status:r.status||'New',notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null}}
 function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,email:j.email||'',address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,contractor_paid:!!j.contractorPaid,payment_link:j.paymentLink||'',status:j.status||'New',notes:j.notes||''}}
-function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',margin:Number(r.margin)||30,photo_url:r.photo_url||null,bio:r.bio||'',insurance_url:r.insurance_url||null,service_interests:r.service_interests||null}}
+function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',margin:Number(r.margin)||30,photo_url:r.photo_url||null,bio:r.bio||'',insurance_url:r.insurance_url||null,service_interests:r.service_interests||null,stripe_onboarded:!!r.stripe_onboarded}}
 function cl2r(c){return{id:c.id,name:c.name,phone:c.phone,email:c.email||'',specialty:c.specialty||c.spec||'',margin:c.margin||30}}
 
 var SEED_JOBS=[
@@ -1632,8 +1632,14 @@ function renderHomeowners(){
   }).join('');
 }
 function openAddContractor(){_editCtId=null;document.getElementById('ctEditId').value='';document.getElementById('ctName').value='';document.getElementById('ctPhone').value='';document.getElementById('ctEmail').value='';document.getElementById('ctSpec').value='';document.getElementById('ctMargin').value='30';document.getElementById('ctModalTitle').textContent='Add Contractor';document.getElementById('delCtBtn').classList.add('hidden');document.getElementById('ctModal').classList.remove('hidden')}
-function openEditCtx(id){
-  var c=contractors.find(function(x){return x.id===id});if(!c)return;
+async function openEditCtx(id){
+  // Always fetch fresh data from Supabase so profile updates show immediately
+  var fresh=await _sb.from('contractors').select('*').eq('id',id).limit(1);
+  var c=(fresh.data&&fresh.data.length)?cr2l(fresh.data[0]):contractors.find(function(x){return x.id===id});
+  if(!c)return;
+  // Update in-memory cache
+  var idx=contractors.findIndex(function(x){return x.id===id});
+  if(idx>=0)contractors[idx]=c;
   _editCtId=id;
   document.getElementById('ctEditId').value=id;
   document.getElementById('ctName').value=c.name||'';
@@ -1656,7 +1662,8 @@ function openEditCtx(id){
   var pe=document.getElementById('ctProfileEmail'); if(pe) pe.textContent=c.email||'';
   // Bio
   var bw=document.getElementById('ctBioWrap'); var bt=document.getElementById('ctBio');
-  if(bw&&bt){bw.style.display=c.bio?'':'none';bt.textContent=c.bio||'';}
+  var bioText=(c.bio&&c.bio.trim()!=='EMPTY')?c.bio:'';
+  if(bw&&bt){bw.style.display=bioText?'':'none';bt.textContent=bioText;}
   // Service interests
   var iw=document.getElementById('ctInterestsWrap');
   if(iw){
