@@ -29,7 +29,7 @@ That creates:
 
 1. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**
 2. Connect your GitHub account and select `chipchug/Proservhomes`
-3. Set **Root Directory** to `fb-crawler`
+3. ⚠️ **When asked for Root Directory → type: `fb-crawler`** (the repo has multiple apps; this tells Railway which folder to build)
 4. Railway will detect `nixpacks.toml` and install Playwright + Chromium automatically
 
 ### Step 3 — Set environment variables in Railway
@@ -77,7 +77,7 @@ That runs the crawler every 20 minutes, 24/7.
 
 **Add keywords:** Edit `KEYWORDS` list in `crawler.py`.
 
-**Get email instead of SMS:** Replace `send_sms()` with a call to your `send-email` Supabase edge function.
+**Email alerts:** Already wired up — set `ALERT_EMAIL` and `RESEND_API_KEY` in Railway variables and every lead fires both an SMS and a branded HTML email.
 
 ---
 
