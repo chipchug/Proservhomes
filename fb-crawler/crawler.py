@@ -205,14 +205,23 @@ def login_facebook(page, context):
     if not FB_EMAIL or not FB_PASSWORD:
         raise RuntimeError("FB_EMAIL / FB_PASSWORD env vars not set — cannot log in")
     print("[fb] logging in...")
-    page.goto("https://www.facebook.com/login", wait_until="domcontentloaded")
-    human_delay(2, 4)
+    # Navigate directly to /login (not a group URL) so the real login form loads
+    page.goto("https://www.facebook.com/login", wait_until="domcontentloaded", timeout=30000)
+    human_delay(3, 5)
+    # Wait for the email field with a generous timeout
+    page.wait_for_selector("#email", timeout=20000)
     page.fill("#email", FB_EMAIL)
-    human_delay()
+    human_delay(1, 2)
     page.fill("#pass", FB_PASSWORD)
-    human_delay()
-    page.click('[data-testid="royal_login_button"], button[name="login"]')
-    page.wait_for_load_state("networkidle", timeout=30000)
+    human_delay(1, 2)
+    # Try multiple login button selectors
+    for sel in ['[data-testid="royal_login_button"]', 'button[name="login"]', '#loginbutton', 'button[type="submit"]']:
+        try:
+            page.click(sel, timeout=3000)
+            break
+        except Exception:
+            continue
+    page.wait_for_load_state("networkidle", timeout=40000)
     human_delay(3, 5)
     # Check for 2FA prompt
     if "checkpoint" in page.url or "two_step" in page.url:
@@ -302,10 +311,11 @@ def run_crawler():
         # Stealth: remove webdriver flag
         page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
-        # Test if session is still valid
-        page.goto("https://www.facebook.com", wait_until="domcontentloaded", timeout=30000)
+        # Test if session is still valid by checking the home feed
+        page.goto("https://www.facebook.com/?sk=h_nor", wait_until="domcontentloaded", timeout=30000)
         human_delay(2, 4)
-        if "login" in page.url or page.query_selector("#email"):
+        # If redirected to login page or login form visible, re-authenticate
+        if "login" in page.url or page.query_selector('form#login_form, input[name="email"]'):
             print("[fb] session expired — attempting login")
             login_facebook(page, context)
 
