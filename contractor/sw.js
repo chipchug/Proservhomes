@@ -1,4 +1,4 @@
-const CACHE = 'proserv-co-v1';
+const CACHE = 'proserv-co-v2';
 const SHELL = ['/contractor/', '/contractor/index.html', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', e => {
