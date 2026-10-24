@@ -1692,10 +1692,20 @@ async function openEditCtx(id){
     var stripeOk=c.stripe_onboarded===true||c.stripe_onboarded==='true';
     var coiOk=!!c.insurance_url;
     sb.innerHTML=
-      '<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:700;background:'+(stripeOk?'rgba(31,155,42,.15)':'rgba(200,50,50,.12)')+';color:'+(stripeOk?'var(--green)':'#c83232')+'">'+(stripeOk?'✓':'✗')+' Stripe '+(stripeOk?'Active':'Not Set Up')+'</span>'+
+      '<span onclick="toggleStripe(\''+c.id+'\','+stripeOk+')" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:700;background:'+(stripeOk?'rgba(31,155,42,.15)':'rgba(200,50,50,.12)')+';color:'+(stripeOk?'var(--green)':'#c83232')+'">'+(stripeOk?'✓':'✗')+' Stripe '+(stripeOk?'Active':'Not Set Up — tap to mark active')+'</span>'+
       '<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:700;background:'+(coiOk?'rgba(31,155,42,.15)':'rgba(200,50,50,.12)')+';color:'+(coiOk?'var(--green)':'#c83232')+'">'+(coiOk?'✓':'✗')+' COI '+(coiOk?'On File':'Missing')+'</span>';
   }
   document.getElementById('ctModal').classList.remove('hidden');
+}
+async function toggleStripe(id, currentlyActive){
+  if(currentlyActive){if(!confirm('Mark Stripe as NOT set up?'))return;}
+  var newVal=!currentlyActive;
+  var r=await _sb.from('contractors').update({stripe_onboarded:newVal}).eq('id',id);
+  if(r.error){showToast('Error: '+r.error.message);return;}
+  showToast(newVal?'✓ Stripe marked active':'Stripe marked inactive');
+  var idx=contractors.findIndex(function(c){return c.id===id});
+  if(idx>=0)contractors[idx].stripe_onboarded=newVal;
+  openEditCtx(id); // refresh modal
 }
 function openHwDetail(email){
   var h=_homeowners.find(function(x){return(x.email||'').toLowerCase()===(email||'').toLowerCase()});

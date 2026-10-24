@@ -1522,9 +1522,28 @@ function loadPropData(){
 }
 
 // ─── BILLING ───────────────────────────────────────────────────────────────
-function openPaymentEdit(){
-  var url = 'https://billing.stripe.com/p/login/8x29AU3KcdhB2pAa6b9fW00';
-  window.open(url, '_blank');
+async function openPaymentEdit(){
+  if(!_sb){showToast('Not signed in');return;}
+  var btn=document.querySelector('[onclick="openPaymentEdit()"]');
+  if(btn){btn.disabled=true;btn.textContent='...';}
+  try{
+    var ur=await _sb.auth.getUser();
+    var email=ur&&ur.data&&ur.data.user&&ur.data.user.email;
+    if(!email){showToast('No email on file');return;}
+    var res=await fetch(SURL+'/functions/v1/create-portal-session',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:email,return_url:'https://proservhomes.co/homeowner/'})
+    });
+    var data=await res.json();
+    if(data&&data.url){window.open(data.url,'_blank');}
+    else{showToast('Could not open billing portal — try again');}
+  }catch(e){
+    console.error('[billing-portal]',e);
+    showToast('Could not connect to billing service');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Open →';}
+  }
 }
 function renderBillingRow(){
   var completed = JOBS.filter(function(j){return j.status==='Complete';});

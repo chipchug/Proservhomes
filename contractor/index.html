@@ -1847,9 +1847,12 @@ async function cpSaveProfile() {
       if (!iup.error) {
         var ipub = _sb.storage.from('documents').getPublicUrl(ipath);
         insUrl = ipub.data && ipub.data.publicUrl;
+      } else {
+        console.error('[coi-upload]', iup.error);
+        toast('⚠️ Insurance upload failed — ' + (iup.error.message||'try again'));
       }
     }
-  } catch(e) {}
+  } catch(e) { console.error('[profile-save]', e); toast('⚠️ Save failed — check connection and try again'); }
 
   // Save to contractors table
   if (_sb && cc && cc.id) {
