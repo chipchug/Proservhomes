@@ -208,14 +208,30 @@ def login_facebook(page, context):
     # Navigate directly to /login (not a group URL) so the real login form loads
     page.goto("https://www.facebook.com/login", wait_until="domcontentloaded", timeout=30000)
     human_delay(3, 5)
-    # Wait for the email field with a generous timeout
-    page.wait_for_selector("#email", timeout=20000)
-    page.fill("#email", FB_EMAIL)
+    # Wait for the email field — try multiple selectors Facebook has used
+    email_sel = None
+    for sel in ['input[name="email"]', '#email', 'input[type="email"]', 'input[autocomplete="username"]']:
+        try:
+            page.wait_for_selector(sel, timeout=8000)
+            email_sel = sel
+            break
+        except Exception:
+            continue
+    if not email_sel:
+        page.screenshot(path="/tmp/fb_login_debug.png")
+        raise RuntimeError("Could not find Facebook email field — screenshot saved to /tmp/fb_login_debug.png")
+    page.fill(email_sel, FB_EMAIL)
     human_delay(1, 2)
-    page.fill("#pass", FB_PASSWORD)
+    # Password field
+    for sel in ['input[name="pass"]', '#pass', 'input[type="password"]']:
+        try:
+            page.fill(sel, FB_PASSWORD, timeout=5000)
+            break
+        except Exception:
+            continue
     human_delay(1, 2)
-    # Try multiple login button selectors
-    for sel in ['[data-testid="royal_login_button"]', 'button[name="login"]', '#loginbutton', 'button[type="submit"]']:
+    # Login button
+    for sel in ['button[name="login"]', '[data-testid="royal_login_button"]', '#loginbutton', 'button[type="submit"]']:
         try:
             page.click(sel, timeout=3000)
             break
