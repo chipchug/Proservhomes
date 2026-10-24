@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Core pages -->
+  <url><loc>https://proservhomes.co/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://proservhomes.co/about/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://proservhomes.co/service-area/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+
+  <!-- Service pages -->
+  <url><loc>https://proservhomes.co/gutter-cleaning/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://proservhomes.co/pressure-washing/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://proservhomes.co/fence-installation/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://proservhomes.co/dryer-vent-cleaning/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://proservhomes.co/christmas-lights/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://proservhomes.co/snow-removal/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://proservhomes.co/concrete-pavers/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+
+  <!-- Gutter cleaning — location pages -->
+  <url><loc>https://proservhomes.co/gutter-cleaning-toms-river/</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://proservhomes.co/gutter-cleaning-brick/</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://proservhomes.co/gutter-cleaning-lakewood/</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://proservhomes.co/gutter-cleaning-howell/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://proservhomes.co/gutter-cleaning-point-pleasant/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://proservhomes.co/gutter-cleaning-freehold/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+
+  <!-- Pressure washing — location pages -->
+  <url><loc>https://proservhomes.co/pressure-washing-toms-river/</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://proservhomes.co/pressure-washing-brick/</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://proservhomes.co/pressure-washing-jackson/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://proservhomes.co/pressure-washing-lakewood/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+
+</urlset>
