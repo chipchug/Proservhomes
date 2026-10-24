@@ -20,22 +20,21 @@ TWILIO_SID     = os.environ["TWILIO_ACCOUNT_SID"]
 TWILIO_TOKEN   = os.environ["TWILIO_AUTH_TOKEN"]
 TWILIO_FROM    = os.environ["TWILIO_FROM_NUMBER"]    # e.g. +17325551234
 ALERT_TO       = os.environ["ALERT_PHONE"]           # Nick's cell e.g. +17325559999
+ALERT_EMAIL    = os.environ.get("ALERT_EMAIL", "")   # Nick's email e.g. nick@proservhomes.co
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "") # Resend API key for email alerts
 FB_EMAIL       = os.environ.get("FB_EMAIL", "")      # Only needed for first login
 FB_PASSWORD    = os.environ.get("FB_PASSWORD", "")   # Only needed for first login
 
 # ── Facebook groups to monitor ─────────────────────────────────────────────────
 # Add/remove group URLs here. Use the /groups/<id>/ format.
 GROUPS = [
-    "https://www.facebook.com/groups/jacksonnjcommunity",
-    "https://www.facebook.com/groups/tomsrivernj",
-    "https://www.facebook.com/groups/bricknj",
-    "https://www.facebook.com/groups/lakewoodnjcommunity",
-    "https://www.facebook.com/groups/howellnjresidents",
-    "https://www.facebook.com/groups/oceancountynj",
-    "https://www.facebook.com/groups/monmouthcountynj",
-    "https://www.facebook.com/groups/pointpleasantnj",
-    "https://www.facebook.com/groups/freeholdnj",
-    "https://www.facebook.com/groups/njhomeimprovement",
+    # NJ community groups Nick is a member of (share links redirect to the real group URL)
+    "https://www.facebook.com/share/g/1Dw8yaKhxG/",  # Group 1 (94.5K members)
+    "https://www.facebook.com/share/g/1FUAwV7YE1/",  # Group 2 (17.9K members)
+    "https://www.facebook.com/share/g/1Ech8gSZSf/",  # Group 3 (27.4K members)
+    "https://www.facebook.com/share/g/1JKZvDwnfN/",  # Group 4 (29.9K members)
+    "https://www.facebook.com/share/g/18acVjAWCP/",  # NJ Contractors (75.2K members)
+    # TODO: Add Monmouth County News share link here (94.5K members)
 ]
 
 # ── Keywords that trigger an alert ────────────────────────────────────────────
@@ -138,6 +137,53 @@ def send_sms(body):
     except Exception as e:
         print(f"[sms] exception: {e}")
 
+# ── Resend Email ───────────────────────────────────────────────────────────────
+def send_email(subject, group_name, keywords, snippet, post_url):
+    """Send alert email via Resend API (direct call, no SDK)."""
+    if not RESEND_API_KEY or not ALERT_EMAIL:
+        return  # Email not configured, skip silently
+    # Build a clean HTML body
+    kw_str = ", ".join(keywords)
+    html = f"""
+<div style="font-family:sans-serif;max-width:600px;margin:0 auto">
+  <div style="background:#F26310;padding:16px 20px;border-radius:8px 8px 0 0">
+    <h2 style="margin:0;color:#fff;font-size:20px">🏠 New Facebook Lead!</h2>
+  </div>
+  <div style="background:#fff;padding:20px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+    <table style="width:100%;border-collapse:collapse">
+      <tr><td style="padding:6px 0;font-weight:700;color:#555;width:110px">Group</td>
+          <td style="padding:6px 0;color:#111">{group_name}</td></tr>
+      <tr><td style="padding:6px 0;font-weight:700;color:#555">Keywords</td>
+          <td style="padding:6px 0;color:#111">{kw_str}</td></tr>
+      <tr><td style="padding:6px 0;font-weight:700;color:#555;vertical-align:top">Post</td>
+          <td style="padding:6px 0;color:#333;font-style:italic">"{snippet}…"</td></tr>
+    </table>
+    <div style="margin-top:20px;text-align:center">
+      <a href="{post_url}" style="background:#F26310;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px">View Facebook Post →</a>
+    </div>
+    <p style="margin-top:20px;font-size:12px;color:#999;text-align:center">ProServ Homes lead alert · Respond quickly — these book within hours</p>
+  </div>
+</div>"""
+    try:
+        r = requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+            json={
+                "from": "ProServ Homes <noreply@proservhomes.co>",
+                "reply_to": "hello@proservhomes.co",
+                "to": [ALERT_EMAIL],
+                "subject": subject,
+                "html": html,
+            },
+            timeout=15,
+        )
+        if r.status_code in (200, 201):
+            print(f"[email] sent OK to {ALERT_EMAIL}")
+        else:
+            print(f"[email] failed {r.status_code}: {r.text}")
+    except Exception as e:
+        print(f"[email] exception: {e}")
+
 # ── Matching logic ─────────────────────────────────────────────────────────────
 def matches(text):
     """Return True if post text matches a keyword and isn't spam."""
@@ -159,14 +205,23 @@ def login_facebook(page, context):
     if not FB_EMAIL or not FB_PASSWORD:
         raise RuntimeError("FB_EMAIL / FB_PASSWORD env vars not set — cannot log in")
     print("[fb] logging in...")
-    page.goto("https://www.facebook.com/login", wait_until="domcontentloaded")
-    human_delay(2, 4)
+    # Navigate directly to /login (not a group URL) so the real login form loads
+    page.goto("https://www.facebook.com/login", wait_until="domcontentloaded", timeout=30000)
+    human_delay(3, 5)
+    # Wait for the email field with a generous timeout
+    page.wait_for_selector("#email", timeout=20000)
     page.fill("#email", FB_EMAIL)
-    human_delay()
+    human_delay(1, 2)
     page.fill("#pass", FB_PASSWORD)
-    human_delay()
-    page.click('[data-testid="royal_login_button"], button[name="login"]')
-    page.wait_for_load_state("networkidle", timeout=30000)
+    human_delay(1, 2)
+    # Try multiple login button selectors
+    for sel in ['[data-testid="royal_login_button"]', 'button[name="login"]', '#loginbutton', 'button[type="submit"]']:
+        try:
+            page.click(sel, timeout=3000)
+            break
+        except Exception:
+            continue
+    page.wait_for_load_state("networkidle", timeout=40000)
     human_delay(3, 5)
     # Check for 2FA prompt
     if "checkpoint" in page.url or "two_step" in page.url:
@@ -256,10 +311,11 @@ def run_crawler():
         # Stealth: remove webdriver flag
         page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
-        # Test if session is still valid
-        page.goto("https://www.facebook.com", wait_until="domcontentloaded", timeout=30000)
+        # Test if session is still valid by checking the home feed
+        page.goto("https://www.facebook.com/?sk=h_nor", wait_until="domcontentloaded", timeout=30000)
         human_delay(2, 4)
-        if "login" in page.url or page.query_selector("#email"):
+        # If redirected to login page or login form visible, re-authenticate
+        if "login" in page.url or page.query_selector('form#login_form, input[name="email"]'):
             print("[fb] session expired — attempting login")
             login_facebook(page, context)
 
@@ -300,6 +356,13 @@ def run_crawler():
                 )
                 print(f"  ✅ NEW LEAD — {kws}")
                 send_sms(msg)
+                send_email(
+                    subject=f"🏠 ProServ Lead — {group_name}: {', '.join(kws[:3])}",
+                    group_name=group_name,
+                    keywords=kws,
+                    snippet=snippet,
+                    post_url=post_url,
+                )
                 mark_seen(post["id"], group_url, snippet, post_url)
                 new_leads += 1
 

@@ -29,7 +29,7 @@ That creates:
 
 1. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**
 2. Connect your GitHub account and select `chipchug/Proservhomes`
-3. Set **Root Directory** to `fb-crawler`
+3. ⚠️ **When asked for Root Directory → type: `fb-crawler`** (the repo has multiple apps; this tells Railway which folder to build)
 4. Railway will detect `nixpacks.toml` and install Playwright + Chromium automatically
 
 ### Step 3 — Set environment variables in Railway
@@ -44,6 +44,8 @@ In Railway → your service → **Variables**, add:
 | `TWILIO_AUTH_TOKEN` | Your Twilio Auth Token |
 | `TWILIO_FROM_NUMBER` | Your Twilio number e.g. `+17325551234` |
 | `ALERT_PHONE` | Your cell number e.g. `+17325559999` |
+| `ALERT_EMAIL` | Your email address for lead alerts e.g. `nick@proservhomes.co` |
+| `RESEND_API_KEY` | Resend API key (same one used by Supabase edge functions) — email alerts optional but recommended |
 | `FB_EMAIL` | Your Facebook login email |
 | `FB_PASSWORD` | Your Facebook password |
 
@@ -75,7 +77,7 @@ That runs the crawler every 20 minutes, 24/7.
 
 **Add keywords:** Edit `KEYWORDS` list in `crawler.py`.
 
-**Get email instead of SMS:** Replace `send_sms()` with a call to your `send-email` Supabase edge function.
+**Email alerts:** Already wired up — set `ALERT_EMAIL` and `RESEND_API_KEY` in Railway variables and every lead fires both an SMS and a branded HTML email.
 
 ---
 

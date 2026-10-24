@@ -19,6 +19,8 @@
  */
 
 const TWILIO_FROM = "+18482767239"; // ProServ Homes Twilio number
+const RESEND_FROM = "ProServ Homes <noreply@proservhomes.co>";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -73,6 +75,9 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
+    const resendKey   = Deno.env.get("RESEND_API_KEY");
+    const adminEmail  = Deno.env.get("ADMIN_EMAIL") ?? "hello@proservhomes.co";
+
     if (!accountSid || !authToken) throw new Error("Missing Twilio secrets");
     if (!supabaseUrl || !serviceKey) throw new Error("Missing Supabase env vars");
 
@@ -88,7 +93,7 @@ Deno.serve(async (req) => {
       `&gg_followup_sent=eq.false` +
       `&completed_at=gte.${windowStart}` +
       `&completed_at=lte.${windowEnd}` +
-      `&select=id,client,phone,service,address`;
+      `&select=id,client,phone,email,service,address`;
 
     const queryResp = await fetch(queryUrl, {
       headers: {
@@ -106,6 +111,7 @@ Deno.serve(async (req) => {
       id: string;
       client: string;
       phone: string | null;
+      email: string | null;
       service: string;
       address: string;
     }> = await queryResp.json();
@@ -127,10 +133,37 @@ Deno.serve(async (req) => {
         `We install them starting at $299. Interested? Reply YES and we'll call you. ` +
         `— ProServ Homes`;
 
-      const sent = await sendTwilioSms(accountSid, authToken, job.phone!, msg);
+      const smsSent = await sendTwilioSms(accountSid, authToken, job.phone!, msg);
 
-      if (sent) {
-        // Mark follow-up sent so we never double-text
+      // Also send email if homeowner has one and Resend is configured
+      if (resendKey && job.email) {
+        try {
+          const emailPayload = {
+            event: "gutter_guard_upsell",
+            job: { id: job.id, service: job.service, address: job.address },
+            homeowner: { name: job.client, email: job.email, phone: job.phone },
+          };
+          const emailResp = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+            method: "POST",
+            headers: {
+              apikey: serviceKey,
+              Authorization: `Bearer ${serviceKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(emailPayload),
+          });
+          if (!emailResp.ok) {
+            console.error(`Email failed for ${job.client}:`, await emailResp.text());
+          } else {
+            console.log(`Email sent to ${job.email}`);
+          }
+        } catch (emailErr) {
+          console.error(`Email error for ${job.client}:`, emailErr);
+        }
+      }
+
+      if (smsSent || (resendKey && job.email)) {
+        // Mark follow-up sent so we never double-send
         await fetch(`${supabaseUrl}/rest/v1/jobs?id=eq.${job.id}`, {
           method: "PATCH",
           headers: {
@@ -143,7 +176,7 @@ Deno.serve(async (req) => {
         });
         results.push(`✓ ${job.client} (${job.id})`);
       } else {
-        results.push(`✗ ${job.client} — SMS failed`);
+        results.push(`✗ ${job.client} — SMS + email both failed`);
       }
 
       // Brief pause between sends
