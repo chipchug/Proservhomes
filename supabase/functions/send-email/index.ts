@@ -43,6 +43,7 @@ interface JobInfo {
   address?: string;
   scheduled_date?: string;
   amount?: number;
+  payout_amount?: number; // contractor's pay (never shown as "Estimate" to contractor)
 }
 
 interface PersonInfo {
@@ -242,6 +243,18 @@ async function buildEmails(payload: EmailPayload, adminEmail?: string): Promise<
   // Fires when admin assigns a contractor. Contractor only — no admin, no homeowner.
   if (event === "job_accepted") {
     if (contractor?.email) {
+      // Build contractor-specific job details: show payout amount, NOT the customer estimate
+      const contractorJobDetailsHtml = job
+        ? [
+            `<strong>Service:</strong> ${job.service}`,
+            job.address        ? `<strong>Address:</strong> ${job.address}` : null,
+            job.scheduled_date ? `<strong>Date:</strong> ${job.scheduled_date}` : null,
+            (job.payout_amount || job.payout_amount === 0)
+              ? `<strong>Your Pay:</strong> ${formatCurrency(job.payout_amount)}`
+              : null,
+          ].filter(Boolean).join("<br>")
+        : "";
+
       msgs.push({
         to: contractor.email,
         recipient: "contractor",
@@ -249,7 +262,7 @@ async function buildEmails(payload: EmailPayload, adminEmail?: string): Promise<
         html: emailHtml({
           headline: "New Job Alert!",
           body: `You have a new job assigned to you. Log into the contractor portal to view full details.${homeowner?.name ? `<br><br><strong>Customer:</strong> ${homeowner.name}` : ""}`,
-          jobDetails: jobDetailsHtml,
+          jobDetails: contractorJobDetailsHtml,
           ctaUrl: "https://proservhomes.co/contractor/",
           ctaLabel: "View in Contractor Portal",
         }),

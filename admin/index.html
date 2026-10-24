@@ -1587,7 +1587,7 @@ async function saveJob(){var client=document.getElementById('jClient').value.tri
 var ct=contractors.find(function(c){return c.id===j.contractorId});
 if(j.contractorId&&(isNew||j.contractorId!==prevCtId)){
   // Contractor assigned (new job) or reassigned — notify contractor only
-  sendSmsNotification({event:'job_accepted',job:{id:j.id,service:j.service,address:j.address,scheduled_date:j.date,amount:j.price},homeowner:{name:j.client,phone:j.phone||null,email:j.email||null},contractor:ct?{name:ct.name,phone:ct.phone||null,email:ct.email||null}:null});
+  sendSmsNotification({event:'job_accepted',job:{id:j.id,service:j.service,address:j.address,scheduled_date:j.date,amount:j.price,payout_amount:j.contractorPay||0},homeowner:{name:j.client,phone:j.phone||null,email:j.email||null},contractor:ct?{name:ct.name,phone:ct.phone||null,email:ct.email||null}:null});
 }}
 async function deleteJob(){var id=document.getElementById('jEditId').value;if(!id)return;jobs=jobs.filter(function(j){return j.id!==id});await _sb.from('jobs').delete().eq('id',id);closeModal('jobModal');renderDashboard();renderJobsTable();renderBooks();showToast('Job deleted')}
 
@@ -2202,8 +2202,8 @@ async function doConfirmRequest(){
   // Notify homeowner + contractor
   // (homeowner already received job_booked when they submitted the form)
   var ct2=contractors.find(function(c){return c.id==ctId});
-  var hwName=r.client_name||r.name||'Customer';
-  var sharedJob={id:jobId,service:r.service||'',address:r.address||'',scheduled_date:r.date||'',amount:price};
+  var hwName=r.client_name||r.name||r.client||'';
+  var sharedJob={id:jobId,service:r.service||'',address:r.address||'',scheduled_date:r.date||'',amount:price,payout_amount:pay||0};
   var sharedHw={name:hwName,email:email||null,phone:r.homeowner_phone||null};
   if(ctId && ct2){
     // job_accepted: homeowner "you're all set — [Tech]" + contractor "new job alert" + admin confirmation

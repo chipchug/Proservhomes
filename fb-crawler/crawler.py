@@ -28,16 +28,13 @@ FB_PASSWORD    = os.environ.get("FB_PASSWORD", "")   # Only needed for first log
 # ── Facebook groups to monitor ─────────────────────────────────────────────────
 # Add/remove group URLs here. Use the /groups/<id>/ format.
 GROUPS = [
-    "https://www.facebook.com/groups/jacksonnjcommunity",
-    "https://www.facebook.com/groups/tomsrivernj",
-    "https://www.facebook.com/groups/bricknj",
-    "https://www.facebook.com/groups/lakewoodnjcommunity",
-    "https://www.facebook.com/groups/howellnjresidents",
-    "https://www.facebook.com/groups/oceancountynj",
-    "https://www.facebook.com/groups/monmouthcountynj",
-    "https://www.facebook.com/groups/pointpleasantnj",
-    "https://www.facebook.com/groups/freeholdnj",
-    "https://www.facebook.com/groups/njhomeimprovement",
+    # NJ community groups Nick is a member of (share links redirect to the real group URL)
+    "https://www.facebook.com/share/g/1Dw8yaKhxG/",  # Group 1 (94.5K members)
+    "https://www.facebook.com/share/g/1FUAwV7YE1/",  # Group 2 (17.9K members)
+    "https://www.facebook.com/share/g/1Ech8gSZSf/",  # Group 3 (27.4K members)
+    "https://www.facebook.com/share/g/1JKZvDwnfN/",  # Group 4 (29.9K members)
+    "https://www.facebook.com/share/g/18acVjAWCP/",  # NJ Contractors (75.2K members)
+    # TODO: Add Monmouth County News share link here (94.5K members)
 ]
 
 # ── Keywords that trigger an alert ────────────────────────────────────────────
