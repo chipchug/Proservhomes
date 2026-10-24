@@ -86,6 +86,15 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
 .feature-item:hover .feature-img-wrap img{transform:scale(1.025);}
 .feature-text{display:flex;flex-direction:column;justify-content:center;padding:44px max(28px,env(safe-area-inset-left,0px)) 48px;}
 @media(min-width:820px){.feature-text{width:42%;padding:64px 68px;}}
+/* Scroll-triggered stagger animations */
+@keyframes feat-rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+.feature-img-wrap,.feature-num,.feature-accent,.feature-title,.feature-body{opacity:0;will-change:opacity,transform}
+.feature-item.in-view .feature-img-wrap{animation:feat-rise .7s cubic-bezier(.22,1,.36,1) 0s both}
+.feature-item.in-view .feature-num,.feature-item.in-view .feature-accent{animation:feat-rise .55s cubic-bezier(.22,1,.36,1) .18s both}
+.feature-item.in-view .feature-title{animation:feat-rise .55s cubic-bezier(.22,1,.36,1) .32s both}
+.feature-item.in-view .feature-body{animation:feat-rise .55s cubic-bezier(.22,1,.36,1) .48s both}
+/* Desktop: breathing room between feature panels */
+@media(min-width:820px){.feature-item+.feature-item{margin-top:40px}}
 .feature-num{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.2);margin-bottom:22px;}
 .feature-accent{display:block;width:28px;height:2px;background:var(--green);margin-bottom:18px;border-radius:2px;}
 .feature-title{font-family:'Barlow Condensed',sans-serif;font-size:clamp(44px,6vw,80px);font-weight:900;letter-spacing:-.01em;text-transform:uppercase;color:#fff;line-height:.98;margin-bottom:18px;}
@@ -578,6 +587,21 @@ async function submitApplication(){
   document.getElementById('successPopup').classList.add('show');
   window.scrollTo(0,0);
 }
+
+// Scroll-triggered feature card animations
+(function(){
+  var items = document.querySelectorAll('.feature-item');
+  if (!items.length || !window.IntersectionObserver) {
+    items.forEach(function(el){ el.classList.add('in-view'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){ e.target.classList.add('in-view'); io.unobserve(e.target); }
+    });
+  }, {threshold: 0.12, rootMargin: '0px 0px -60px 0px'});
+  items.forEach(function(el){ io.observe(el); });
+})();
 </script>
 </body>
 </html>
