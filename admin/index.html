@@ -1899,8 +1899,7 @@ var _seenLeadIds=new Set(JSON.parse(localStorage.getItem('seenLeadIds')||'[]'));
 
 function generateReply(keywords,group){
   var kws=(keywords||'').toLowerCase();
-  var group_clean=(group||'').replace(/nj|community|residents|county/gi,'').trim();
-  var area=group_clean?'in the '+group_clean+' area':'in your area';
+  var area='in your area';
   if(kws.includes('gutter'))
     return 'Hey! ProServ Homes here — we specialize in professional gutter cleaning '+area+'. We also install gutter guards so you never have to clean them again! Starting at $149 for a standard home. DM me or visit proservhomes.co for a free quote 🏠';
   if(kws.includes('pressure wash')||kws.includes('power wash'))
@@ -1936,7 +1935,9 @@ async function loadLeads(){
     if(badge){if(unseen>0){badge.textContent=unseen;badge.classList.remove('hidden')}else{badge.classList.add('hidden')}}
     el.innerHTML=leads.map(function(l){
       var isNew=!_seenLeadIds.has(l.id);
-      var groupName=(l.group_url||'').split('/').filter(Boolean).pop()||'Facebook Group';
+      var _groupKey=(l.group_url||'').split('/').filter(Boolean).pop()||'';
+      var _groupMap={'1Dw8yaKhxG':'NJ Community (94.5K)','1FUAwV7YE1':'NJ Community (17.9K)','1Ech8gSZSf':'NJ Community (27.4K)','1JKZvDwnfN':'NJ Community (29.9K)','18acVjAWCP':'NJ Contractors (75.2K)'};
+      var groupName=_groupMap[_groupKey]||_groupKey||'Facebook Group';
       var keywords=l.text_snippet?extractKws(l.text_snippet,groupName):'';
       var reply=generateReply(keywords,groupName);
       var when=l.seen_at?timeAgo(new Date(l.seen_at)):'';

@@ -37,22 +37,48 @@ GROUPS = [
     # TODO: Add Monmouth County News share link here (94.5K members)
 ]
 
+# Human-readable group names (keyed by share link suffix)
+GROUP_NAMES = {
+    "1Dw8yaKhxG": "NJ Community (94.5K)",
+    "1FUAwV7YE1": "NJ Community (17.9K)",
+    "1Ech8gSZSf": "NJ Community (27.4K)",
+    "1JKZvDwnfN": "NJ Community (29.9K)",
+    "18acVjAWCP": "NJ Contractors (75.2K)",
+}
+
 # ── Keywords that trigger an alert ────────────────────────────────────────────
-KEYWORDS = [
+# Specific service keywords always match
+SERVICE_KEYWORDS = [
     "gutter", "gutters",
     "pressure wash", "power wash",
-    "fence", "fencing",
+    "fence install", "fence repair", "fencing",
     "dryer vent",
-    "christmas lights", "holiday lights",
-    "snow removal", "snow plow", "plowing",
-    "concrete", "pavers", "patio",
-    "handyman", "home service",
-    "recommend", "recommendations", "anyone know",
-    "looking for", "need someone", "need a",
+    "christmas lights", "holiday lights", "xmas lights",
+    "snow removal", "snow plow", "plowing", "snow blowing",
+    "concrete", "pavers", "patio install", "patio repair",
+    "handyman",
+    "roof clean", "roof washing",
+    "window clean", "window washing",
 ]
 
+# Intent phrases — only match when combined with a home-service context word
+INTENT_PHRASES = [
+    "recommend a contractor", "recommend someone", "recommendations for",
+    "anyone know a good", "looking for a contractor", "looking for someone to",
+    "need someone to", "need a contractor", "need a handyman",
+    "who does", "who can", "any recommendations for",
+    "looking for help with", "can anyone recommend",
+]
+
+# Combined list used by matching logic
+KEYWORDS = SERVICE_KEYWORDS + INTENT_PHRASES
+
 # Negative keywords — skip posts matching these (spam reduction)
-SKIP_KEYWORDS = ["for sale", "selling", "buy", "lost", "found", "missing", "puppy", "dog", "cat"]
+SKIP_KEYWORDS = [
+    "for sale", "selling", "buy", "lost", "found", "missing",
+    "puppy", "dog", "cat", "drive thru", "diner", "restaurant",
+    "movie", "school", "church", "event", "party", "job opening",
+]
 
 # ── Supabase helpers ───────────────────────────────────────────────────────────
 def sb_headers():
@@ -367,7 +393,8 @@ def run_crawler():
                 kws = matched_keywords(post["text"])
                 snippet = post["text"][:200].replace("\n", " ")
                 post_url = post["url"] or group_url
-                group_name = group_url.rstrip("/").split("/")[-1]
+                group_key = group_url.rstrip("/").split("/")[-1]
+                group_name = GROUP_NAMES.get(group_key, group_key)
 
                 msg = (
                     f"🏠 ProServ Lead!\n"
