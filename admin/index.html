@@ -452,29 +452,28 @@ textarea{resize:vertical;min-height:80px}
           <div style="display:flex;gap:6px">
             <button id="ctToggleContractors" onclick="showCustomersView('contractors')" style="padding:7px 14px;border-radius:8px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;background:var(--orange);color:#fff">Contractors</button>
             <button id="ctToggleHomeowners" onclick="showCustomersView('homeowners')" style="padding:7px 14px;border-radius:8px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;background:var(--surface-2);color:var(--fg-2)">Homeowners</button>
+            <button id="ctToggleApps" onclick="showCustomersView('apps');loadApplications()" style="padding:7px 14px;border-radius:8px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;background:var(--surface-2);color:var(--fg-2);position:relative">Apps<span id="appsBadge2" class="req-badge hidden"></span></button>
           </div>
           <button id="addEntityBtn" onclick="onAddEntity()" style="display:flex;align-items:center;gap:5px;background:var(--orange);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">+ Add</button>
         </div>
         <div id="contractorList"></div>
         <div id="homeownerList" style="display:none"></div>
-      </div>
-
-      <!-- APPLICATIONS -->
-      <div id="tabApps" class="tab-pane">
-        <div class="books-head" style="display:flex;align-items:center;justify-content:space-between">
-          <span>ProServ Pro Applications</span>
-          <button onclick="loadApplications()" style="background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:12px;padding:4px 8px">↻ Refresh</button>
-        </div>
-        <!-- Status filter tabs -->
-        <div style="display:flex;gap:6px;padding:0 14px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch">
-          <button id="appsFilter_pending" onclick="setAppsFilter('pending')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer">Pending</button>
-          <button id="appsFilter_approved" onclick="setAppsFilter('approved')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:transparent;color:var(--fg-2);cursor:pointer">Approved</button>
-          <button id="appsFilter_welcomed" onclick="setAppsFilter('welcomed')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:transparent;color:var(--fg-2);cursor:pointer">Onboarded</button>
-          <button id="appsFilter_denied" onclick="setAppsFilter('denied')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:transparent;color:var(--fg-2);cursor:pointer">Denied</button>
-          <button id="appsFilter_all" onclick="setAppsFilter('all')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:transparent;color:var(--fg-2);cursor:pointer">All</button>
-        </div>
-        <div id="appsList" style="padding:0 14px 80px">
-          <div style="padding:24px 0;text-align:center;color:var(--fg-3);font-size:13px">Loading applications…</div>
+        <!-- Applications view (inline) -->
+        <div id="appsView" style="display:none">
+          <div class="books-head" style="display:flex;align-items:center;justify-content:space-between">
+            <span>ProServ Pro Applications</span>
+            <button onclick="loadApplications()" style="background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:12px;padding:4px 8px">↻ Refresh</button>
+          </div>
+          <div style="display:flex;gap:6px;padding:0 14px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+            <button id="appsFilter_pending" onclick="setAppsFilter('pending')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer">Pending</button>
+            <button id="appsFilter_approved" onclick="setAppsFilter('approved')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:transparent;color:var(--fg-2);cursor:pointer">Approved</button>
+            <button id="appsFilter_welcomed" onclick="setAppsFilter('welcomed')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:transparent;color:var(--fg-2);cursor:pointer">Onboarded</button>
+            <button id="appsFilter_denied" onclick="setAppsFilter('denied')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:transparent;color:var(--fg-2);cursor:pointer">Denied</button>
+            <button id="appsFilter_all" onclick="setAppsFilter('all')" style="flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border:1.5px solid var(--border);background:transparent;color:var(--fg-2);cursor:pointer">All</button>
+          </div>
+          <div id="appsList" style="padding:0 14px 80px">
+            <div style="padding:24px 0;text-align:center;color:var(--fg-3);font-size:13px">Loading applications…</div>
+          </div>
         </div>
       </div>
 
@@ -536,7 +535,6 @@ textarea{resize:vertical;min-height:80px}
     <button class="nb" onclick="switchTab('Requests',this)" id="navRequests" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Requests<span id="reqBadge" class="req-badge hidden"></span></button>
     <button class="nb" onclick="switchTab('Jobs',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Jobs</button>
     <button class="nb" onclick="switchTab('Customers',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Contractors</button>
-    <button class="nb" onclick="switchTab('Apps',this)" id="navApps" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Apps<span id="appsBadge" class="req-badge hidden"></span></button>
     <button class="nb" onclick="switchTab('Leads',this);loadLeads()" id="navLeads" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Leads<span id="leadsBadge" class="req-badge hidden"></span></button>
     <button class="nb" onclick="switchTab('More',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>More</button>
   </nav>
@@ -1267,7 +1265,7 @@ async function loadApplications(){
     if(res.error){console.warn('loadApplications:',res.error.message);if(el)el.innerHTML='<div style="padding:24px;text-align:center;color:var(--fg-3)">Could not load applications</div>';return;}
     _applications=res.data||[];
     var pending=_applications.filter(function(a){return a.status==='pending'});
-    var badge=document.getElementById('appsBadge');
+    var badge=document.getElementById('appsBadge2');
     if(badge){if(pending.length>0){badge.textContent=pending.length;badge.classList.remove('hidden');}else{badge.classList.add('hidden');}}
     renderApplications();
   }catch(e){console.error('[loadApplications]',e);}
@@ -1469,7 +1467,7 @@ async function enterApp(){
   if(_jp)setTimeout(function(){openJobDetail(_jp);},300);
 }
 
-function switchTab(n,el){['Overview','Requests','Jobs','Customers','Apps','Leads','More'].forEach(function(t){document.getElementById('tab'+t).classList.remove('active')});document.getElementById('tab'+n).classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;if(n==='Apps')loadApplications();}
+function switchTab(n,el){['Overview','Requests','Jobs','Customers','Leads','More'].forEach(function(t){document.getElementById('tab'+t).classList.remove('active')});document.getElementById('tab'+n).classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;}
 
 function renderDashboard(){
   var now=new Date();var mn=now.getMonth();var yr=now.getFullYear();
@@ -1600,19 +1598,28 @@ var _homeowners=[];
 var _customersView='contractors';
 function showCustomersView(v){
   _customersView=v;
-  var cBtn=document.getElementById('ctToggleContractors');var hBtn=document.getElementById('ctToggleHomeowners');
-  var cList=document.getElementById('contractorList');var hList=document.getElementById('homeownerList');
+  var cBtn=document.getElementById('ctToggleContractors');
+  var hBtn=document.getElementById('ctToggleHomeowners');
+  var aBtn=document.getElementById('ctToggleApps');
+  var cList=document.getElementById('contractorList');
+  var hList=document.getElementById('homeownerList');
+  var appsView=document.getElementById('appsView');
   var addBtn=document.getElementById('addEntityBtn');
+  // Reset all
+  [cBtn,hBtn,aBtn].forEach(function(b){if(b){b.style.background='var(--surface-2)';b.style.color='var(--fg-2)';}});
+  cList.style.display='none';hList.style.display='none';appsView.style.display='none';
   if(v==='homeowners'){
-    cBtn.style.background='var(--surface-2)';cBtn.style.color='var(--fg-2)';
     hBtn.style.background='var(--orange)';hBtn.style.color='#fff';
-    cList.style.display='none';hList.style.display='block';
+    hList.style.display='block';
     if(addBtn){addBtn.style.display='flex';addBtn.textContent='+ Add Homeowner';}
     if(!_homeowners.length){loadHomeowners();}
+  } else if(v==='apps'){
+    aBtn.style.background='var(--orange)';aBtn.style.color='#fff';
+    appsView.style.display='block';
+    if(addBtn){addBtn.style.display='none';}
   } else {
-    hBtn.style.background='var(--surface-2)';hBtn.style.color='var(--fg-2)';
     cBtn.style.background='var(--orange)';cBtn.style.color='#fff';
-    hList.style.display='none';cList.style.display='block';
+    cList.style.display='block';
     if(addBtn){addBtn.style.display='flex';addBtn.textContent='+ Add';}
   }
 }
