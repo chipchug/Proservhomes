@@ -645,6 +645,7 @@ textarea{resize:vertical;min-height:80px}
         <div id="ctInsurancePreview" style="margin-bottom:8px"></div>
         <a id="ctInsuranceLink" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--orange);font-weight:600;text-decoration:none;background:var(--surface-2);border-radius:8px;padding:8px 12px">📄 Open Full Document</a>
       </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px" id="ctStatusBadges"></div>
       <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
       <div style="font-size:11px;font-weight:700;color:var(--fg-3);letter-spacing:.06em;margin-bottom:10px">ADMIN CONTROLS</div>
     </div>
@@ -1642,10 +1643,9 @@ function openEditCtx(id){
   document.getElementById('ctMargin').value=String(c.margin||30);
   document.getElementById('ctModalTitle').textContent=c.name||'Contractor';
   document.getElementById('delCtBtn').classList.remove('hidden');
-  // Profile section — show contractor-uploaded info
+  // Profile section — always show full contractor info
   var ps=document.getElementById('ctProfileSection');
-  var hasProfile=!!(c.photo_url||c.bio||c.insurance_url||(c.service_interests&&c.service_interests.length));
-  if(ps) ps.style.display=hasProfile?'':'none';
+  if(ps) ps.style.display='';
   // Avatar
   var av=document.getElementById('ctPhotoWrap');
   if(av){
@@ -1678,6 +1678,15 @@ function openEditCtx(id){
         insPrev.innerHTML='';
       }
     }
+  }
+  // Status badges (Stripe, COI)
+  var sb=document.getElementById('ctStatusBadges');
+  if(sb){
+    var stripeOk=c.stripe_onboarded===true||c.stripe_onboarded==='true';
+    var coiOk=!!c.insurance_url;
+    sb.innerHTML=
+      '<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:700;background:'+(stripeOk?'rgba(31,155,42,.15)':'rgba(200,50,50,.12)')+';color:'+(stripeOk?'var(--green)':'#c83232')+'">'+(stripeOk?'✓':'✗')+' Stripe '+(stripeOk?'Active':'Not Set Up')+'</span>'+
+      '<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:700;background:'+(coiOk?'rgba(31,155,42,.15)':'rgba(200,50,50,.12)')+';color:'+(coiOk?'var(--green)':'#c83232')+'">'+(coiOk?'✓':'✗')+' COI '+(coiOk?'On File':'Missing')+'</span>';
   }
   document.getElementById('ctModal').classList.remove('hidden');
 }
