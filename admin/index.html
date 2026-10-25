@@ -504,34 +504,43 @@ textarea{resize:vertical;min-height:80px}
 
       <!-- LOG LEAD MODAL -->
       <div id="logLeadOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeLogLead()">
-        <div id="logLeadSheet" style="background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-width:520px;padding:20px 20px max(20px,env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .3s cubic-bezier(.32,1,.4,1)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.04em">Log a Lead</div>
-            <button onclick="closeLogLead()" style="background:var(--surface-2);border:none;color:var(--fg-2);border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+        <div id="logLeadSheet" style="background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,1,.4,1)">
+          <!-- fixed handle + title -->
+          <div style="flex-shrink:0;padding:20px 20px 0">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.04em">Log a Lead</div>
+              <button onclick="closeLogLead()" style="background:var(--surface-2);border:none;color:var(--fg-2);border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+            </div>
+            <div style="font-size:12px;color:var(--fg-2);margin-bottom:14px">Spot a post in an NJ group? Paste the URL — or add the post text too for a keyword-matched reply.</div>
           </div>
-          <div style="font-size:12px;color:var(--fg-2);margin-bottom:16px">Found someone asking about home services in a group? Paste the post here — you'll get a suggested reply to copy.</div>
-          <div class="field">
-            <label>Post text</label>
-            <textarea id="llText" placeholder="Paste the post text here…" rows="4"></textarea>
+          <!-- scrollable fields -->
+          <div style="flex:1;overflow-y:auto;padding:0 20px">
+            <div class="field">
+              <label>Post URL</label>
+              <input id="llUrl" type="url" placeholder="https://www.facebook.com/groups/…">
+            </div>
+            <div class="field">
+              <label>Post text <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--fg-3)">(optional — helps match a reply)</span></label>
+              <textarea id="llText" placeholder="Paste the post text here…" rows="3"></textarea>
+            </div>
+            <div class="field">
+              <label>Group</label>
+              <select id="llGroup">
+                <option value="">— select group —</option>
+                <option value="NJ Home Services (manual)">NJ Home Services (manual)</option>
+                <option value="NJ Community (94.5K)">NJ Community (94.5K)</option>
+                <option value="NJ Community (17.9K)">NJ Community (17.9K)</option>
+                <option value="NJ Community (27.4K)">NJ Community (27.4K)</option>
+                <option value="NJ Community (29.9K)">NJ Community (29.9K)</option>
+                <option value="NJ Contractors (75.2K)">NJ Contractors (75.2K)</option>
+                <option value="Other NJ Group">Other NJ Group</option>
+              </select>
+            </div>
           </div>
-          <div class="field">
-            <label>Post URL (optional)</label>
-            <input id="llUrl" type="url" placeholder="https://www.facebook.com/groups/…">
+          <!-- always-visible save button -->
+          <div style="flex-shrink:0;padding:12px 20px;padding-bottom:max(16px,env(safe-area-inset-bottom,0px));border-top:1px solid var(--border)">
+            <button id="llSaveBtn" class="bf bfo" onclick="saveLoggedLead()">Save Lead</button>
           </div>
-          <div class="field">
-            <label>Group</label>
-            <select id="llGroup">
-              <option value="">— select group —</option>
-              <option value="NJ Home Services (manual)">NJ Home Services (manual)</option>
-              <option value="NJ Community (94.5K)">NJ Community (94.5K)</option>
-              <option value="NJ Community (17.9K)">NJ Community (17.9K)</option>
-              <option value="NJ Community (27.4K)">NJ Community (27.4K)</option>
-              <option value="NJ Community (29.9K)">NJ Community (29.9K)</option>
-              <option value="NJ Contractors (75.2K)">NJ Contractors (75.2K)</option>
-              <option value="Other NJ Group">Other NJ Group</option>
-            </select>
-          </div>
-          <button id="llSaveBtn" class="bf bfo" onclick="saveLoggedLead()" style="margin-top:4px">Save Lead</button>
         </div>
       </div>
 
@@ -1953,7 +1962,7 @@ async function saveLoggedLead(){
   var text=(document.getElementById('llText').value||'').trim();
   var url=(document.getElementById('llUrl').value||'').trim();
   var group=document.getElementById('llGroup').value||'NJ Home Services (manual)';
-  if(!text){showToast('Paste the post text first');return;}
+  if(!url&&!text){showToast('Add a post URL or text first');return;}
   var btn=document.getElementById('llSaveBtn');
   btn.disabled=true;btn.textContent='Saving…';
   try{
