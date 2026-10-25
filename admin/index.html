@@ -493,10 +493,46 @@ textarea{resize:vertical;min-height:80px}
       <div id="tabLeads" class="tab-pane">
         <div class="jobs-head" style="display:flex;align-items:center;justify-content:space-between">
           <div class="jobs-title">FB Leads</div>
-          <button onclick="loadLeads()" style="background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg-2);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">↻ Refresh</button>
+          <div style="display:flex;gap:8px">
+            <button onclick="openLogLead()" style="background:var(--orange);border:none;color:#fff;border-radius:8px;padding:6px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase">+ Log Lead</button>
+            <button onclick="loadLeads()" style="background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg-2);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">↻ Refresh</button>
+          </div>
         </div>
-        <div style="padding:0 12px 8px;font-size:12px;color:var(--fg-2)">Matching posts from NJ Facebook groups. Copy the reply → click the link → paste &amp; post.</div>
+        <div style="padding:0 12px 8px;font-size:12px;color:var(--fg-2)">Leads from NJ Facebook groups. Spot one manually? Hit <strong style="color:var(--fg)">+ Log Lead</strong> to save it and get a suggested reply.</div>
         <div id="leadsList" style="padding:0 12px 80px"></div>
+      </div>
+
+      <!-- LOG LEAD MODAL -->
+      <div id="logLeadOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeLogLead()">
+        <div id="logLeadSheet" style="background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-width:520px;padding:20px 20px max(20px,env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .3s cubic-bezier(.32,1,.4,1)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.04em">Log a Lead</div>
+            <button onclick="closeLogLead()" style="background:var(--surface-2);border:none;color:var(--fg-2);border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+          </div>
+          <div style="font-size:12px;color:var(--fg-2);margin-bottom:16px">Found someone asking about home services in a group? Paste the post here — you'll get a suggested reply to copy.</div>
+          <div class="field">
+            <label>Post text</label>
+            <textarea id="llText" placeholder="Paste the post text here…" rows="4"></textarea>
+          </div>
+          <div class="field">
+            <label>Post URL (optional)</label>
+            <input id="llUrl" type="url" placeholder="https://www.facebook.com/groups/…">
+          </div>
+          <div class="field">
+            <label>Group</label>
+            <select id="llGroup">
+              <option value="">— select group —</option>
+              <option value="NJ Home Services (manual)">NJ Home Services (manual)</option>
+              <option value="NJ Community (94.5K)">NJ Community (94.5K)</option>
+              <option value="NJ Community (17.9K)">NJ Community (17.9K)</option>
+              <option value="NJ Community (27.4K)">NJ Community (27.4K)</option>
+              <option value="NJ Community (29.9K)">NJ Community (29.9K)</option>
+              <option value="NJ Contractors (75.2K)">NJ Contractors (75.2K)</option>
+              <option value="Other NJ Group">Other NJ Group</option>
+            </select>
+          </div>
+          <button id="llSaveBtn" class="bf bfo" onclick="saveLoggedLead()" style="margin-top:4px">Save Lead</button>
+        </div>
       </div>
 
       <!-- MORE (Books + Settings) -->
@@ -1893,6 +1929,51 @@ async function sendReviewRequest(jobId){
   }
 }
 
+// ─── LOG LEAD MODAL ───────────────────────────────────────────────────────
+function openLogLead(){
+  var ov=document.getElementById('logLeadOverlay');
+  ov.style.display='flex';
+  requestAnimationFrame(function(){
+    document.getElementById('logLeadSheet').style.transform='translateY(0)';
+  });
+  setTimeout(function(){document.getElementById('llText').focus()},350);
+}
+function closeLogLead(){
+  document.getElementById('logLeadSheet').style.transform='translateY(100%)';
+  setTimeout(function(){
+    document.getElementById('logLeadOverlay').style.display='none';
+    document.getElementById('llText').value='';
+    document.getElementById('llUrl').value='';
+    document.getElementById('llGroup').value='';
+    var btn=document.getElementById('llSaveBtn');
+    btn.disabled=false;btn.textContent='Save Lead';
+  },320);
+}
+async function saveLoggedLead(){
+  var text=(document.getElementById('llText').value||'').trim();
+  var url=(document.getElementById('llUrl').value||'').trim();
+  var group=document.getElementById('llGroup').value||'NJ Home Services (manual)';
+  if(!text){showToast('Paste the post text first');return;}
+  var btn=document.getElementById('llSaveBtn');
+  btn.disabled=true;btn.textContent='Saving…';
+  try{
+    var r=await fetch(SURL+'/rest/v1/fb_leads',{
+      method:'POST',
+      headers:{apikey:SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({text_snippet:text,post_url:url||null,group_url:group,seen_at:new Date().toISOString()})
+    });
+    if(!r.ok){var e=await r.text();throw new Error(e);}
+    showToast('Lead saved!');
+    closeLogLead();
+    // reload list
+    setTimeout(loadLeads,400);
+  }catch(e){
+    console.error(e);
+    showToast('Save failed: '+e.message);
+    btn.disabled=false;btn.textContent='Save Lead';
+  }
+}
+
 // ─── FACEBOOK LEADS ───────────────────────────────────────────────────────
 var _leadsLoaded=false;
 var _seenLeadIds=new Set(JSON.parse(localStorage.getItem('seenLeadIds')||'[]'));
@@ -1928,7 +2009,7 @@ async function loadLeads(){
     });
     if(!r.ok)throw new Error('fetch failed');
     var leads=await r.json();
-    if(!leads.length){el.innerHTML='<div class="lead-empty">No leads yet — crawler will populate this once it starts running.</div>';return;}
+    if(!leads.length){el.innerHTML='<div class="lead-empty">No leads yet — spot someone in a group? Hit <strong>+ Log Lead</strong> above to save it.</div>';return;}
     // Badge: count unseen
     var unseen=leads.filter(function(l){return!_seenLeadIds.has(l.id)}).length;
     var badge=document.getElementById('leadsBadge');
