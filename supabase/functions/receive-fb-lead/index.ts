@@ -131,7 +131,7 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      // SMS alert to admin
+      // SMS alert to admin (requires Twilio approval)
       const adminPhone = Deno.env.get('ADMIN_PHONE');
       const twilioSid  = Deno.env.get('TWILIO_ACCOUNT_SID');
       const twilioAuth = Deno.env.get('TWILIO_AUTH_TOKEN');
@@ -157,6 +157,30 @@ Deno.serve(async (req: Request) => {
         } catch (e) {
           console.error('SMS alert failed:', e);
         }
+      }
+
+      // Email fallback — always fires so you get notified even without Twilio
+      const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'nick@chipchug.com';
+      try {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            to: adminEmail,
+            subject: `🔥 New FB Lead: ${name || 'Unknown'}`,
+            html: `
+              <h2>New Facebook Lead Ad Submission</h2>
+              ${name    ? `<p><strong>Name:</strong> ${name}</p>`    : ''}
+              ${phone   ? `<p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>` : ''}
+              ${email   ? `<p><strong>Email:</strong> ${email}</p>`  : ''}
+              ${service ? `<p><strong>Service:</strong> ${service}</p>` : ''}
+              ${zip     ? `<p><strong>Zip:</strong> ${zip}</p>`      : ''}
+              <hr>
+              <p style="color:#888;font-size:12px">ProServ Homes Lead Ads webhook</p>
+            `,
+          },
+        });
+      } catch (e) {
+        // Email fallback failed — lead is still saved in Supabase
+        console.error('Email alert failed:', e);
       }
     }
   }
