@@ -1,0 +1,2 @@
+[functions.receive-fb-lead]
+verify_jwt = false
