@@ -1459,6 +1459,7 @@ async function appAction(action,id){
     // 1. Create contractor record if one doesn't already exist for this email
     var existing=await _sb.from('contractors').select('id').eq('email',a.email.toLowerCase()).limit(1);
     if(existing.error){showToast('Error checking contractors: '+existing.error.message);return;}
+    var _payoutPct=typeof a.payout_pct==='number'?a.payout_pct:0.30;
     if(!existing.data||!existing.data.length){
       var svcs=[];try{svcs=JSON.parse(a.services||'[]');}catch(e){}
       var newRow={
@@ -1467,10 +1468,14 @@ async function appAction(action,id){
         phone:a.phone||null,
         specialty:svcs[0]||null,
         bio:a.bio||null,
-        stripe_onboarded:false
+        stripe_onboarded:false,
+        payout_pct:_payoutPct
       };
       var ins=await _sb.from('contractors').insert([newRow]);
       if(ins.error){showToast('Could not create contractor: '+ins.error.message);return;}
+    } else {
+      // Contractor already exists — update payout_pct from application
+      await _sb.from('contractors').update({payout_pct:_payoutPct}).eq('email',a.email.toLowerCase());
     }
     // 2. Send welcome email + SMS
     await sendSmsNotification({event:'contractor_welcome',applicant:{name:a.name,email:a.email}});

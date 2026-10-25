@@ -457,6 +457,15 @@ var _photoFiles=[];
 var _expCount=0;
 var _coiFile=null;
 
+// Tier detection — URL param ?r= maps to payout rate (not visible to applicant)
+var _tierMap={'oct':0.30,'fall':0.20};
+var _payoutPct=(function(){
+  try{
+    var p=new URLSearchParams(window.location.search).get('r');
+    return _tierMap[p]||0.30; // default 30% if no param or unknown
+  }catch(e){return 0.30;}
+})();
+
 function showForm(){
   var modal=document.getElementById('formModal');
   modal.style.display='block';
@@ -602,7 +611,8 @@ async function submitApplication(){
     photo_urls:JSON.stringify(photoUrls),
     coi_url:coiUrl,
     services:JSON.stringify(svcs),
-    status:'pending'
+    status:'pending',
+    payout_pct:_payoutPct
   };
 
   var saved=false;
