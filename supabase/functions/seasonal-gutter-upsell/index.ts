@@ -129,15 +129,14 @@ Deno.serve(async (req) => {
       address: string;
     }> = await queryResp.json();
 
-    // Only snow-related services
+    // Only snow-related services with at least a phone or email
     const snowJobs = jobs.filter(
       (j) =>
         (j.service?.toLowerCase().includes("snow") ||
          j.service?.toLowerCase().includes("plowing") ||
-         j.service?.toLowerCase().includes("plowing") ||
          j.service?.toLowerCase().includes("salting") ||
          j.service?.toLowerCase().includes("de-icing")) &&
-        j.phone
+        (j.phone || j.email)
     );
 
     console.log(`Found ${snowJobs.length} snow job(s) eligible for gutter upsell`);
@@ -147,15 +146,52 @@ Deno.serve(async (req) => {
     for (const job of snowJobs) {
       const firstName = (job.client || "there").split(" ")[0];
 
-      const msg =
+      const smsMsg =
         `Hi ${firstName}! Glad we kept your driveway clear this winter ❄️ ` +
         `Spring is the best time to get your gutters cleaned before the rainy season. ` +
         `ProServ Homes handles gutter cleaning starting at $149. ` +
         `Reply YES for a free quote or call (848) 276-7239. — ProServ Homes`;
 
-      const smsSent = await sendTwilioSms(accountSid, authToken, job.phone!, msg);
+      let notified = false;
 
-      if (smsSent) {
+      // Try SMS first
+      if (job.phone) {
+        const smsSent = await sendTwilioSms(accountSid, authToken, job.phone, smsMsg);
+        if (smsSent) notified = true;
+      }
+
+      // Email fallback — always send if homeowner has email (covers Twilio pending period)
+      if (job.email) {
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+            method: "POST",
+            headers: {
+              apikey: serviceKey,
+              Authorization: `Bearer ${serviceKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              to: job.email,
+              subject: `🌿 Spring gutter cleaning — book before the rush`,
+              html: `
+                <p>Hi ${firstName},</p>
+                <p>Glad we kept your driveway clear this winter! ❄️</p>
+                <p>Spring is the best time to get your gutters cleaned before the rainy season hits. Clogged gutters cause water damage fast — we make it easy.</p>
+                <p><strong>Gutter cleaning starting at $149.</strong></p>
+                <p><a href="https://proservhomes.co/gutter-cleaning" style="background:#1a73e8;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:8px">Get a Free Quote</a></p>
+                <p>Or call us at <a href="tel:8482767239">(848) 276-7239</a></p>
+                <hr>
+                <p style="color:#888;font-size:12px">ProServ Homes · Ocean &amp; Monmouth County NJ</p>
+              `,
+            }),
+          });
+          notified = true;
+        } catch (e) {
+          console.error(`Email failed for ${job.client}:`, e);
+        }
+      }
+
+      if (notified) {
         // Mark so we never double-send
         await fetch(`${supabaseUrl}/rest/v1/jobs?id=eq.${job.id}`, {
           method: "PATCH",
@@ -169,7 +205,7 @@ Deno.serve(async (req) => {
         });
         results.push(`✓ gutter upsell → ${job.client} (${job.id})`);
       } else {
-        results.push(`✗ ${job.client} — SMS failed`);
+        results.push(`✗ ${job.client} — SMS + email both failed`);
       }
 
       await new Promise((r) => setTimeout(r, 500));

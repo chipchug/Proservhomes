@@ -129,9 +129,9 @@ Deno.serve(async (req) => {
       address: string;
     }> = await queryResp.json();
 
-    // Only gutter-related services
+    // Only gutter-related services with at least a phone or email
     const gutterJobs = jobs.filter(
-      (j) => j.service?.toLowerCase().includes("gutter") && j.phone
+      (j) => j.service?.toLowerCase().includes("gutter") && (j.phone || j.email)
     );
 
     console.log(`Found ${gutterJobs.length} gutter job(s) eligible for snow upsell`);
@@ -141,15 +141,51 @@ Deno.serve(async (req) => {
     for (const job of gutterJobs) {
       const firstName = (job.client || "there").split(" ")[0];
 
-      const msg =
+      const smsMsg =
         `Hi ${firstName}! Glad your gutters are all set 🍂 With winter coming, ` +
         `are you covered for snow removal? ProServ Homes offers seasonal snow contracts ` +
         `— one flat price, we handle every storm. Reply YES for a quick quote or call ` +
         `(848) 276-7239. — ProServ Homes`;
 
-      const smsSent = await sendTwilioSms(accountSid, authToken, job.phone!, msg);
+      let notified = false;
 
-      if (smsSent) {
+      // Try SMS first
+      if (job.phone) {
+        const smsSent = await sendTwilioSms(accountSid, authToken, job.phone, smsMsg);
+        if (smsSent) notified = true;
+      }
+
+      // Email fallback — always send if homeowner has email (covers Twilio pending period)
+      if (job.email) {
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+            method: "POST",
+            headers: {
+              apikey: serviceKey,
+              Authorization: `Bearer ${serviceKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              to: job.email,
+              subject: `❄️ Winter snow removal — are you covered?`,
+              html: `
+                <p>Hi ${firstName},</p>
+                <p>Glad your gutters are all set! 🍂 With winter coming, are you covered for snow removal?</p>
+                <p>ProServ Homes offers <strong>seasonal snow contracts</strong> — one flat price and we handle every storm so you never have to worry.</p>
+                <p><a href="https://proservhomes.co/snow-removal" style="background:#1a73e8;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:8px">Get a Free Quote</a></p>
+                <p>Or call us at <a href="tel:8482767239">(848) 276-7239</a></p>
+                <hr>
+                <p style="color:#888;font-size:12px">ProServ Homes · Ocean &amp; Monmouth County NJ</p>
+              `,
+            }),
+          });
+          notified = true;
+        } catch (e) {
+          console.error(`Email failed for ${job.client}:`, e);
+        }
+      }
+
+      if (notified) {
         // Mark so we never double-send
         await fetch(`${supabaseUrl}/rest/v1/jobs?id=eq.${job.id}`, {
           method: "PATCH",
@@ -163,7 +199,7 @@ Deno.serve(async (req) => {
         });
         results.push(`✓ snow upsell → ${job.client} (${job.id})`);
       } else {
-        results.push(`✗ ${job.client} — SMS failed`);
+        results.push(`✗ ${job.client} — SMS + email both failed`);
       }
 
       await new Promise((r) => setTimeout(r, 500));
