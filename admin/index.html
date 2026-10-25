@@ -2025,26 +2025,39 @@ async function loadLeads(){
     if(badge){if(unseen>0){badge.textContent=unseen;badge.classList.remove('hidden')}else{badge.classList.add('hidden')}}
     el.innerHTML=leads.map(function(l){
       var isNew=!_seenLeadIds.has(l.id);
+      var isLeadAd=(l.source==='lead_ad')||(l.group_url||'').startsWith('fb_lead_ad:');
       var _groupKey=(l.group_url||'').split('/').filter(Boolean).pop()||'';
       var _groupMap={'1Dw8yaKhxG':'NJ Community (94.5K)','1FUAwV7YE1':'NJ Community (17.9K)','1Ech8gSZSf':'NJ Community (27.4K)','1JKZvDwnfN':'NJ Community (29.9K)','18acVjAWCP':'NJ Contractors (75.2K)'};
-      var groupName=_groupMap[_groupKey]||_groupKey||'Facebook Group';
+      var groupName=isLeadAd?'📣 Facebook Lead Ad':(_groupMap[_groupKey]||_groupKey||'Facebook Group');
       var keywords=l.text_snippet?extractKws(l.text_snippet,groupName):'';
-      var reply=generateReply(keywords,groupName);
+      var reply=generateReply(keywords+(l.lead_service||''),groupName);
       var when=l.seen_at?timeAgo(new Date(l.seen_at)):'';
       var snippet=esc(l.text_snippet||'').slice(0,200);
-      return '<div class="lead-card'+(isNew?' lead-new':'')+'" id="lead-'+l.id+'">'
-        +(isNew?'<div style="position:absolute;top:10px;right:10px;background:var(--orange);color:#fff;font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:100px">NEW</div>':'')
-        +'<div class="lead-group">'+esc(groupName)+'</div>'
-        +'<div class="lead-snippet">"'+snippet+(l.text_snippet&&l.text_snippet.length>200?'…':'')+'"</div>'
-        +(keywords?'<div class="lead-kw">'+keywords.split(',').map(function(k){return'<span>'+esc(k.trim())+'</span>'}).join('')+'</div>':'')
-        +'<div style="font-size:11px;font-weight:700;color:var(--fg-2);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase">Suggested reply</div>'
-        +'<div class="lead-reply" id="reply-'+l.id+'">'+esc(reply)+'</div>'
-        +'<div class="lead-actions">'
-        +'<button class="lead-copy" onclick="copyReply(\''+l.id+'\',\''+escAttr(reply)+'\')">📋 Copy Reply</button>'
-        +'<a class="lead-link" href="'+esc(l.post_url||'https://facebook.com')+'" target="_blank">🔗 View Post</a>'
-        +'</div>'
-        +'<div class="lead-time">'+when+'</div>'
-        +'</div>';
+      var html='<div class="lead-card'+(isNew?' lead-new':'')+'"'+(isLeadAd?' style="border-color:var(--orange);border-width:1.5px"':'')+' id="lead-'+l.id+'">';
+      // NEW badge
+      if(isNew)html+='<div style="position:absolute;top:10px;right:10px;background:var(--orange);color:#fff;font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:100px">NEW</div>';
+      html+='<div class="lead-group">'+esc(groupName)+'</div>';
+      // Lead Ad: show name + phone prominently
+      if(isLeadAd&&(l.lead_name||l.lead_phone)){
+        html+='<div style="display:flex;flex-direction:column;gap:4px;margin:8px 0 10px;background:var(--orange-dim);border-radius:10px;padding:10px 12px">';
+        if(l.lead_name) html+='<div style="font-size:16px;font-weight:700;color:var(--fg)">'+esc(l.lead_name)+'</div>';
+        if(l.lead_phone) html+='<a href="tel:'+esc(l.lead_phone)+'" style="font-family:\'Barlow Condensed\',sans-serif;font-size:20px;font-weight:900;color:var(--orange);text-decoration:none;letter-spacing:.02em">📞 '+esc(l.lead_phone)+'</a>';
+        if(l.lead_email) html+='<div style="font-size:12px;color:var(--fg-2)">✉️ '+esc(l.lead_email)+'</div>';
+        if(l.lead_service) html+='<div style="font-size:12px;color:var(--fg-2)">🔧 '+esc(l.lead_service)+'</div>';
+        html+='</div>';
+      } else {
+        html+='<div class="lead-snippet">"'+snippet+(l.text_snippet&&l.text_snippet.length>200?'…':'')+'"</div>';
+      }
+      if(keywords)html+='<div class="lead-kw">'+keywords.split(',').map(function(k){return'<span>'+esc(k.trim())+'</span>'}).join('')+'</div>';
+      html+='<div style="font-size:11px;font-weight:700;color:var(--fg-2);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase">Suggested reply</div>';
+      html+='<div class="lead-reply" id="reply-'+l.id+'">'+esc(reply)+'</div>';
+      html+='<div class="lead-actions">';
+      html+='<button class="lead-copy" onclick="copyReply(\''+l.id+'\',\''+escAttr(reply)+'\')">📋 Copy Reply</button>';
+      if(l.post_url)html+='<a class="lead-link" href="'+esc(l.post_url)+'" target="_blank">🔗 View Post</a>';
+      html+='</div>';
+      html+='<div class="lead-time">'+when+'</div>';
+      html+='</div>';
+      return html;
     }).join('');
     // Mark all as seen
     leads.forEach(function(l){_seenLeadIds.add(l.id)});
