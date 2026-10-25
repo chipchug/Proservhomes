@@ -1,0 +1,2 @@
+[functions.seasonal-snow-upsell]
+verify_jwt = false
