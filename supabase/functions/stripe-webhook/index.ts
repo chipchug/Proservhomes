@@ -124,21 +124,7 @@ Deno.serve(async (req) => {
                 .eq("id", jobId);
             }
 
-            // Send magic link so they can set a password and log in
-            const { error: otpErr } = await supabase.auth.admin.generateLink({
-              type: "magiclink",
-              email: customerEmail,
-              options: {
-                redirectTo: "https://proservhomes.co/homeowner/?welcome=true"
-                  + (jobId ? `&job=${encodeURIComponent(jobId)}` : ""),
-              },
-            });
-
-            if (otpErr) {
-              console.error("Failed to send magic link:", otpErr.message);
-            } else {
-              console.log(`Magic link sent to ${customerEmail}`);
-            }
+            console.log(`Homeowner account ready — they will use OTP to log in at proservhomes.co/homeowner/`);
           }
         } else {
           console.log(`Homeowner account already exists for ${customerEmail} — skipping creation`);
