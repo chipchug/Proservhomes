@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     const jobId = payload.job_id ? String(payload.job_id) : null;
 
     // Success URL includes session_id so webhook can look up customer email if needed
-    const successUrl = "https://proservhomes.co/homeowner/?payment=success&session_id={CHECKOUT_SESSION_ID}"
+    const successUrl = "https://proservhomes.co/homeowner/?welcome=true&session_id={CHECKOUT_SESSION_ID}"
       + (jobId ? `&job=${encodeURIComponent(jobId)}` : "");
 
     // Build form body manually to avoid bracket-key parsing issues
