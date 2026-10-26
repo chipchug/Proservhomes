@@ -446,7 +446,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
       </label>
     </div>
 
-    <button class="submit-btn" id="submitBtn" onclick="submitApplication()">Submit Application</button>
+    <button class="submit-btn" id="submitBtn" onclick="if(!this.disabled)submitApplication()">Submit Application</button>
     <div style="text-align:center;font-size:12px;color:var(--fg-3);margin-top:12px">We typically respond within 1–2 business days.</div>
 
   </div>
@@ -554,6 +554,9 @@ function removePhoto(idx,el){
 }
 
 async function submitApplication(){
+  var btn=document.getElementById('submitBtn');
+  if(btn.disabled) return; // prevent double-submit
+
   var name=(document.getElementById('aName').value||'').trim();
   var phone=(document.getElementById('aPhone').value||'').trim();
   var email=(document.getElementById('aEmail').value||'').trim().toLowerCase();
@@ -566,7 +569,6 @@ async function submitApplication(){
   if(!bio){alert('Please tell us a bit about yourself.');return;}
   if(!_coiFile){alert('Please upload your Certificate of Insurance (COI).');return;}
 
-  var btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='Submitting…';
 
   // Collect services
