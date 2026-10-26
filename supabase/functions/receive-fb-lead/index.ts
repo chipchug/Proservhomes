@@ -135,19 +135,19 @@ function getFirstText(name: string, service: string): string {
   const svc = (service || '').toLowerCase();
 
   if (svc.includes('snow') || svc.includes('plow')) {
-    return `${greeting}, this is Nick from ProServ Homes — just got your inquiry about snow removal! We cover your area and have availability this season. What's your address so I can get you a quick quote? 🏠`;
+    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about snow removal! Quick question — are you looking for full season coverage, or more of an as-needed basis?`;
   }
   if (svc.includes('gutter')) {
-    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about gutter cleaning! We service your area and can usually get out within a few days. What's your address so I can throw together a quick quote? 🍂`;
+    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about gutter cleaning! Quick question — is this a one-time clean or are you looking for regular seasonal service?`;
   }
   if (svc.includes('light') || svc.includes('christmas')) {
-    return `${greeting}, this is Nick from ProServ Homes — just saw your inquiry about Christmas lights! We do full install and takedown. What's your address so I can get you a quote? 🎄`;
+    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about Christmas lights! Quick question — are you looking for just install, or install + takedown when the season's over?`;
   }
   if (svc.includes('pressure') || svc.includes('wash')) {
-    return `${greeting}, this is Nick from ProServ Homes — saw your request about pressure washing! We service your area. What's the address so I can pull it up and get you a price? 💧`;
+    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about pressure washing! Quick question — is this for the driveway, house exterior, or both?`;
   }
   // Generic fallback
-  return `${greeting}, this is Nick from ProServ Homes — just got your inquiry! What's your address so I can get you a quick quote? Happy to help 🏡`;
+  return `${greeting}, this is Nick from ProServ Homes — just got your inquiry! Quick question — what's the main thing you're looking to get done?`;
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
