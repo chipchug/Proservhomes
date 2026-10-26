@@ -430,6 +430,22 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
       <div class="photo-grid" id="photoGrid"></div>
     </div>
 
+    <!-- Non-Solicitation Agreement -->
+    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--fg-3);text-transform:uppercase;margin-bottom:10px">Contractor Agreement</div>
+      <p style="font-size:12px;color:var(--fg-2);line-height:1.7;margin:0 0 14px">By submitting this application, I agree to the following terms if accepted as a ProServ Homes contractor:</p>
+      <ul style="font-size:12px;color:var(--fg-2);line-height:1.8;margin:0 0 14px;padding-left:18px">
+        <li><strong>Non-Solicitation:</strong> I will not directly solicit, contact, or accept work from any client introduced to me through ProServ Homes for a period of 24 months following the completion of any ProServ-assigned job, without prior written consent from ProServ Homes.</li>
+        <li><strong>Client Confidentiality:</strong> I will keep all client contact information, job details, and pricing strictly confidential and will not use this information for personal business development.</li>
+        <li><strong>Liquidated Damages:</strong> I understand that violation of the non-solicitation clause will result in liquidated damages of $2,500 per client solicited or served outside of ProServ Homes.</li>
+        <li><strong>Independent Contractor:</strong> I am an independent contractor and am responsible for my own taxes, insurance, and licensing compliance.</li>
+      </ul>
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+        <input type="checkbox" id="agreeCheck" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:var(--orange)">
+        <span style="font-size:12px;color:var(--fg-2);line-height:1.6">I have read, understand, and agree to the ProServ Homes Contractor Agreement, including the non-solicitation and confidentiality terms above.</span>
+      </label>
+    </div>
+
     <button class="submit-btn" id="submitBtn" onclick="submitApplication()">Submit Application</button>
     <div style="text-align:center;font-size:12px;color:var(--fg-3);margin-top:12px">We typically respond within 1–2 business days.</div>
 
@@ -545,6 +561,7 @@ async function submitApplication(){
 
   if(!name){alert('Please enter your name.');return;}
   if(!phone){alert('Please enter your phone number.');return;}
+  if(!document.getElementById('agreeCheck').checked){alert('Please read and agree to the Contractor Agreement before submitting.');return;}
   if(!email||!email.includes('@')){alert('Please enter a valid email address.');return;}
   if(!bio){alert('Please tell us a bit about yourself.');return;}
   if(!_coiFile){alert('Please upload your Certificate of Insurance (COI).');return;}
