@@ -420,7 +420,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
 
     <div class="form-section">
       <div class="form-section-title">Before &amp; After Photos</div>
-      <p style="font-size:13px;color:var(--fg-3);margin-bottom:14px;line-height:1.5">Upload photos showing your work quality. Before/after pairs are ideal. Up to 10 images.</p>
+      <p style="font-size:13px;color:var(--fg-3);margin-bottom:14px;line-height:1.5">Upload at least 2 photos showing your work quality. Before/after pairs are ideal. Up to 10 images. <strong style="color:var(--orange)">Required.</strong></p>
       <div class="photo-upload-area" onclick="document.getElementById('photoInput').click()">
         <div style="font-size:32px;margin-bottom:8px">📸</div>
         <div style="font-size:14px;font-weight:600;margin-bottom:4px">Tap to upload photos</div>
@@ -568,6 +568,8 @@ async function submitApplication(){
   if(!email||!email.includes('@')){alert('Please enter a valid email address.');return;}
   if(!bio){alert('Please tell us a bit about yourself.');return;}
   if(!_coiFile){alert('Please upload your Certificate of Insurance (COI).');return;}
+  var validPhotos=_photoFiles.filter(function(f){return f!==null;});
+  if(validPhotos.length<2){alert('Please upload at least 2 work photos (before/after pairs preferred).');return;}
 
   btn.disabled=true;btn.textContent='Submitting…';
 
