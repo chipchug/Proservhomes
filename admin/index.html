@@ -1480,14 +1480,17 @@ async function appAction(action,id){
         phone:a.phone||null,
         specialty:svcs[0]||null,
         bio:a.bio||null,
+        insurance_url:a.coi_url||null,
         stripe_onboarded:false,
         payout_pct:_payoutPct
       };
       var ins=await _sb.from('contractors').insert([newRow]);
       if(ins.error){showToast('Could not create contractor: '+ins.error.message);return;}
     } else {
-      // Contractor already exists — update payout_pct from application
-      await _sb.from('contractors').update({payout_pct:_payoutPct}).eq('email',a.email.toLowerCase());
+      // Contractor already exists — update payout_pct and COI from application
+      var updFields={payout_pct:_payoutPct};
+      if(a.coi_url)updFields.insurance_url=a.coi_url;
+      await _sb.from('contractors').update(updFields).eq('email',a.email.toLowerCase());
     }
     // 2. Send welcome email + SMS
     await sendSmsNotification({event:'contractor_welcome',applicant:{name:a.name,email:a.email}});
