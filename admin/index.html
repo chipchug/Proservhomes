@@ -1061,24 +1061,36 @@ function crAddonFill(){
 }
 
 // Generate Stripe payment link via edge function
-async function genPaymentLink(priceId,linkId,svcId,btn){
+// jobIdOverride: pass a known job ID (edit modal). For new jobs (create modal), job_id is omitted
+// and the webhook will still mark the job paid once it's saved with that Stripe session.
+async function genPaymentLink(priceId,linkId,svcId,btn,jobIdOverride){
   var price=Number(document.getElementById(priceId).value)||0;
   var svcSel=document.getElementById(svcId);
   var svc=svcSel?svcSel.value:'';
   if(!price||price<=0){showToast('Enter a job price first');return;}
   if(btn){btn.textContent='…';btn.disabled=true;}
+
+  // Try to get job_id: use override, or fall back to currentJob if in the edit modal
+  var jobId=jobIdOverride||null;
+  if(!jobId&&typeof currentJob!=='undefined'&&currentJob&&currentJob.id){
+    jobId=currentJob.id;
+  }
+
+  var payload={amount:price,description:svc||'ProServ Homes Service',currency:'usd'};
+  if(jobId){payload.job_id=jobId;}
+
   try{
     var resp=await fetch(SURL+'/functions/v1/create-payment-link',{
       method:'POST',
       headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
-      body:JSON.stringify({amount:price,description:svc||'ProServ Homes Service',currency:'usd'})
+      body:JSON.stringify(payload)
     });
     var rawText=await resp.text();
-    console.log('[genPaymentLink] status:',resp.status,'body:',rawText);
+    console.log('[genPaymentLink] status:',resp.status,'body:',rawText,'job_id:',jobId||'(new job — will link on save)');
     var data={};try{data=JSON.parse(rawText);}catch(pe){showToast('Bad response ('+resp.status+'): '+rawText.slice(0,80));return;}
     if(data.url){
       document.getElementById(linkId).value=data.url;
-      showToast('Payment link generated ✓');
+      showToast(jobId?'Payment link generated ✓':'Payment link generated ✓ (save job to activate auto-tracking)');
     } else {
       showToast('Stripe error: '+(data.error||JSON.stringify(data).slice(0,80)));
     }

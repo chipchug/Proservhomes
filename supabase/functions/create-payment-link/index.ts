@@ -28,11 +28,16 @@ Deno.serve(async (req) => {
     const amountCents = Math.round(amount * 100);
     const currency = payload.currency ? String(payload.currency).toLowerCase() : "usd";
     const description = payload.description ? String(payload.description) : "ProServ Homes Service";
+    const jobId = payload.job_id ? String(payload.job_id) : null;
+
+    // Success URL includes session_id so webhook can look up customer email if needed
+    const successUrl = "https://proservhomes.co/homeowner/?payment=success&session_id={CHECKOUT_SESSION_ID}"
+      + (jobId ? `&job=${encodeURIComponent(jobId)}` : "");
 
     // Build form body manually to avoid bracket-key parsing issues
     const parts: string[] = [];
     parts.push("mode=payment");
-    parts.push("success_url=" + encodeURIComponent("https://proservhomes.co/homeowner/?payment=success"));
+    parts.push("success_url=" + encodeURIComponent(successUrl));
     parts.push("cancel_url=" + encodeURIComponent("https://proservhomes.co/homeowner/?payment=cancel"));
     parts.push("line_items[0][quantity]=1");
     parts.push("line_items[0][price_data][currency]=" + encodeURIComponent(currency));
@@ -40,6 +45,10 @@ Deno.serve(async (req) => {
     parts.push("line_items[0][price_data][product_data][name]=" + encodeURIComponent(description));
     if (payload.customer_email) {
       parts.push("customer_email=" + encodeURIComponent(String(payload.customer_email)));
+    }
+    // Pass job_id in Stripe metadata so the webhook knows which job was paid
+    if (jobId) {
+      parts.push("metadata[job_id]=" + encodeURIComponent(jobId));
     }
     const body = parts.join("&");
 

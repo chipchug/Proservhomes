@@ -87,6 +87,80 @@ Deno.serve(async (req) => {
           console.log(`Job ${jobId} marked as Paid`);
         }
       }
+
+      // ── Auto-create homeowner account ────────────────────────────────────
+      // Get customer email from Stripe session (customer_details.email is most reliable)
+      const customerEmail = session.customer_details?.email ?? session.customer_email ?? null;
+
+      if (customerEmail) {
+        // Check if this email already has an account — don't create duplicates
+        const { data: existingUsers } = await supabase.auth.admin.listUsers();
+        const alreadyExists = existingUsers?.users?.some(
+          (u) => u.email?.toLowerCase() === customerEmail.toLowerCase()
+        );
+
+        if (!alreadyExists) {
+          // Create the homeowner account
+          const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({
+            email: customerEmail,
+            email_confirm: true, // mark email as confirmed — they just paid, they're real
+            user_metadata: {
+              role: "homeowner",
+              job_id: jobId ?? null,
+              created_via: "stripe_payment",
+            },
+          });
+
+          if (createErr) {
+            console.error("Failed to create homeowner account:", createErr.message);
+          } else {
+            console.log(`Homeowner account created for ${customerEmail} (user: ${newUser?.user?.id})`);
+
+            // Link homeowner_id on the job record
+            if (jobId && newUser?.user?.id) {
+              await supabase
+                .from("jobs")
+                .update({ homeowner_id: newUser.user.id })
+                .eq("id", jobId);
+            }
+
+            // Send magic link so they can set a password and log in
+            const { error: otpErr } = await supabase.auth.admin.generateLink({
+              type: "magiclink",
+              email: customerEmail,
+              options: {
+                redirectTo: "https://proservhomes.co/homeowner/?welcome=true"
+                  + (jobId ? `&job=${encodeURIComponent(jobId)}` : ""),
+              },
+            });
+
+            if (otpErr) {
+              console.error("Failed to send magic link:", otpErr.message);
+            } else {
+              console.log(`Magic link sent to ${customerEmail}`);
+            }
+          }
+        } else {
+          console.log(`Homeowner account already exists for ${customerEmail} — skipping creation`);
+
+          // Still link job to existing user if we have both IDs
+          if (jobId) {
+            const existingUser = existingUsers?.users?.find(
+              (u) => u.email?.toLowerCase() === customerEmail.toLowerCase()
+            );
+            if (existingUser?.id) {
+              await supabase
+                .from("jobs")
+                .update({ homeowner_id: existingUser.id })
+                .eq("id", jobId);
+              console.log(`Linked job ${jobId} to existing homeowner ${existingUser.id}`);
+            }
+          }
+        }
+      } else {
+        console.warn("No customer email on Stripe session — skipping homeowner account creation");
+      }
+      // ─────────────────────────────────────────────────────────────────────
     }
 
     if (event.type === "payment_intent.payment_failed") {

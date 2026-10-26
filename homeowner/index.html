@@ -2116,6 +2116,87 @@ async function saveProfile(){
   if(typeof obShowForNewUser==='function')obShowForNewUser();
 }
 
+// ── Welcome / payment-success screen ─────────────────────────────────────
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var isWelcome = params.get('welcome') === 'true';
+  var jobId = params.get('job') || '';
+
+  if(!isWelcome) return; // normal boot path
+
+  // Inject the welcome screen HTML + styles
+  var style = document.createElement('style');
+  style.textContent = [
+    '#ps-welcome{position:fixed;inset:0;z-index:99999;background:#0a0d0a;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;font-family:"DM Sans",system-ui,sans-serif;color:#fff}',
+    '@keyframes ps-rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}',
+    '@keyframes ps-pop{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}',
+    '@keyframes ps-pulse-ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.7);opacity:0}}',
+    '.ps-wring{position:absolute;width:96px;height:96px;border-radius:50%;border:2px solid #2dba56;animation:ps-pulse-ring 1.6s ease-out infinite}',
+    '.ps-wcheck{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#1e8c42,#2dba56);display:flex;align-items:center;justify-content:center;position:relative;animation:ps-pop .55s cubic-bezier(.22,1,.36,1) .1s both}',
+    '.ps-wcheck svg{animation:ps-rise .4s ease .5s both}',
+    '.ps-wtop{display:flex;flex-direction:column;align-items:center;gap:28px;animation:ps-rise .6s ease .2s both}',
+    '.ps-wh1{font-size:clamp(28px,7vw,38px);font-weight:800;line-height:1.1;letter-spacing:-.02em;margin:0;background:linear-gradient(135deg,#fff 60%,rgba(255,255,255,.55));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}',
+    '.ps-wh2{font-size:16px;color:rgba(255,255,255,.55);line-height:1.6;max-width:300px;margin:0}',
+    '.ps-wcards{display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;animation:ps-rise .6s ease .45s both}',
+    '.ps-wcard{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px;text-align:left}',
+    '.ps-wcard-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}',
+    '.ps-wcard-icon.green{background:rgba(45,186,86,.15);}',
+    '.ps-wcard-icon.blue{background:rgba(59,130,246,.15);}',
+    '.ps-wcard-icon.orange{background:rgba(240,114,48,.15);}',
+    '.ps-wcard-body{flex:1}',
+    '.ps-wcard-title{font-size:14px;font-weight:700;color:#fff;margin:0 0 2px}',
+    '.ps-wcard-desc{font-size:12px;color:rgba(255,255,255,.45);margin:0;line-height:1.5}',
+    '.ps-wbtn{margin-top:8px;width:100%;max-width:340px;padding:16px;background:linear-gradient(135deg,#1e8c42,#2dba56);border:none;border-radius:14px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:.01em;font-family:inherit;animation:ps-rise .6s ease .65s both;box-shadow:0 4px 20px rgba(45,186,86,.35);transition:transform .15s,box-shadow .15s}',
+    '.ps-wbtn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(45,186,86,.45)}',
+    '.ps-wbtn:active{transform:translateY(0)}',
+    '.ps-wlogo{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-top:32px;animation:ps-rise .5s ease .8s both}'
+  ].join('');
+  document.head.appendChild(style);
+
+  var div = document.createElement('div');
+  div.id = 'ps-welcome';
+  div.innerHTML = [
+    '<div class="ps-wtop">',
+      '<div style="position:relative;width:88px;height:88px">',
+        '<div class="ps-wring"></div>',
+        '<div class="ps-wcheck">',
+          '<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+        '</div>',
+      '</div>',
+      '<div>',
+        '<h1 class="ps-wh1">You\'re all set!</h1>',
+        '<p class="ps-wh2">Payment received. Your ProServ Homes account is ready — check your email for your login link.</p>',
+      '</div>',
+    '</div>',
+    '<div class="ps-wcards">',
+      '<div class="ps-wcard">',
+        '<div class="ps-wcard-icon green">✓</div>',
+        '<div class="ps-wcard-body">',
+          '<p class="ps-wcard-title">Payment Confirmed</p>',
+          '<p class="ps-wcard-desc">Your payment was processed successfully</p>',
+        '</div>',
+      '</div>',
+      '<div class="ps-wcard">',
+        '<div class="ps-wcard-icon blue">✉</div>',
+        '<div class="ps-wcard-body">',
+          '<p class="ps-wcard-title">Check Your Email</p>',
+          '<p class="ps-wcard-desc">We sent you a magic link to access your homeowner portal</p>',
+        '</div>',
+      '</div>',
+      '<div class="ps-wcard">',
+        '<div class="ps-wcard-icon orange">📋</div>',
+        '<div class="ps-wcard-body">',
+          '<p class="ps-wcard-title">Job Updates</p>',
+          '<p class="ps-wcard-desc">Track your service, photos, and messages — all in one place</p>',
+        '</div>',
+      '</div>',
+    '</div>',
+    '<button class="ps-wbtn" onclick="(function(){document.getElementById(\'ps-welcome\').style.display=\'none\';window.history.replaceState({},\'\',\'/homeowner/\');})()">Go to My Portal →</button>',
+    '<div class="ps-wlogo">ProServ Homes</div>'
+  ].join('');
+  document.body.appendChild(div);
+})();
+
 (async function(){
   if(!_sb){ return; }
   try{
