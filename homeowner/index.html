@@ -2191,11 +2191,8 @@ async function saveProfile(){
         '</div>',
       '</div>',
     '</div>',
-    '<div style="width:100%;max-width:340px;background:rgba(45,186,86,.1);border:1px solid rgba(45,186,86,.3);border-radius:14px;padding:18px 20px;text-align:center;animation:ps-rise .6s ease .65s both">',
-      '<div style="font-size:22px;margin-bottom:8px">📬</div>',
-      '<p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#fff">Check your email</p>',
-      '<p style="margin:0;font-size:13px;color:rgba(255,255,255,.5);line-height:1.6">We sent you a link to access your<br>homeowner account. Click it to log in.</p>',
-    '</div>',
+    '<button class="ps-wbtn" onclick="(function(){document.getElementById(\'ps-welcome\').style.display=\'none\';window.history.replaceState({},\'\',\'/homeowner/\');})()">Login to My Account →</button>',
+    '<p style="font-size:12px;color:rgba(255,255,255,.3);margin:4px 0 0;animation:ps-rise .5s ease .75s both">Or check your email for a direct login link</p>',
     '<div class="ps-wlogo">ProServ Homes</div>'
   ].join('');
   document.body.appendChild(div);
