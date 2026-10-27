@@ -85,6 +85,42 @@ Deno.serve(async (req) => {
           // Return 200 anyway so Stripe doesn't retry — log it
         } else {
           console.log(`Job ${jobId} marked as Paid`);
+
+          // ── Fire review request SMS 1 hour after payment ─────────────────
+          // Fetch job details to get homeowner phone + name
+          const { data: jobRow } = await supabase
+            .from("jobs")
+            .select("client, phone, service, address")
+            .eq("id", jobId)
+            .single();
+
+          if (jobRow?.phone) {
+            const firstName = (jobRow.client || "there").split(" ")[0];
+            const reviewMsg =
+              `Hi ${firstName}! Thanks for choosing ProServ Homes 🙏 ` +
+              `We'd really appreciate a quick Google review — it helps us a ton. ` +
+              `Here's the link: https://g.page/r/proservhomes/review ` +
+              `Only takes 30 seconds! — Nick @ ProServ Homes`;
+
+            // Schedule 1-hour delay via send-sms function
+            // We call it after a 5-second buffer so the job record is fully settled
+            await new Promise((r) => setTimeout(r, 5000));
+
+            try {
+              await supabase.functions.invoke("send-sms", {
+                body: {
+                  event: "review_request",
+                  homeowner: { name: jobRow.client, phone: jobRow.phone },
+                  job: { id: jobId, service: jobRow.service, address: jobRow.address },
+                  custom_message: reviewMsg,
+                },
+              });
+              console.log(`Review request queued for ${jobRow.phone}`);
+            } catch (smsErr) {
+              console.error("Review request SMS failed:", smsErr);
+            }
+          }
+          // ─────────────────────────────────────────────────────────────────
         }
       }
 

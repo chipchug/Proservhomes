@@ -56,14 +56,14 @@ interface PersonInfo {
 }
 
 interface SmsPayload {
-  event: "job_booked" | "job_accepted" | "job_completed" | "job_cancelled" | "otp" | "payout_request" | "review_request" | "payment_reminder";
+  event: "job_booked" | "job_accepted" | "job_completed" | "job_cancelled" | "otp" | "payout_request" | "review_request" | "payment_reminder" | "referral_ask";
   job?: JobInfo;
   homeowner?: PersonInfo;
   contractor?: PersonInfo;
   amount?: number;
   otp_code?: string;
   recipient_phone?: string;
-  custom_message?: string; // used by review_request to pass fully-formed SMS body
+  custom_message?: string; // used by review_request / referral_ask to pass fully-formed SMS body
 }
 
 async function sendTwilioSms(
@@ -204,6 +204,16 @@ function buildMessages(payload: SmsPayload): Array<{ to: string; body: string; r
     return msgs;
   }
 
+  if (event === "referral_ask") {
+    // → Homeowner: referral ask after positive review
+    const phone = homeowner?.phone ?? payload.recipient_phone;
+    const body = payload.custom_message;
+    if (phone && body) {
+      msgs.push({ to: phone, recipient: "homeowner", body });
+    }
+    return msgs;
+  }
+
   if (event === "payment_reminder") {
     // → Homeowner: payment nudge
     if (homeowner?.phone) {
@@ -276,6 +286,7 @@ Deno.serve(async (req) => {
         payout_request: "💰 PAYOUT REQUEST",
         review_request: "⭐ REVIEW REQUEST SENT",
         payment_reminder: "💳 PAYMENT REMINDER SENT",
+        referral_ask: "🤝 REFERRAL ASK SENT",
       };
       const label = eventLabel[event] ?? event.toUpperCase();
 
