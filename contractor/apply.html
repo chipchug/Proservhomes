@@ -366,7 +366,11 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
         <div class="field"><label>Phone *</label><input id="aPhone" type="tel" placeholder="(732) 555-0000" autocomplete="tel"></div>
       </div>
       <div class="field"><label>Email Address *</label><input id="aEmail" type="email" placeholder="jake@email.com" autocomplete="email"></div>
-      <div class="field"><label>Town / City you work in</label><input id="aCity" placeholder="Freehold, NJ"></div>
+      <div class="field"><label>Home Address (Street, City, Zip) *</label><input id="aHomeAddress" placeholder="123 Main St, Toms River, NJ 08753" autocomplete="street-address"></div>
+      <div class="field"><label>Cities / Towns you can service <span style="color:var(--orange)">*</span></label>
+        <input id="aCoverage" placeholder="e.g. Toms River, Brick, Lakewood, Jackson, Howell">
+        <div style="font-size:11px;color:var(--fg-3);margin-top:5px;line-height:1.5">List every town you're willing to travel to, separated by commas. This determines which jobs you'll be offered.</div>
+      </div>
     </div>
 
     <div class="form-section">
@@ -562,8 +566,12 @@ async function submitApplication(){
   var email=(document.getElementById('aEmail').value||'').trim().toLowerCase();
   var bio=(document.getElementById('aBio').value||'').trim();
 
+  var homeAddress=(document.getElementById('aHomeAddress').value||'').trim();
+  var coverage=(document.getElementById('aCoverage').value||'').trim();
   if(!name){alert('Please enter your name.');return;}
   if(!phone){alert('Please enter your phone number.');return;}
+  if(!homeAddress){alert('Please enter your home address.');return;}
+  if(!coverage){alert('Please enter the cities/towns you can service.');return;}
   if(!document.getElementById('agreeCheck').checked){alert('Please read and agree to the Contractor Agreement before submitting.');return;}
   if(!email||!email.includes('@')){alert('Please enter a valid email address.');return;}
   if(!bio){alert('Please tell us a bit about yourself.');return;}
@@ -621,11 +629,16 @@ async function submitApplication(){
     }
   }
 
+  // Parse coverage towns into array
+  var coverageTowns=coverage.split(',').map(function(t){return t.trim();}).filter(Boolean);
+
   // Build row
   var row={
     name:name,
     email:email,
     phone:phone,
+    home_address:homeAddress,
+    coverage_towns:JSON.stringify(coverageTowns),
     bio:bio,
     experience:JSON.stringify(expItems),
     qualifications:(document.getElementById('aQuals').value||'').trim()||null,

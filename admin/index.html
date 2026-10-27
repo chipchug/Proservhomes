@@ -1381,6 +1381,7 @@ function openAppDetail(id){
   var photos=[];try{photos=Array.isArray(a.photo_urls)?a.photo_urls:JSON.parse(a.photo_urls||'[]');}catch(e){}
   var services=[];try{services=Array.isArray(a.services)?a.services:JSON.parse(a.services||'[]');}catch(e){}
   var experience=[];try{experience=Array.isArray(a.experience)?a.experience:JSON.parse(a.experience||'[]');}catch(e){}
+  var coverageTowns=[];try{coverageTowns=Array.isArray(a.coverage_towns)?a.coverage_towns:JSON.parse(a.coverage_towns||'[]');}catch(e){}
   var dt=a.created_at?new Date(a.created_at).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}):'';
   var dtRev=a.reviewed_at?new Date(a.reviewed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
   var html='';
@@ -1395,11 +1396,34 @@ function openAppDetail(id){
       +'<span style="font-size:12px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;padding:4px 10px;border-radius:20px;border:1.5px solid '+statusColor+';color:'+statusColor+'">'+statusLabel+'</span>'
     +'</div>'
   +'</div>';
+  // Missing doc warnings
+  if(!a.coi_url||!photos.length){
+    html+='<div style="background:rgba(242,99,16,.12);border:1px solid rgba(242,99,16,.35);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--orange);font-weight:700">'
+      +'⚠️ Missing: '
+      +(!a.coi_url?'COI not uploaded':'')
+      +(!a.coi_url&&!photos.length?' · ':'')
+      +(!photos.length?'No work photos uploaded':'')
+    +'</div>';
+  }
   // Meta
-  html+='<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;padding:12px 14px;background:var(--surface);border-radius:12px;border:1px solid var(--border)">'
+  html+='<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding:12px 14px;background:var(--surface);border-radius:12px;border:1px solid var(--border)">'
     +(dt?'<div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);margin-bottom:2px">Applied</div><div style="font-size:13px;font-weight:600">'+dt+'</div></div>':'')
     +(dtRev?'<div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);margin-bottom:2px">Reviewed</div><div style="font-size:13px;font-weight:600">'+dtRev+'</div></div>':'')
+    +(a.home_address?'<div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);margin-bottom:2px">Home Address</div><div style="font-size:13px;font-weight:600">'+esc(a.home_address)+'</div></div>':'')
   +'</div>';
+  // Coverage towns
+  if(coverageTowns.length){
+    html+='<div style="margin-bottom:18px"><div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Coverage Towns</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+coverageTowns.map(function(t){return'<span style="font-size:13px;font-weight:700;padding:5px 12px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:20px">'+esc(t)+'</span>'}).join('')+'</div></div>';
+  }
+  // COI
+  html+='<div style="margin-bottom:18px"><div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Certificate of Insurance (COI)</div>';
+  if(a.coi_url){
+    html+='<a href="'+esc(a.coi_url)+'" target="_blank" style="display:inline-flex;align-items:center;gap:7px;padding:10px 16px;background:var(--green-dim);border:1px solid var(--green);border-radius:10px;color:var(--green);font-size:14px;font-weight:700;text-decoration:none">📄 View COI Document</a>';
+  } else {
+    html+='<div style="font-size:13px;color:var(--red,#e04040);font-weight:600">⚠️ Not uploaded — request before approving</div>';
+  }
+  html+='</div>';
   // Services
   if(services.length){
     html+='<div style="margin-bottom:18px"><div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">Services Offered</div>'
