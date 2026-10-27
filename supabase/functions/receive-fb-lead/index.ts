@@ -114,14 +114,22 @@ async function sendAdminEmail(
 </html>`;
 
   try {
-    await supabase.functions.invoke('send-email', {
-      body: {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({
         to,
         subject: `🔥 New Lead: ${name || 'Unknown'} — ${displayService}`,
         html,
-      },
+      }),
     });
-    console.log('Admin email sent to', to);
+    const result = await res.json();
+    console.log('Admin email sent to', to, '— status:', res.status, JSON.stringify(result));
   } catch (e) {
     console.error('Admin email failed:', e);
   }
