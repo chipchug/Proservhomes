@@ -114,16 +114,17 @@ async function sendAdminEmail(
 </html>`;
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const res = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+    const resendKey = Deno.env.get('RESEND_API_KEY')!;
+    const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${resendKey}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${serviceRoleKey}`,
       },
       body: JSON.stringify({
-        to,
+        from: 'ProServ Homes <noreply@proservhomes.co>',
+        reply_to: 'hello@proservhomes.co',
+        to: [to],
         subject: `🔥 New Lead: ${name || 'Unknown'} — ${displayService}`,
         html,
       }),
