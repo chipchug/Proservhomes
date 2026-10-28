@@ -413,6 +413,17 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;min-hei
           <div style="font-size:12px;color:var(--fg-3)">PDF, JPG, or PNG</div>
           <input type="file" id="coiInput" accept=".pdf,image/*" onchange="handleCOI(this)">
         </div>
+        <div id="coiPreview" style="display:none;margin-top:12px;border-radius:10px;overflow:hidden;border:1.5px solid var(--green);position:relative;">
+          <img id="coiPreviewImg" src="" alt="COI preview" style="display:none;width:100%;max-height:220px;object-fit:contain;background:var(--surface-2);">
+          <div id="coiPreviewPdf" style="display:none;padding:14px 16px;background:var(--surface-2);display:flex;align-items:center;gap:12px;">
+            <span style="font-size:28px">📄</span>
+            <div>
+              <div id="coiPreviewName" style="font-size:13px;font-weight:700;color:var(--fg)"></div>
+              <div style="font-size:11px;color:var(--green);font-weight:600;margin-top:2px">✓ COI uploaded</div>
+            </div>
+            <button onclick="removeCOI(event)" style="margin-left:auto;background:rgba(0,0,0,.5);border:none;color:#fff;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -509,10 +520,41 @@ function handleCOI(input){
   var label=document.getElementById('coiLabel');
   var icon=document.getElementById('coiIcon');
   var area=document.getElementById('coiUploadArea');
+  var preview=document.getElementById('coiPreview');
+  var previewImg=document.getElementById('coiPreviewImg');
+  var previewPdf=document.getElementById('coiPreviewPdf');
+  var previewName=document.getElementById('coiPreviewName');
   label.textContent=f.name;
   if(icon)icon.textContent='✅';
   area.style.borderColor='var(--green)';
   input.value='';
+  // Show preview
+  preview.style.display='block';
+  if(f.type.startsWith('image/')){
+    var reader=new FileReader();
+    reader.onload=function(e){previewImg.src=e.target.result;};
+    reader.readAsDataURL(f);
+    previewImg.style.display='block';
+    previewPdf.style.display='none';
+  } else {
+    previewImg.style.display='none';
+    previewPdf.style.display='flex';
+    if(previewName)previewName.textContent=f.name;
+  }
+}
+function removeCOI(e){
+  e.stopPropagation();
+  _coiFile=null;
+  var label=document.getElementById('coiLabel');
+  var icon=document.getElementById('coiIcon');
+  var area=document.getElementById('coiUploadArea');
+  var preview=document.getElementById('coiPreview');
+  var previewImg=document.getElementById('coiPreviewImg');
+  label.textContent='Tap to upload COI';
+  if(icon)icon.textContent='📄';
+  area.style.borderColor='';
+  preview.style.display='none';
+  previewImg.src='';
 }
 
 function addExp(){
