@@ -405,6 +405,15 @@ body{padding-top:56px;padding-bottom:64px}
         <div id="contractorList"></div>
       </div>
 
+      <!-- LEADS TAB -->
+      <div id="tabLeads" class="tab-pane">
+        <div class="ct-head">
+          <span class="ct-title">Leads</span>
+          <button onclick="refreshLeads()" style="display:flex;align-items:center;gap:5px;background:var(--surface-2);color:var(--fg-2);border:1px solid var(--border-2);border-radius:9px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer">↻ Refresh</button>
+        </div>
+        <div id="leadsList" style="padding:0 16px 12px"></div>
+      </div>
+
       <!-- MORE (Books + Settings) -->
       <div id="tabMore" class="tab-pane">
         <div class="books-head">Books</div>
@@ -427,6 +436,7 @@ body{padding-top:56px;padding-bottom:64px}
     <button class="nb active" onclick="switchTab('Overview',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</button>
     <button class="nb" onclick="switchTab('Jobs',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Jobs</button>
     <button class="nb" onclick="switchTab('Customers',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Contractors</button>
+    <button class="nb" onclick="switchTab('Leads',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="18" y1="11" x2="18" y2="17"/><line x1="15" y1="14" x2="21" y2="14"/></svg>Leads</button>
     <button class="nb" onclick="switchTab('More',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>More</button>
   </nav>
 </div>
@@ -645,7 +655,7 @@ async function enterApp(){
   if(_jp)setTimeout(function(){openJobDetail(_jp);},300);
 }
 
-function switchTab(n,el){['Overview','Jobs','Customers','More'].forEach(function(t){document.getElementById('tab'+t).classList.remove('active')});document.getElementById('tab'+n).classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0}
+function switchTab(n,el){['Overview','Jobs','Customers','Leads','More'].forEach(function(t){document.getElementById('tab'+t).classList.remove('active')});document.getElementById('tab'+n).classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;if(n==='Leads')loadLeads()}
 
 function renderDashboard(){
   var now=new Date();var mn=now.getMonth();var yr=now.getFullYear();
@@ -740,6 +750,222 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
 
 document.querySelectorAll('.overlay').forEach(function(el){el.addEventListener('click',function(e){if(e.target===el)el.classList.add('hidden')})});
 if(session)enterApp()
+
+/* ─── LEADS TAB ─────────────────────────────────────────── */
+var _leadsCache=[];
+var _activeLead=null;
+
+async function loadLeads(){
+  if(!_sb)return;
+  var r=await _sb.from('fb_leads').select('*').order('created_at',{ascending:false}).limit(50);
+  if(r.error){renderLeadsList([]);return}
+  _leadsCache=r.data||[];
+  renderLeadsList(_leadsCache);
+}
+
+function refreshLeads(){showToast('Refreshing…');loadLeads()}
+
+function renderLeadsList(leads){
+  var el=document.getElementById('leadsList');
+  if(!leads.length){el.innerHTML='<div style="padding:48px 0;text-align:center;color:var(--fg-3);font-size:15px">No leads yet</div>';return}
+  el.innerHTML=leads.map(function(l){
+    var svc=l.service_type||l.service||'—';
+    var ds=l.driveway_size||'';
+    var ago=timeAgo(l.created_at);
+    var initials=(l.name||'?').split(' ').map(function(w){return w[0]}).join('').toUpperCase().slice(0,2);
+    var svcColor={'Snow Removal':'#3b82f6','Seasonal Contract':'#06b6d4','Gutter Cleaning':'#f59e0b','Pressure Washing':'#10b981','Lawn Care':'#84cc16'}[svc]||'#6366f1';
+    return '<div class="lead-card" onclick="openLeadPanel(\''+esc(l.id)+'\')" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 15px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:13px">'
+      +'<div style="width:42px;height:42px;border-radius:50%;background:'+svcColor+'22;color:'+svcColor+';font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+initials+'</div>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-weight:700;font-size:15px;color:var(--fg)">'+esc(l.name||'Unknown')+'</div>'
+        +'<div style="font-size:13px;color:var(--fg-2);margin-top:2px">'+esc(svc)+(ds?' · '+esc(ds):'')+'</div>'
+      +'</div>'
+      +'<div style="text-align:right;flex-shrink:0">'
+        +'<div style="font-size:12px;color:var(--fg-3)">'+ago+'</div>'
+        +(l.phone?'<div style="font-size:12px;color:var(--fg-2);margin-top:2px">'+esc(l.phone)+'</div>':'')
+      +'</div>'
+    +'</div>'
+  }).join('');
+}
+
+function openLeadPanel(id){
+  var l=_leadsCache.find(function(x){return String(x.id)===String(id)});
+  if(!l)return;
+  _activeLead=l;
+  var svc=l.service_type||l.service||'Snow Removal';
+  var name=l.name||'there';
+  var first=name.split(' ')[0];
+  var ds=l.driveway_size||'';
+  var phone=l.phone||'';
+
+  // Build scripts for this lead
+  var scripts=buildScripts(first,svc,ds);
+  var objections=buildObjections(first,svc,ds);
+
+  var panel=document.getElementById('leadPanel');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='leadPanel';
+    panel.className='overlay';
+    document.body.appendChild(panel);
+    panel.addEventListener('click',function(e){if(e.target===panel)panel.classList.add('hidden')});
+  }
+
+  panel.innerHTML='<div class="modal" style="max-height:90vh;overflow-y:auto;padding-bottom:32px">'
+    +'<div class="modal-pill"></div>'
+    +'<div style="display:flex;align-items:center;gap:12px;padding:0 20px 16px;border-bottom:1px solid var(--border);margin-bottom:16px">'
+      +'<div style="flex:1">'
+        +'<div style="font-size:18px;font-weight:800;color:var(--fg)">'+esc(name)+'</div>'
+        +'<div style="font-size:13px;color:var(--fg-2);margin-top:2px">'+esc(svc)+(ds?' · '+esc(ds):'')+'</div>'
+        +(phone?'<div style="font-size:13px;color:var(--accent);margin-top:4px"><a href="tel:'+esc(phone)+'" style="color:var(--accent);text-decoration:none">'+esc(phone)+'</a></div>':'')
+      +'</div>'
+    +'</div>'
+
+    // SEQUENCE SECTION
+    +'<div style="padding:0 20px 4px"><div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:10px">📲 Text Sequence</div>'
+    +scripts.map(function(s){return scriptBtn(s.label,s.text,s.color)}).join('')
+    +'</div>'
+
+    // OBJECTIONS SECTION
+    +'<div style="padding:16px 20px 4px"><div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:10px">🛡 Handle Objections</div>'
+    +objections.map(function(o){return scriptBtn(o.label,o.text,'#6366f1')}).join('')
+    +'</div>'
+
+    // QUICK INFO
+    +'<div style="padding:16px 20px 0"><div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);margin-bottom:10px">📋 Lead Info</div>'
+    +'<div style="background:var(--surface-2);border-radius:12px;padding:14px 15px;font-size:13px;line-height:2;color:var(--fg-2)">'
+    +(l.name?'<b style="color:var(--fg)">Name:</b> '+esc(l.name)+'<br>':'')
+    +(phone?'<b style="color:var(--fg)">Phone:</b> '+esc(phone)+'<br>':'')
+    +(svc?'<b style="color:var(--fg)">Service:</b> '+esc(svc)+'<br>':'')
+    +(ds?'<b style="color:var(--fg)">Driveway:</b> '+esc(ds)+'<br>':'')
+    +(l.property_type?'<b style="color:var(--fg)">Property:</b> '+esc(l.property_type)+'<br>':'')
+    +(l.zip_code?'<b style="color:var(--fg)">Zip:</b> '+esc(l.zip_code)+'<br>':'')
+    +(l.created_at?'<b style="color:var(--fg)">Received:</b> '+new Date(l.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'<br>':'')
+    +'</div></div>'
+
+  +'</div>';
+  panel.classList.remove('hidden');
+}
+
+function scriptBtn(label,text,color){
+  var id='sb_'+Math.random().toString(36).slice(2,7);
+  return '<div style="margin-bottom:10px">'
+    +'<div style="font-size:12px;font-weight:700;color:'+color+';margin-bottom:4px">'+esc(label)+'</div>'
+    +'<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;line-height:1.5;color:var(--fg);white-space:pre-wrap" id="'+id+'">'+esc(text)+'</div>'
+    +'<button onclick="copyScript(\''+id+'\')" style="margin-top:6px;background:'+color+';color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.02em">Copy</button>'
+  +'</div>'
+}
+
+function copyScript(id){
+  var el=document.getElementById(id);
+  if(!el)return;
+  var txt=el.textContent;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){showToast('Copied!')}).catch(function(){fallbackCopy(txt)});
+  } else {fallbackCopy(txt)}
+}
+function fallbackCopy(txt){
+  var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('Copied!');
+}
+
+function buildScripts(first,svc,ds){
+  var isSnow=svc.toLowerCase().indexOf('snow')>-1;
+  var isSeasonal=svc.toLowerCase().indexOf('seasonal')>-1;
+  var isGutter=svc.toLowerCase().indexOf('gutter')>-1;
+  var isPressure=svc.toLowerCase().indexOf('pressure')>-1||svc.toLowerCase().indexOf('wash')>-1;
+  var isLawn=svc.toLowerCase().indexOf('lawn')>-1;
+
+  var priceHint='';
+  if(isSeasonal){
+    var pmap={'Small (1 car)':'$299','Small':'$299','Medium (2 cars)':'$399','Medium':'$399','Large (3+ cars)':'$499','Large':'$499'};
+    priceHint=pmap[ds]||'starting at $299';
+  }
+
+  var svcLine=isSnow?'snow removal':isSeasonal?'seasonal snow contract':isGutter?'gutter cleaning':isPressure?'pressure washing':isLawn?'lawn care':'property services';
+
+  return [
+    {
+      label:'1️⃣  First Touch',
+      color:'#3b82f6',
+      text:'Hey '+first+'! This is Nick from ProServ Homes 👋 I got your request for '+svcLine+' — appreciate you reaching out! Just wanted to connect and make sure we get you taken care of. Do you have a quick minute to chat, or would you prefer I just send everything over text? Reply STOP to opt out.'
+    },
+    {
+      label:'2️⃣  Follow Up (no reply after 24h)',
+      color:'#f59e0b',
+      text:'Hey '+first+', just circling back from ProServ Homes! Still want to get your '+svcLine+' squared away before the season hits. Takes 2 min to get you a quote — just let me know what works best 🙏'
+    },
+    {
+      label:'3️⃣  Quote'+(priceHint?' ('+priceHint+')':''),
+      color:'#10b981',
+      text:'Hey '+first+'! So based on your'+(ds?' '+ds+' driveway':' info')+', here\'s what we\'re looking at:\n\n'
+        +(isSeasonal
+          ? '❄️ Seasonal Snow Contract: '+priceHint+'\nCovers unlimited plowing all season — we come out every time it snows, no calls needed. Way cheaper than paying per storm.\n\nWant to lock it in? I can get you confirmed today 👊'
+          : isSnow
+          ? '❄️ Snow Removal: $75–$125 per visit depending on accumulation\nOr ask me about our seasonal contract — better deal if you want zero hassle all winter.\n\nWant me to lock you in?'
+          : isGutter
+          ? '🍂 Gutter Cleaning: starting at $149 for most homes\nWe clean, flush, and make sure everything\'s draining right.\n\nWant to get on the schedule?'
+          : isPressure
+          ? '💦 Pressure Washing: starting at $199\nDriveway, walkway, siding — we do it all.\n\nWant to set a date?'
+          : '📋 Based on your request, I\'ll put together a custom quote for you. Can you tell me a bit more about what you need done?'
+        )
+    },
+    {
+      label:'4️⃣  Close',
+      color:'#8b5cf6',
+      text:'Hey '+first+'! Just wanted to follow up one more time — spots are filling up fast for this season and I\'d hate for you to miss out 😅 If you\'re ready to move forward, I can get you locked in right now. Takes 2 minutes. What do you say?'
+    }
+  ]
+}
+
+function buildObjections(first,svc,ds){
+  var isSeasonal=svc.toLowerCase().indexOf('seasonal')>-1;
+  var pmap={'Small (1 car)':'$299','Small':'$299','Medium (2 cars)':'$399','Medium':'$399','Large (3+ cars)':'$499','Large':'$499'};
+  var price=isSeasonal?(pmap[ds]||'$299'):'$75';
+
+  return [
+    {
+      label:'💰 Price is too much',
+      text:'Hey '+first+', totally get it — nobody wants to overpay! Here\'s the math though: if we get 5+ storms this winter (and last year we had 8), you\'re paying $75–$125 each time — that\'s $375–$1,000+. The seasonal locks you in at '+price+' flat, storms or not. It\'s basically free after 4 plows 🤷 Want to do it?'
+    },
+    {
+      label:'🛡 Are you insured?',
+      text:'100% yes — ProServ Homes carries full general liability insurance. I can send you the certificate of insurance (COI) right now if you need it. We\'re fully covered, so you have nothing to worry about 👍'
+    },
+    {
+      label:'💳 Can I pay after?',
+      text:'Totally flexible on that! For seasonal contracts we ask for 50% upfront to hold your spot, then the rest after first service. For one-time jobs we can do payment right when we\'re done. We take Venmo, Zelle, card — whatever\'s easiest for you 🙌'
+    },
+    {
+      label:'❄️ Do you plow the whole street?',
+      text:'Great question — we plow your driveway, walkway, and any areas you want cleared on your property. The public street is handled by the town/municipality. But we\'ll make sure your driveway meets the street cleanly so you can get in and out no problem 👊'
+    },
+    {
+      label:'🕐 How fast do you come after a storm?',
+      text:'We aim to be out within 2–4 hours of the storm ending — sooner for seasonal contract customers since they get priority! We monitor the weather and dispatch automatically, so you don\'t have to call us or remind us. You\'ll just wake up and your driveway will be done 💪'
+    },
+    {
+      label:'🔄 What if it snows again right after?',
+      text:'With the seasonal contract — unlimited plowing, no limit on visits! If it snows 3 times in a week we come out 3 times, same price. That\'s the whole point of the seasonal 😊 You literally never have to think about it.'
+    },
+    {
+      label:'📅 I\'ll wait and see',
+      text:'Totally understand '+first+'! Just heads up — spots go fast before the first snow hits and then everyone\'s scrambling. Last year we were full by mid-November. I\'m not trying to pressure you, just don\'t want you stuck in a storm with no one to call 😬 Happy to hold a spot for you — just say the word.'
+    },
+    {
+      label:'🤔 I need to talk to my spouse',
+      text:'Of course, makes total sense! Just send them this: ProServ Homes is a local NJ company, fully insured, unlimited plowing all season at a flat rate — '+price+' for your size driveway. No surprise charges, no calling around after every storm. Happy to answer any questions they have too 🙏'
+    }
+  ]
+}
+
+function timeAgo(ts){
+  if(!ts)return'';
+  var d=new Date(ts);var now=new Date();var s=Math.floor((now-d)/1000);
+  if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';if(s<604800)return Math.floor(s/86400)+'d ago';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
 
 (function(){
   var _t=JSON.parse(localStorage.getItem('ps_theme')||'"dark"');
