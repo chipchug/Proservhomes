@@ -8,6 +8,7 @@
  *   FB_VERIFY_TOKEN       — any string you choose; paste into Meta webhook settings
  *   ADMIN_PHONE           — your cell e.g. +17321234567 (for SMS alert to you)
  *   ADMIN_EMAIL           — your email e.g. nick@chipchug.com
+ *   RESEND_API_KEY        — from resend.com dashboard
  *   TWILIO_ACCOUNT_SID
  *   TWILIO_AUTH_TOKEN
  *
@@ -24,7 +25,7 @@ const PROSERV_NAME = 'ProServ Homes';
 
 // ── SMS helpers ───────────────────────────────────────────────────────────────
 
-async function sendSms(sid: string, auth: string, to: string, body: string) {
+async function sendSms(sid: string, auth: string, to: string, body: string): Promise<boolean> {
   try {
     const res = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
@@ -38,10 +39,15 @@ async function sendSms(sid: string, auth: string, to: string, body: string) {
       }
     );
     const data = await res.json();
-    if (data.error_code) console.error('Twilio error:', data.message);
-    else console.log('SMS sent to', to, 'SID:', data.sid);
+    if (data.error_code) {
+      console.error('Twilio error:', data.error_code, data.message);
+      return false;
+    }
+    console.log('SMS sent to', to, 'SID:', data.sid);
+    return true;
   } catch (e) {
     console.error('SMS send failed:', e);
+    return false;
   }
 }
 
@@ -55,7 +61,6 @@ function normalizePhone(raw: string): string {
 // ── Email helper ──────────────────────────────────────────────────────────────
 
 async function sendAdminEmail(
-  supabase: any,
   to: string,
   name: string,
   phone: string,
@@ -63,7 +68,15 @@ async function sendAdminEmail(
   service: string,
   zip: string,
   formName: string
-) {
+): Promise<boolean> {
+  const resendKey = Deno.env.get('RESEND_API_KEY');
+
+  // Guard: if key missing, log clearly and return false so SMS fallback fires
+  if (!resendKey) {
+    console.error('RESEND_API_KEY is not set in Supabase secrets — email cannot send');
+    return false;
+  }
+
   const displayService = service || 'Not specified';
   const callLink = phone ? `tel:${normalizePhone(phone)}` : '#';
   const firstTextTemplate = getFirstText(name, service);
@@ -114,7 +127,6 @@ async function sendAdminEmail(
 </html>`;
 
   try {
-    const resendKey = Deno.env.get('RESEND_API_KEY')!;
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -130,9 +142,16 @@ async function sendAdminEmail(
       }),
     });
     const result = await res.json();
-    console.log('Admin email sent to', to, '— status:', res.status, JSON.stringify(result));
+    if (res.status >= 200 && res.status < 300) {
+      console.log('Admin email sent to', to, '— status:', res.status, JSON.stringify(result));
+      return true;
+    } else {
+      console.error('Admin email FAILED — status:', res.status, JSON.stringify(result));
+      return false;
+    }
   } catch (e) {
-    console.error('Admin email failed:', e);
+    console.error('Admin email exception:', e);
+    return false;
   }
 }
 
@@ -144,19 +163,19 @@ function getFirstText(name: string, service: string): string {
   const svc = (service || '').toLowerCase();
 
   if (svc.includes('snow') || svc.includes('plow')) {
-    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about snow removal! Quick question — are you looking for full season coverage, or more of an as-needed basis?`;
+    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about snow removal! Quick question — are you looking for full season coverage, or more of an as-needed basis? Reply STOP to opt out.`;
   }
   if (svc.includes('gutter')) {
-    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about gutter cleaning! Quick question — is this a one-time clean or are you looking for regular seasonal service?`;
+    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about gutter cleaning! Quick question — is this a one-time clean or are you looking for regular seasonal service? Reply STOP to opt out.`;
   }
   if (svc.includes('light') || svc.includes('christmas')) {
-    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about Christmas lights! Quick question — are you looking for just install, or install + takedown when the season's over?`;
+    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about Christmas lights! Quick question — are you looking for just install, or install + takedown when the season's over? Reply STOP to opt out.`;
   }
   if (svc.includes('pressure') || svc.includes('wash')) {
-    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about pressure washing! Quick question — is this for the driveway, house exterior, or both?`;
+    return `${greeting}, this is Nick from ProServ Homes — saw your inquiry about pressure washing! Quick question — is this for the driveway, house exterior, or both? Reply STOP to opt out.`;
   }
   // Generic fallback
-  return `${greeting}, this is Nick from ProServ Homes — just got your inquiry! Quick question — what's the main thing you're looking to get done?`;
+  return `${greeting}, this is Nick from ProServ Homes — just got your inquiry! Quick question — what's the main thing you're looking to get done? Reply STOP to opt out.`;
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
@@ -186,7 +205,7 @@ Deno.serve(async (req: Request) => {
   catch { return new Response('Bad JSON', { status: 400 }); }
 
   const pageAccessToken = Deno.env.get('FB_PAGE_ACCESS_TOKEN');
-  const adminPhone      = Deno.env.get('ADMIN_PHONE');
+  const adminPhone      = Deno.env.get('ADMIN_PHONE') || '+17322770299'; // fallback to Nick's number
   const adminEmail      = Deno.env.get('ADMIN_EMAIL') || 'nick@chipchug.com';
   const twilioSid       = Deno.env.get('TWILIO_ACCOUNT_SID');
   const twilioAuth      = Deno.env.get('TWILIO_AUTH_TOKEN');
@@ -206,6 +225,8 @@ Deno.serve(async (req: Request) => {
       const formId: string    = change.value?.form_id;
       if (!leadgenId) continue;
 
+      console.log('Processing lead:', leadgenId, 'form:', formId);
+
       // Fetch full lead from Graph API
       let leadData: any = {};
       try {
@@ -213,8 +234,13 @@ Deno.serve(async (req: Request) => {
           `https://graph.facebook.com/v19.0/${leadgenId}?access_token=${pageAccessToken}`
         );
         leadData = await res.json();
+        if (leadData.error) {
+          console.error('Graph API returned error:', JSON.stringify(leadData.error));
+        } else {
+          console.log('Graph API success — fields:', (leadData.field_data || []).map((f: any) => f.name).join(', '));
+        }
       } catch (e) {
-        console.error('Graph API error:', e);
+        console.error('Graph API fetch failed:', e);
       }
 
       // Parse fields
@@ -230,6 +256,8 @@ Deno.serve(async (req: Request) => {
       const service = fields['service']      || fields['which_service']    ||
                       fields['services_needed'] || fields['service_type'] || '';
       const formName = leadData.form_id ? `Form ${leadData.form_id}` : 'Lead Ad';
+
+      console.log('Parsed lead — name:', name, '| phone:', phone, '| service:', service, '| zip:', zip);
 
       const snippetParts = [name, zip, service].filter(Boolean);
       const textSnippet  = snippetParts.join(' · ') || 'Facebook Lead Ad';
@@ -255,19 +283,30 @@ Deno.serve(async (req: Request) => {
           post_url:     null,
           seen_at:      new Date().toISOString(),
         });
+      } else {
+        console.log('Lead saved to fb_leads table');
       }
 
-      // ── 1. Email admin (always fires) ──────────────────────────────────────
-      await sendAdminEmail(supabase, adminEmail, name, phone, email, service, zip, formName);
+      // ── 1. Email admin ─────────────────────────────────────────────────────
+      const emailSent = await sendAdminEmail(adminEmail, name, phone, email, service, zip, formName);
 
-      // ── 2. SMS alert to admin ──────────────────────────────────────────────
-      if (adminPhone && twilioSid && twilioAuth) {
-        const smsBody = `🔥 New Lead: ${name || 'Unknown'}\n${phone ? '📞 ' + phone + '\n' : ''}${service ? '🔧 ' + service + '\n' : ''}${zip ? '📍 ' + zip : ''}`.trim();
+      // ── 2. SMS alert to admin (always fires as fallback) ───────────────────
+      // Fires regardless of email success — this is your guaranteed notification
+      if (twilioSid && twilioAuth && adminPhone) {
+        const smsBody = [
+          `🔥 New Lead: ${name || 'Unknown'}`,
+          phone   ? `📞 ${phone}`   : '',
+          service ? `🔧 ${service}` : '',
+          zip     ? `📍 ${zip}`     : '',
+          emailSent ? '' : '⚠️ Email failed — check Resend',
+        ].filter(Boolean).join('\n');
+
         await sendSms(twilioSid, twilioAuth, adminPhone, smsBody);
+      } else {
+        console.warn('SMS admin alert skipped — missing TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or ADMIN_PHONE');
       }
 
       // ── 3. Auto-text the prospect ──────────────────────────────────────────
-      // Fires when Twilio is approved for A2P messaging
       if (phone && twilioSid && twilioAuth) {
         const prospectPhone = normalizePhone(phone);
         const firstText = getFirstText(name, service);
