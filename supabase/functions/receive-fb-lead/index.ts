@@ -126,33 +126,43 @@ async function sendAdminEmail(
 </body>
 </html>`;
 
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'ProServ Homes <noreply@proservhomes.co>',
-        reply_to: 'hello@proservhomes.co',
-        to: [to],
-        subject: `🔥 New Lead: ${name || 'Unknown'} — ${displayService}`,
-        html,
-      }),
-    });
-    const result = await res.json();
-    if (res.status >= 200 && res.status < 300) {
-      console.log('Admin email sent to', to, '— status:', res.status, JSON.stringify(result));
-      return true;
-    } else {
-      console.error('Admin email FAILED — status:', res.status, JSON.stringify(result));
-      return false;
+  // Try primary from address first, fall back to Resend's always-verified domain
+  const fromAddresses = [
+    'ProServ Homes <noreply@proservhomes.co>',
+    'ProServ Homes <onboarding@resend.dev>',
+  ];
+
+  for (const fromAddr of fromAddresses) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: fromAddr,
+          reply_to: 'hello@proservhomes.co',
+          to: [to],
+          subject: `🔥 New Lead: ${name || 'Unknown'} — ${displayService}`,
+          html,
+        }),
+      });
+      const result = await res.json();
+      if (res.status >= 200 && res.status < 300) {
+        console.log('Admin email sent from', fromAddr, '→', to, '| id:', result.id);
+        return true;
+      } else {
+        console.error('Email attempt failed from', fromAddr, '| status:', res.status, '| error:', JSON.stringify(result));
+        // Loop continues — try next from address
+      }
+    } catch (e) {
+      console.error('Email exception from', fromAddr, ':', e);
     }
-  } catch (e) {
-    console.error('Admin email exception:', e);
-    return false;
   }
+
+  console.error('ALL email attempts failed for lead:', name);
+  return false;
 }
 
 // ── First text templates by service ──────────────────────────────────────────
