@@ -738,7 +738,14 @@ textarea{resize:vertical;min-height:80px}
           <button class="mbtn" style="background:var(--surface-2);border:1px solid var(--border);font-size:13px" onclick="printStatement(document.getElementById('booksMonth').value,null)">📄 All Jobs PDF</button>
           <button class="mbtn" style="background:var(--surface-2);border:1px solid var(--border);font-size:13px" onclick="openContractorStatementPicker()">👷 By Contractor</button>
         </div>
-        <div style="padding:14px 16px 0"><button class="bf bfg2" onclick="doLogout()">Sign Out</button></div>
+        <!-- ── Email System Diagnostics ───────────────────────────────── -->
+        <div class="books-head">🔧 System</div>
+        <div style="padding:8px 14px 14px;display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;color:var(--fg-3)">Test that the email system is working end-to-end. Results will appear below.</div>
+          <button class="mbtn" style="background:var(--surface-2);border:1px solid var(--border);font-size:13px" onclick="testEmailSystem()">📧 Test Email System</button>
+          <div id="emailTestResult" style="display:none;background:var(--surface-2);border-radius:10px;padding:12px 14px;font-size:12px;font-family:monospace;white-space:pre-wrap;word-break:break-all;color:var(--fg)"></div>
+        </div>
+        <div style="padding:0 16px 14px"><button class="bf bfg2" onclick="doLogout()">Sign Out</button></div>
       </div>
 
     </div>
@@ -752,6 +759,23 @@ textarea{resize:vertical;min-height:80px}
     <button class="nb" onclick="switchTab('Leads',this);loadLeads()" id="navLeads" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Leads<span id="leadsBadge" class="req-badge hidden"></span></button>
     <button class="nb" onclick="switchTab('More',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>More</button>
   </nav>
+</div>
+
+<!-- EMAIL ERROR MODAL -->
+<div class="overlay hidden" id="emailErrorModal" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal" style="max-height:80vh;overflow-y:auto">
+    <div class="modal-pill"></div>
+    <div class="modal-title" style="color:#e55">⚠️ Email Failed</div>
+    <div id="emailErrorMsg" style="background:var(--surface-2);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--fg);margin-bottom:14px;line-height:1.5"></div>
+    <div style="font-size:12px;color:var(--fg-3);margin-bottom:14px">
+      <strong>To fix this:</strong><br>
+      1. Go to <a href="https://supabase.com/dashboard" target="_blank" style="color:var(--orange)">supabase.com/dashboard</a> → your project → Edge Functions<br>
+      2. Confirm <code>send-email</code> is deployed and recent<br>
+      3. Check Project Settings → Edge Functions → Secrets → confirm <code>RESEND_API_KEY</code> is set<br>
+      4. Re-deploy the function if needed
+    </div>
+    <button class="bf bfg2" onclick="document.getElementById('emailErrorModal').classList.add('hidden')">OK</button>
+  </div>
 </div>
 
 <!-- REQUEST DETAIL MODAL -->
@@ -1699,14 +1723,14 @@ async function appAction(action,id){
     }
     // 2. Send welcome email + SMS
     var wErr=await sendSmsNotification({event:'contractor_welcome',applicant:{name:a.name,email:a.email}});
-    if(wErr){showToast('⚠️ Email failed: '+wErr,6000);return;}
+    if(wErr){showEmailError('Sending welcome email to '+a.name+' ('+a.email+') failed:\n\n'+wErr+'\n\nThe contractor record was created. You can retry by clicking "↻ Resend Welcome Email" once the email issue is fixed.\n\nGo to More → Test Email System to diagnose.');return;}
     // 3. Mark application welcomed
     await _sb.from('applications').update({status:'welcomed',reviewed_at:new Date().toISOString()}).eq('id',id);
     a.status='welcomed';renderApplications();showToast('Contractor account created + welcome email sent to '+a.name+' 🎉');
   } else if(action==='resend_welcome'){
     if(!confirm('Resend welcome email to '+a.name+' ('+a.email+')?'))return;
     var wErr2=await sendSmsNotification({event:'contractor_welcome',applicant:{name:a.name,email:a.email}});
-    if(wErr2){showToast('⚠️ Resend failed: '+wErr2,6000);return;}
+    if(wErr2){showEmailError('Resending welcome email to '+a.name+' ('+a.email+') failed:\n\n'+wErr2+'\n\nGo to More → Test Email System to diagnose.');return;}
     showToast('Welcome email resent to '+a.name+' ✓');
   }
 }
@@ -2144,23 +2168,77 @@ function showToast(msg,ms){var t=document.getElementById('toast');t.textContent=
 
 // ─── NOTIFICATION HELPER (SMS + Email) ────────────────────────────────────
 // Returns null on success, error string on failure (email only — SMS is best-effort)
+// PRIMARY notification function — email first, SMS best-effort
 async function sendSmsNotification(payload){
-  var opts={method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify(payload)};
-  // SMS — fire and forget (best effort)
-  fetch(SURL+'/functions/v1/send-sms',opts).then(function(r){return r.json();}).then(function(d){console.log('[SMS]',payload.event,'sent:',d.sent,'failed:',d.failed);}).catch(function(e){console.warn('[SMS] error:',e);});
-  // Email — awaited so callers can detect failures
+  var headers={'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY};
+  var body=JSON.stringify(payload);
+
+  // ── EMAIL (primary, awaited) ──────────────────────────────────────────────
+  var emailErr=null;
   try{
-    var r=await fetch(SURL+'/functions/v1/send-email',opts);
-    var d=await r.json();
-    console.log('[Email]',payload.event,'full response:',JSON.stringify(d),'status:',r.status);
-    if(!r.ok)return 'HTTP '+r.status+': '+(d.error||d.message||'unknown error');
-    if(d.sent===0||d.sent==='0')return 'Email not sent: '+(d.message||'no recipients found — check email address in application');
-    if(d.failed&&d.failed>0)return 'Delivery failed for '+d.failed+' recipient(s)';
-    return null;
+    var er=await fetch(SURL+'/functions/v1/send-email',{method:'POST',headers:headers,body:body});
+    var ed=await er.json();
+    console.log('[Email]',payload.event,'→ HTTP',er.status,'response:',JSON.stringify(ed));
+    if(!er.ok)emailErr='HTTP '+er.status+': '+(ed.error||ed.message||'edge function error');
+    else if(ed.sent===0||ed.sent==='0')emailErr='Email not sent: '+(ed.message||'no recipients — check email address');
+    else if(ed.failed&&ed.failed>0)emailErr='Delivery failed for '+ed.failed+' recipient(s)';
   }catch(e){
-    console.warn('[Email] error:',e);
-    return String(e);
+    console.warn('[Email] fetch error:',e);
+    emailErr=String(e);
   }
+
+  // ── SMS (best-effort, fire-and-forget) ────────────────────────────────────
+  fetch(SURL+'/functions/v1/send-sms',{method:'POST',headers:headers,body:body})
+    .then(function(r){return r.json();})
+    .then(function(d){console.log('[SMS]',payload.event,'sent:',d.sent,'failed:',d.failed);})
+    .catch(function(e){console.warn('[SMS] error (non-blocking):',e);});
+
+  return emailErr; // null = success, string = error message
+}
+
+// ─── Show email error in prominent modal ─────────────────────────────────
+function showEmailError(msg){
+  document.getElementById('emailErrorMsg').textContent=msg;
+  document.getElementById('emailErrorModal').classList.remove('hidden');
+}
+
+// ─── Test Email System ───────────────────────────────────────────────────
+async function testEmailSystem(){
+  var btn=event.target;
+  var res=document.getElementById('emailTestResult');
+  btn.disabled=true;btn.textContent='Testing…';
+  res.style.display='block';
+  res.style.color='var(--fg)';
+  res.textContent='Sending test email to nick@chipchug.com…\n';
+  try{
+    var payload={
+      event:'contractor_welcome',
+      contractor:{name:'Test Contractor',email:'nick@chipchug.com',phone:'555-0100',specialty:'Test',bio:'Diagnostic test'},
+      contractors:[{name:'Test Contractor',email:'nick@chipchug.com',phone:'555-0100',specialty:'Test',bio:'Diagnostic test'}]
+    };
+    var r=await fetch(SURL+'/functions/v1/send-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      body:JSON.stringify(payload)
+    });
+    var d=await r.json();
+    var summary='HTTP Status: '+r.status+'\nResponse:\n'+JSON.stringify(d,null,2);
+    if(r.ok&&d.sent>0){
+      res.style.color='var(--green)';
+      res.textContent='✅ SUCCESS — Email sent!\n\n'+summary;
+    } else {
+      res.style.color='#e55';
+      res.textContent='❌ FAILED\n\n'+summary+'\n\n--- What this means ---\n'+(
+        !r.ok?'Edge function returned HTTP '+r.status+'. The function may not be deployed or has a code error.':
+        d.message&&d.message.indexOf('RESEND_API_KEY')>=0?'RESEND_API_KEY secret is NOT configured in Supabase. Go to Project Settings → Edge Functions → Secrets and add it.':
+        d.sent===0?'Edge function ran but sent 0 emails. Check the response message above.':'Unknown failure.'
+      );
+    }
+  }catch(e){
+    res.style.color='#e55';
+    res.textContent='❌ NETWORK ERROR — Could not reach edge function\n\n'+String(e)+'\n\nThe send-email function may not exist or the Supabase project URL may be wrong.';
+  }
+  btn.disabled=false;btn.textContent='📧 Test Email System';
 }
 
 // ─── STRIPE: Send Payment Link ────────────────────────────────────────────
