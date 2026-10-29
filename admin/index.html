@@ -523,7 +523,8 @@ textarea{resize:vertical;min-height:80px}
               <div>
                 <div class="lc-field-label">Service</div>
                 <select id="lcService" onchange="lcUpdate()" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif">
-                  <option value="snow">❄️ Snow Removal</option>
+                  <option value="snow_seasonal">❄️ Snow Removal — Seasonal</option>
+                  <option value="snow_visit">🌨️ Snow Removal — Per Visit</option>
                   <option value="gutter">🍂 Gutter Cleaning</option>
                   <option value="pressure">💦 Pressure Washing</option>
                   <option value="lights">🎄 Christmas Lights</option>
@@ -2149,7 +2150,7 @@ async function loadLeads(){
     try{localStorage.setItem('seenLeadIds',JSON.stringify([..._seenLeadIds].slice(-200)))}catch(e){}
     if(badge)badge.classList.add('hidden');
   }catch(e){console.warn('loadLeads error',e);}
-  lcRenderFields('snow',{});
+  lcRenderFields('snow_seasonal',{});
   lcUpdate();
 }
 
@@ -2163,10 +2164,11 @@ function lcPickLead(id){
   // Auto-detect service
   var svcEl=document.getElementById('lcService');
   var raw=(lead.lead_service||'').toLowerCase();
-  var svc='snow';
+  var svc='snow_seasonal';
   if(raw.includes('gutter'))svc='gutter';
   else if(raw.includes('pressure')||raw.includes('wash'))svc='pressure';
   else if(raw.includes('light')||raw.includes('christmas'))svc='lights';
+  else if(raw.includes('per visit')||raw.includes('as needed')||raw.includes('as-needed'))svc='snow_visit';
   svcEl.value=svc;
   // Build saved context values for auto-detect
   var saved={};
@@ -2184,8 +2186,12 @@ function lcPickLead(id){
 
 // Context fields config — what secondary fields each service needs
 var _lcFieldDefs={
-  snow:[
+  snow_seasonal:[
     {id:'lcDriveway',label:'Driveway Size',opts:[['unknown','Unknown'],['small','Small (1-2 cars) — $299'],['medium','Medium (3-4 cars) — $399'],['large','Large (5+ cars) — $499']]},
+    {id:'lcProperty',label:'Property Type',opts:[['sfh','Single Family Home'],['condo','Condo / Townhouse'],['commercial','Commercial']]}
+  ],
+  snow_visit:[
+    {id:'lcDriveway',label:'Driveway Size',opts:[['unknown','Unknown'],['small','Small (1-2 cars) — ~$75'],['medium','Medium (3-4 cars) — ~$100'],['large','Large (5+ cars) — ~$150']]},
     {id:'lcProperty',label:'Property Type',opts:[['sfh','Single Family Home'],['condo','Condo / Townhouse'],['commercial','Commercial']]}
   ],
   gutter:[
@@ -2222,7 +2228,7 @@ function lcRenderFields(svc,saved){
 function lcGetVals(){
   var name=(document.getElementById('lcName')||{}).value||'';
   var first=name.trim().split(' ')[0]||'';
-  var svc=(document.getElementById('lcService')||{}).value||'snow';
+  var svc=(document.getElementById('lcService')||{}).value||'snow_seasonal';
   // Read whichever context fields are currently rendered
   var drv=(document.getElementById('lcDriveway')||{}).value||'unknown';
   var prop=(document.getElementById('lcProperty')||{}).value||'sfh';
@@ -2240,22 +2246,28 @@ function lcGetVals(){
 function lcBuildScript(tab){
   var v=lcGetVals();
   var hi=v.first?'Hey '+v.first:'Hey';
-  var svcLabel={snow:'snow removal',gutter:'gutter cleaning',pressure:'pressure washing',lights:'Christmas lights',general:'home services'};
+  var svcLabel={snow_seasonal:'snow removal',snow_visit:'snow removal',gutter:'gutter cleaning',pressure:'pressure washing',lights:'Christmas lights',general:'home services'};
   var s=svcLabel[v.svc]||'snow removal';
+  var perVisitMap={small:'$75',medium:'$100',large:'$150',unknown:'our per-visit rate'};
+  var pvPrice=perVisitMap[v.drv];
   if(tab==='first'){
-    if(v.svc==='snow')return hi+', this is Nick from ProServ Homes — just got your inquiry about snow removal! Quick question — are you looking for full season coverage, or more of an as-needed basis? Reply STOP to opt out.';
+    if(v.svc==='snow_seasonal')return hi+', this is Nick from ProServ Homes — just got your inquiry about snow removal! We do seasonal contracts that cover you all winter — unlimited visits, one flat rate. Want me to shoot you the numbers for your driveway? Reply STOP to opt out.';
+    if(v.svc==='snow_visit')return hi+', this is Nick from ProServ Homes — just got your inquiry about snow removal! We do per-visit plowing — you call, we come out. No contract needed. What\'s your address so I can confirm we cover your area? Reply STOP to opt out.';
     if(v.svc==='gutter')return hi+', this is Nick from ProServ Homes — saw your inquiry about gutter cleaning! Quick question — is this a one-time clean or are you looking for regular seasonal service? Reply STOP to opt out.';
     if(v.svc==='pressure')return hi+', this is Nick from ProServ Homes — saw your inquiry about pressure washing! Is this for the driveway, house exterior, or both? Reply STOP to opt out.';
     if(v.svc==='lights')return hi+', this is Nick from ProServ Homes — saw your inquiry about Christmas lights! Are you looking for install only, or install + takedown after the season? Reply STOP to opt out.';
     return hi+', this is Nick from ProServ Homes — just got your inquiry! What\'s the main thing you\'re looking to get done? Reply STOP to opt out.';
   }
   if(tab==='followup'){
-    if(v.svc==='snow')return hi+', just following up on snow removal — we\'re heading into the busy season and seasonal spots are filling up fast. Did you get a chance to think it over? Reply STOP to opt out.';
+    if(v.svc==='snow_seasonal')return hi+', just following up on snow removal — seasonal spots are filling up as we head into the season. Did you get a chance to think it over? Reply STOP to opt out.';
+    if(v.svc==='snow_visit')return hi+', just checking in on snow removal — we\'re still taking on per-visit customers in your area. Let me know if you want to get added to the list! Reply STOP to opt out.';
     return hi+', just wanted to follow up on your '+s+' inquiry! Did you get a chance to think it over? Reply STOP to opt out.';
   }
   if(tab==='quote'){
-    if(v.svc==='snow'&&v.drv!=='unknown')return hi+', for your '+v.drive+' our seasonal snow contract is '+v.price+' for the whole winter — unlimited visits, never charged per storm. Most customers with a '+v.drive+' save $200+ vs paying each time. Want to lock it in before the season starts? Reply STOP to opt out.';
-    if(v.svc==='snow')return hi+', our seasonal snow contract covers the full winter with unlimited visits — never charged per storm. Pricing starts at $299 and depends on driveway size. Can I get your address to give you an exact quote? Reply STOP to opt out.';
+    if(v.svc==='snow_seasonal'&&v.drv!=='unknown')return hi+', for your '+v.drive+' our seasonal snow contract is '+v.price+' for the whole winter — unlimited visits, never charged per storm. Most customers with a '+v.drive+' save $200+ vs paying each time. Want to lock it in before the season starts? Reply STOP to opt out.';
+    if(v.svc==='snow_seasonal')return hi+', our seasonal snow contract covers the full winter with unlimited visits — never charged per storm. Pricing starts at $299 and depends on driveway size. Can I get your address to give you an exact quote? Reply STOP to opt out.';
+    if(v.svc==='snow_visit'&&v.drv!=='unknown')return hi+', per-visit plowing for your '+v.drive+' is '+pvPrice+' per visit — you only pay when it snows. No contract, no commitment. Want to get on the schedule? Reply STOP to opt out.';
+    if(v.svc==='snow_visit')return hi+', per-visit plowing — you pay only when we come out, no contract needed. Pricing depends on driveway size, starts at $75. What\'s your address? Reply STOP to opt out.';
     if(v.svc==='gutter'){
       var storyMap={'1':'1-story','2':'2-story','3':'3-story'};
       var stLabel=storyMap[v.stories]||'';
@@ -2276,8 +2288,9 @@ function lcBuildScript(tab){
     return hi+', I\'d love to get you a quote! Can I get your address and a quick description of the job? Reply STOP to opt out.';
   }
   if(tab==='close'){
-    if(v.svc==='snow'&&v.drv!=='unknown')return hi+', want to make sure you\'re covered before the first storm! I have a spot open for a '+v.drive+' — '+v.price+' locks in the full season. Should I get you set up? Takes 2 minutes. Reply STOP to opt out.';
-    if(v.svc==='snow')return hi+', want to make sure you\'re covered before the first storm hits NJ this season! Should I lock in a spot for you? It takes 2 minutes to get set up. Reply STOP to opt out.';
+    if(v.svc==='snow_seasonal'&&v.drv!=='unknown')return hi+', want to make sure you\'re covered before the first storm! I have a spot open for a '+v.drive+' — '+v.price+' locks in the full season. Should I get you set up? Takes 2 minutes. Reply STOP to opt out.';
+    if(v.svc==='snow_seasonal')return hi+', want to make sure you\'re covered before the first storm hits NJ this season! Should I lock in a spot for you? It takes 2 minutes to get set up. Reply STOP to opt out.';
+    if(v.svc==='snow_visit')return hi+', just want to make sure you\'re on the list before the season kicks off! No contract — you just text me when you need it and we\'ll come out. Should I add you? Reply STOP to opt out.';
     return hi+', just want to make sure we can get this on the schedule for you! Ready to move forward? Reply STOP to opt out.';
   }
   return '';
@@ -2290,13 +2303,22 @@ function lcBuildObj(type){
   var price=priceMap[v.drv];
   var perStorm={small:'$75–$100',medium:'$100–$150',large:'$150–$200'};
   var ps=perStorm[v.drv]||'$75–$150';
-  if(type==='price')return hi+', totally get it — it\'s an investment. But think about it this way: at '+ps+' per visit, you\'d break even after just 3–4 storms. With NJ winters averaging 6–10 storms, the seasonal contract at '+price+' is usually the better deal. And you never have to scramble to find someone during a blizzard. Worth it for the peace of mind alone!';
+  if(type==='price'){
+    if(v.svc==='snow_visit')return hi+', totally get it! One thing to keep in mind — per-visit is '+pvPrice+' each time we come out. If you end up needing us 5+ times this winter, the seasonal contract at '+price+' would actually save you money. Just something to consider — either way works for us!';
+    return hi+', totally get it — it\'s an investment. But think about it this way: at '+ps+' per visit, you\'d break even after just 3–4 storms. With NJ winters averaging 6–10 storms, the seasonal contract at '+price+' is usually the better deal. And you never have to scramble to find someone during a blizzard. Worth it for the peace of mind alone!';
+  }
   if(type==='spouse')return 'No problem at all — totally understand! Just so you have the numbers: '+price+' for the full season, unlimited visits. I\'ll be here whenever you\'re ready. Spots do fill up as we get closer to the season though, so just keep that in mind!';
   if(type==='someone')return 'No worries! If anything changes or they\'re not able to make it out, just reach out — I\'d be happy to jump in. We cover this area regularly so turnaround is fast. Have a great season!';
-  if(type==='wait')return hi+', totally understand wanting to see what happens first! Only thing I\'d say is we fill up fast once the first storm hits — it\'s hard to get someone out on short notice at that point. If you want, I can hold a spot for you with no commitment needed until the first snow? That way you\'re covered either way.';
+  if(type==='wait'){
+    if(v.svc==='snow_visit')return hi+', totally understand! No pressure at all — just keep my number and text me when the first storm is coming. I\'ll do my best to fit you in, though I can\'t always guarantee availability last-minute. Getting on the list now just makes it easier.';
+    return hi+', totally understand wanting to see what happens first! Only thing I\'d say is we fill up fast once the first storm hits — it\'s hard to get someone out on short notice at that point. If you want, I can hold a spot for you with no commitment needed until the first snow? That way you\'re covered either way.';
+  }
   if(type==='payafter')return hi+', I totally get it — here\'s how we do it: the seasonal contract is paid upfront, which is how we guarantee your spot and keep the price locked in all winter. If you want to do per-visit, that\'s fine too — we charge at time of service. What works best for you?';
   if(type==='response')return 'Great question! For the seasonal contract, we\'re out within 2 hours of a storm ending — usually sooner for heavy accumulation. You\'re always on the priority list, never waiting behind a last-minute call. That\'s the big difference between seasonal and as-needed.';
-  if(type==='storms')return 'Covered! The seasonal contract is unlimited visits — it doesn\'t matter if we get 3 storms or 15. You pay '+price+' once and you\'re done for the winter. If a storm drops 8 inches and then we get another one 3 days later, we come back both times. No extra charge.';
+  if(type==='storms'){
+    if(v.svc==='snow_visit')return 'With per-visit, you only pay when we come out — so a heavy storm year actually costs more, but you\'re never locked in. If you\'re thinking there might be a lot of storms, the seasonal contract at '+price+' flat could save you a decent amount. Up to you!';
+    return 'Covered! The seasonal contract is unlimited visits — it doesn\'t matter if we get 3 storms or 15. You pay '+price+' once and you\'re done for the winter. If a storm drops 8 inches and then we get another one 3 days later, we come back both times. No extra charge.';
+  }
   if(type==='insurance')return 'Absolutely — fully insured with general liability. I\'ll send you a copy of our COI (certificate of insurance) right now. Want me to text it or email it to you?';
   return '';
 }
@@ -2328,11 +2350,11 @@ function lcObj(el,type){
 function lcUpdate(){
   // Re-render context fields if service changed
   var svcEl=document.getElementById('lcService');
-  var svc=svcEl?svcEl.value:'snow';
+  var svc=svcEl?svcEl.value:'snow_seasonal';
   var container=document.getElementById('lcContextFields');
   // Only re-render if service changed (check first field id against current defs)
   if(container){
-    var defs=_lcFieldDefs[svc]||_lcFieldDefs.snow;
+    var defs=_lcFieldDefs[svc]||_lcFieldDefs.snow_seasonal;
     var firstId=defs[0]&&defs[0].id;
     if(!document.getElementById(firstId)){
       // Fields don't match current service — re-render (no saved vals, keep defaults)
