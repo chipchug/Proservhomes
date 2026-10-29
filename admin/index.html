@@ -2213,8 +2213,7 @@ async function testEmailSystem(){
   try{
     var payload={
       event:'contractor_welcome',
-      contractor:{name:'Test Contractor',email:'nick@chipchug.com',phone:'555-0100',specialty:'Test',bio:'Diagnostic test'},
-      contractors:[{name:'Test Contractor',email:'nick@chipchug.com',phone:'555-0100',specialty:'Test',bio:'Diagnostic test'}]
+      applicant:{name:'Test Contractor',email:'nick@chipchug.com',phone:'555-0100',specialty:'Test',bio:'Diagnostic test'}
     };
     var r=await fetch(SURL+'/functions/v1/send-email',{
       method:'POST',
