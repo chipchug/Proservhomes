@@ -619,6 +619,66 @@ textarea{resize:vertical;min-height:80px}
 
       <!-- MORE (Books + Settings) -->
       <div id="tabMore" class="tab-pane">
+        <!-- ── Earnings Tracker ─────────────────────────────────────────── -->
+        <div class="books-head" style="display:flex;align-items:center;justify-content:space-between">
+          <span>💰 Earnings Tracker</span>
+          <button onclick="etClearAll()" style="background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:12px;padding:4px 8px">Clear All</button>
+        </div>
+        <!-- Summary tiles -->
+        <div class="books-summary" style="margin-bottom:0">
+          <div class="bs-tile"><div class="bs-val" id="etRevTotal" style="color:var(--green)">$0</div><div class="bs-lbl">Revenue</div></div>
+          <div class="bs-tile"><div class="bs-val" id="etPayTotal" style="color:var(--orange)">$0</div><div class="bs-lbl">Paid Out</div></div>
+          <div class="bs-tile"><div class="bs-val" id="etNetTotal" style="color:var(--fg)">$0</div><div class="bs-lbl">My Net</div></div>
+        </div>
+        <!-- Log a job -->
+        <div style="padding:12px 14px 6px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Service</div>
+            <select id="etSvc" onchange="etUpdatePreview()" style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px">
+              <option value="snow_seasonal">Snow — Seasonal</option>
+              <option value="snow_visit">Snow — Per Visit</option>
+              <option value="gutter">Gutter Cleaning</option>
+              <option value="pressure">Pressure Washing</option>
+              <option value="lights">Holiday Lights</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Size / Tier</div>
+            <select id="etSize" onchange="etUpdatePreview()" style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px">
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+              <option value="custom">Custom $</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Contractor</div>
+            <select id="etTier" onchange="etUpdatePreview()" style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px">
+              <option value="20">20% tier</option>
+              <option value="30">30% tier</option>
+              <option value="35">35% tier</option>
+              <option value="0">No contractor</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Revenue ($)</div>
+            <input id="etRevInput" type="number" inputmode="decimal" placeholder="auto" oninput="etUpdatePreview()" style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px;box-sizing:border-box">
+          </div>
+        </div>
+        <div style="padding:0 14px 4px">
+          <input id="etNote" type="text" placeholder="Note (optional — name, address…)" style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px;box-sizing:border-box;margin-bottom:8px">
+          <!-- Preview row -->
+          <div id="etPreview" style="background:var(--orange-dim);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--fg);margin-bottom:8px;display:none">
+            Revenue: <strong id="etPrevRev">—</strong> &nbsp;|&nbsp; Payout: <strong id="etPrevPay">—</strong> &nbsp;|&nbsp; My Net: <strong id="etPrevNet" style="color:var(--green)">—</strong>
+          </div>
+          <button class="mbtn" style="background:var(--orange);color:#fff;font-weight:700;font-size:14px" onclick="etLog()">+ Log This Job</button>
+        </div>
+        <!-- Jobs log table -->
+        <div style="padding:6px 14px 12px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin-bottom:6px">Logged Jobs</div>
+          <div id="etLog" style="font-size:12px;color:var(--fg-3);text-align:center;padding:8px 0">No jobs logged yet.</div>
+        </div>
         <!-- ── Payout Requests ──────────────────────────────────────────── -->
         <div class="books-head" style="display:flex;align-items:center;justify-content:space-between">
           <span>Payout Requests</span>
@@ -1630,6 +1690,88 @@ async function enterApp(){
 }
 
 function switchTab(n,el){['Overview','Requests','Jobs','Customers','Leads','More'].forEach(function(t){document.getElementById('tab'+t).classList.remove('active')});document.getElementById('tab'+n).classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;}
+
+/* ── Earnings Tracker ──────────────────────────────────────────────────── */
+var _etPricing={
+  snow_seasonal:{small:299,medium:399,large:499},
+  snow_visit:{small:100,medium:135,large:170},
+  gutter:{small:149,medium:199,large:279},
+  pressure:{small:149,medium:199,large:279},
+  lights:{small:299,medium:449,large:649},
+  other:{small:0,medium:0,large:0}
+};
+function etFmt(n){return'$'+Math.round(n).toLocaleString();}
+function etUpdatePreview(){
+  var svc=document.getElementById('etSvc').value;
+  var size=document.getElementById('etSize').value;
+  var tier=parseInt(document.getElementById('etTier').value)||0;
+  var custom=parseFloat(document.getElementById('etRevInput').value)||0;
+  var base=custom||(size==='custom'?0:(_etPricing[svc]&&_etPricing[svc][size])||0);
+  if(!base){document.getElementById('etPreview').style.display='none';return;}
+  var pay=base*(tier/100);
+  var net=base-pay;
+  document.getElementById('etPrevRev').textContent=etFmt(base);
+  document.getElementById('etPrevPay').textContent=etFmt(pay)+(tier?' ('+tier+'%)':'');
+  document.getElementById('etPrevNet').textContent=etFmt(net);
+  document.getElementById('etPreview').style.display='block';
+}
+function etLoad(){
+  try{return JSON.parse(localStorage.getItem('ps_et_jobs')||'[]');}catch(e){return[];}
+}
+function etSave(jobs){
+  try{localStorage.setItem('ps_et_jobs',JSON.stringify(jobs));}catch(e){}
+}
+function etLog(){
+  var svc=document.getElementById('etSvc').value;
+  var size=document.getElementById('etSize').value;
+  var tier=parseInt(document.getElementById('etTier').value)||0;
+  var custom=parseFloat(document.getElementById('etRevInput').value)||0;
+  var base=custom||(size==='custom'?0:(_etPricing[svc]&&_etPricing[svc][size])||0);
+  if(!base){alert('Enter a revenue amount or pick a size with a known price.');return;}
+  var note=document.getElementById('etNote').value.trim();
+  var jobs=etLoad();
+  jobs.unshift({id:Date.now(),date:new Date().toISOString(),svc:svc,size:size,tier:tier,rev:base,pay:Math.round(base*(tier/100)*100)/100,net:Math.round(base*(1-tier/100)*100)/100,note:note});
+  etSave(jobs);
+  document.getElementById('etRevInput').value='';
+  document.getElementById('etNote').value='';
+  document.getElementById('etPreview').style.display='none';
+  etRender();
+}
+function etDelete(id){
+  var jobs=etLoad().filter(function(j){return j.id!==id;});
+  etSave(jobs);etRender();
+}
+function etClearAll(){
+  if(!confirm('Clear all logged jobs?'))return;
+  etSave([]);etRender();
+}
+var _etSvcLabels={snow_seasonal:'❄️ Seasonal',snow_visit:'❄️ Per Visit',gutter:'🍂 Gutters',pressure:'💧 Pressure',lights:'💡 Lights',other:'📋 Other'};
+function etRender(){
+  var jobs=etLoad();
+  var totRev=0,totPay=0,totNet=0;
+  jobs.forEach(function(j){totRev+=j.rev;totPay+=j.pay;totNet+=j.net;});
+  document.getElementById('etRevTotal').textContent=etFmt(totRev);
+  document.getElementById('etPayTotal').textContent=etFmt(totPay);
+  document.getElementById('etNetTotal').textContent=etFmt(totNet);
+  var el=document.getElementById('etLog');
+  if(!jobs.length){el.innerHTML='<div style="text-align:center;padding:8px;color:var(--fg-3);font-size:12px">No jobs logged yet.</div>';return;}
+  var rows=jobs.map(function(j){
+    var d=new Date(j.date);
+    var ds=(d.getMonth()+1)+'/'+d.getDate();
+    var sizeLabel=j.size.charAt(0).toUpperCase()+j.size.slice(1);
+    return '<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:6px 10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="font-size:11px;color:var(--fg-3)">'+ds+'</div>'
+      +'<div><div style="font-size:12px;font-weight:600">'+(_etSvcLabels[j.svc]||j.svc)+' · '+sizeLabel+(j.tier?' · '+j.tier+'%':'')+'</div>'
+      +(j.note?'<div style="font-size:11px;color:var(--fg-3)">'+j.note+'</div>':'')+'</div>'
+      +'<div style="text-align:right"><div style="font-size:12px;font-weight:700;color:var(--green)">'+etFmt(j.net)+'</div>'
+      +'<div style="font-size:10px;color:var(--fg-3)">of '+etFmt(j.rev)+'</div></div>'
+      +'<button onclick="etDelete('+j.id+')" style="background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:16px;padding:0 2px;line-height:1">×</button>'
+      +'</div>';
+  }).join('');
+  el.innerHTML=rows;
+}
+// Init on page load
+(function(){etRender();etUpdatePreview();})();
 
 function renderDashboard(){
   var now=new Date();var mn=now.getMonth();var yr=now.getFullYear();
