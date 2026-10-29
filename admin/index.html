@@ -1634,6 +1634,7 @@ async function appAction(action,id){
     var _payoutPct=typeof a.payout_pct==='number'?a.payout_pct:0.30;
     if(!existing.data||!existing.data.length){
       var svcs=[];try{svcs=JSON.parse(a.services||'[]');}catch(e){}
+      // Try insert with payout_pct; if 400 (column may not exist yet), retry without it
       var newRow={
         name:a.name,
         email:a.email.toLowerCase(),
@@ -1645,10 +1646,18 @@ async function appAction(action,id){
         payout_pct:_payoutPct
       };
       var ins=await _sb.from('contractors').insert([newRow]);
-      if(ins.error){showToast('Could not create contractor: '+ins.error.message);return;}
+      if(ins.error&&(ins.error.code==='PGRST204'||ins.error.message.indexOf('payout_pct')>=0||ins.error.message.indexOf('column')>=0)){
+        // Column missing — retry without payout_pct
+        var newRowB={name:newRow.name,email:newRow.email,phone:newRow.phone,specialty:newRow.specialty,bio:newRow.bio,insurance_url:newRow.insurance_url,stripe_onboarded:false};
+        var ins2=await _sb.from('contractors').insert([newRowB]);
+        if(ins2.error){showToast('Could not create contractor: '+ins2.error.message,5000);return;}
+      } else if(ins.error){
+        showToast('Could not create contractor: '+ins.error.message,5000);return;
+      }
     } else {
-      // Contractor already exists — update payout_pct and COI from application
-      var updFields={payout_pct:_payoutPct};
+      // Contractor already exists — try to update payout_pct and COI from application
+      var updFields={};
+      try{updFields.payout_pct=_payoutPct;}catch(e){}
       if(a.coi_url)updFields.insurance_url=a.coi_url;
       await _sb.from('contractors').update(updFields).eq('email',a.email.toLowerCase());
     }
