@@ -155,6 +155,17 @@ textarea{resize:vertical;min-height:80px}
 .lead-link{background:var(--surface-3);color:var(--fg);border:1px solid var(--border-2);border-radius:9px;padding:9px 0;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;letter-spacing:.04em;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px}
 .lead-time{font-size:11px;color:var(--fg-3);margin-top:6px}
 .lead-empty{text-align:center;padding:48px 20px;color:var(--fg-3);font-size:14px}
+/* ── LEAD COMPOSER ── */
+.lc-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.lc-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-3);margin-bottom:10px}
+.lc-field-label{font-size:11px;font-weight:700;color:var(--fg-3);margin-bottom:4px;letter-spacing:.04em;text-transform:uppercase}
+.lc-script-text{background:var(--surface-2);border:1px solid var(--border-2);border-radius:10px;padding:12px;font-size:13px;color:var(--fg);line-height:1.6;white-space:pre-wrap;min-height:80px;margin-bottom:10px}
+.lcs-tab{flex:1;padding:8px 4px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg-2);border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.lcs-tab.active{background:var(--orange);border-color:var(--orange);color:#fff}
+.lc-obj-btn{padding:9px 8px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;text-align:left;transition:all .15s;font-family:'DM Sans',sans-serif}
+.lc-obj-btn.active{background:var(--orange-dim);border-color:var(--orange);color:var(--fg)}
+.lc-copy-btn{width:100%;padding:11px;background:var(--green);border:none;color:#fff;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:opacity .15s}
+.lc-copy-btn:active{opacity:.8}
 
 /* BADGES */
 .req-badge{position:absolute;top:4px;right:4px;background:var(--orange);color:#fff;border-radius:100px;font-size:9px;font-weight:900;padding:1px 5px;line-height:1.5;min-width:16px;text-align:center}
@@ -492,14 +503,86 @@ textarea{resize:vertical;min-height:80px}
       <!-- FACEBOOK LEADS -->
       <div id="tabLeads" class="tab-pane">
         <div class="jobs-head" style="display:flex;align-items:center;justify-content:space-between">
-          <div class="jobs-title">FB Leads</div>
-          <div style="display:flex;gap:8px">
-            <button onclick="openLogLead()" style="background:var(--orange);border:none;color:#fff;border-radius:8px;padding:6px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase">+ Log Lead</button>
-            <button onclick="loadLeads()" style="background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg-2);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">↻ Refresh</button>
-          </div>
+          <div class="jobs-title">Lead Composer</div>
+          <button onclick="loadLeads()" style="background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg-2);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">↻ Refresh</button>
         </div>
-        <div style="padding:0 12px 8px;font-size:12px;color:var(--fg-2)">Leads from NJ Facebook groups. Spot one manually? Hit <strong style="color:var(--fg)">+ Log Lead</strong> to save it and get a suggested reply.</div>
-        <div id="leadsList" style="padding:0 12px 80px"></div>
+        <div id="leadsComposer" style="padding:0 12px 80px">
+
+          <!-- ── LEAD SELECTOR ── -->
+          <div class="lc-card">
+            <div class="lc-label">SELECT LEAD</div>
+            <select id="lcPicker" onchange="lcPickLead(this.value)" style="width:100%;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;margin-bottom:12px">
+              <option value="">— pick a lead to auto-fill —</option>
+            </select>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);text-align:center;margin-bottom:10px">— or enter manually —</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <div class="lc-field-label">Name</div>
+                <input id="lcName" type="text" placeholder="First Last" oninput="lcUpdate()" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif">
+              </div>
+              <div>
+                <div class="lc-field-label">Service</div>
+                <select id="lcService" onchange="lcUpdate()" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif">
+                  <option value="snow">❄️ Snow Removal</option>
+                  <option value="gutter">🍂 Gutter Cleaning</option>
+                  <option value="pressure">💦 Pressure Washing</option>
+                  <option value="lights">🎄 Christmas Lights</option>
+                  <option value="general">🏠 General</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div>
+                <div class="lc-field-label">Driveway Size</div>
+                <select id="lcDriveway" onchange="lcUpdate()" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif">
+                  <option value="unknown">Unknown</option>
+                  <option value="small">Small (1-2 cars) — $299</option>
+                  <option value="medium">Medium (3-4 cars) — $399</option>
+                  <option value="large">Large (5+ cars) — $499</option>
+                </select>
+              </div>
+              <div>
+                <div class="lc-field-label">Property Type</div>
+                <select id="lcProperty" onchange="lcUpdate()" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif">
+                  <option value="sfh">Single Family Home</option>
+                  <option value="condo">Condo / Townhouse</option>
+                  <option value="commercial">Commercial</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── TEXT SCRIPTS ── -->
+          <div class="lc-card" style="margin-top:14px">
+            <div class="lc-label">TEXT SCRIPTS</div>
+            <div style="display:flex;gap:6px;margin-bottom:12px">
+              <button class="lcs-tab active" onclick="lcTab(this,'first')">First Touch</button>
+              <button class="lcs-tab" onclick="lcTab(this,'followup')">Follow Up</button>
+              <button class="lcs-tab" onclick="lcTab(this,'quote')">Quote</button>
+              <button class="lcs-tab" onclick="lcTab(this,'close')">Close</button>
+            </div>
+            <div id="lcScriptBox" class="lc-script-text"></div>
+            <button class="lc-copy-btn" onclick="lcCopy('script')">📋 Copy Text</button>
+          </div>
+
+          <!-- ── OBJECTION HANDLERS ── -->
+          <div class="lc-card" style="margin-top:14px">
+            <div class="lc-label">OBJECTION HANDLERS</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+              <button class="lc-obj-btn" onclick="lcObj(this,'price')">💰 Too Expensive</button>
+              <button class="lc-obj-btn" onclick="lcObj(this,'spouse')">🤝 Ask Spouse First</button>
+              <button class="lc-obj-btn" onclick="lcObj(this,'someone')">👷 Already Have Someone</button>
+              <button class="lc-obj-btn" onclick="lcObj(this,'wait')">⏳ Wait and See</button>
+              <button class="lc-obj-btn" onclick="lcObj(this,'payafter')">💳 Pay After Service</button>
+              <button class="lc-obj-btn" onclick="lcObj(this,'response')">⏱️ Response Time</button>
+              <button class="lc-obj-btn" onclick="lcObj(this,'storms')">🌨️ Repeat Storms</button>
+              <button class="lc-obj-btn" onclick="lcObj(this,'insurance')">📋 Want Insurance Proof</button>
+            </div>
+            <div id="lcObjBox" class="lc-script-text hidden"></div>
+            <button id="lcObjCopyBtn" class="lc-copy-btn hidden" onclick="lcCopy('obj')">📋 Copy Response</button>
+          </div>
+
+        </div>
       </div>
 
       <!-- LOG LEAD MODAL -->
@@ -2052,72 +2135,188 @@ function generateReply(keywords,group){
   return 'Hey! ProServ Homes here — we handle all kinds of home services '+area+' (gutters, pressure washing, fencing, snow removal, and more). DM me or visit proservhomes.co for a free quote 🏠';
 }
 
+// ── LEAD COMPOSER ──────────────────────────────────────────────────────────
+var _lcLeads=[];
+var _lcActiveTab='first';
+var _lcActiveObj=null;
+
 async function loadLeads(){
-  var el=document.getElementById('leadsList');
-  if(!el)return;
-  el.innerHTML='<div class="lead-empty">Loading leads…</div>';
+  // Populate lead picker dropdown
+  var picker=document.getElementById('lcPicker');
+  if(!picker)return;
   try{
-    var r=await fetch(SURL+'/rest/v1/fb_leads?order=seen_at.desc&limit=50',{
+    var r=await fetch(SURL+'/rest/v1/fb_leads?order=seen_at.desc&limit=100',{
       headers:{apikey:SKEY,'Authorization':'Bearer '+SKEY}
     });
     if(!r.ok)throw new Error('fetch failed');
-    var leads=await r.json();
-    if(!leads.length){el.innerHTML='<div class="lead-empty">No leads yet — spot someone in a group? Hit <strong>+ Log Lead</strong> above to save it.</div>';return;}
-    // Badge: count unseen
-    var unseen=leads.filter(function(l){return!_seenLeadIds.has(l.id)}).length;
+    _lcLeads=await r.json();
+    // Update badge
+    var unseen=_lcLeads.filter(function(l){return!_seenLeadIds.has(l.id)}).length;
     var badge=document.getElementById('leadsBadge');
     if(badge){if(unseen>0){badge.textContent=unseen;badge.classList.remove('hidden')}else{badge.classList.add('hidden')}}
-    el.innerHTML=leads.map(function(l){
-      var isNew=!_seenLeadIds.has(l.id);
-      var isLeadAd=(l.source==='lead_ad')||(l.group_url||'').startsWith('fb_lead_ad:');
-      var _groupKey=(l.group_url||'').split('/').filter(Boolean).pop()||'';
-      var _groupMap={'1Dw8yaKhxG':'NJ Community (94.5K)','1FUAwV7YE1':'NJ Community (17.9K)','1Ech8gSZSf':'NJ Community (27.4K)','1JKZvDwnfN':'NJ Community (29.9K)','18acVjAWCP':'NJ Contractors (75.2K)'};
-      var groupName=isLeadAd?'📣 Facebook Lead Ad':(_groupMap[_groupKey]||_groupKey||'Facebook Group');
-      var keywords=l.text_snippet?extractKws(l.text_snippet,groupName):'';
-      var reply=generateReply(keywords+(l.lead_service||''),groupName);
-      var when=l.seen_at?timeAgo(new Date(l.seen_at)):'';
-      var snippet=esc(l.text_snippet||'').slice(0,200);
-      var html='<div class="lead-card'+(isNew?' lead-new':'')+'"'+(isLeadAd?' style="border-color:var(--orange);border-width:1.5px"':'')+' id="lead-'+l.id+'">';
-      // NEW badge
-      if(isNew)html+='<div style="position:absolute;top:10px;right:10px;background:var(--orange);color:#fff;font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:100px">NEW</div>';
-      html+='<div class="lead-group">'+esc(groupName)+'</div>';
-      // Lead Ad: show name + phone prominently
-      if(isLeadAd&&(l.lead_name||l.lead_phone)){
-        html+='<div style="display:flex;flex-direction:column;gap:4px;margin:8px 0 10px;background:var(--orange-dim);border-radius:10px;padding:10px 12px">';
-        if(l.lead_name) html+='<div style="font-size:16px;font-weight:700;color:var(--fg)">'+esc(l.lead_name)+'</div>';
-        if(l.lead_phone) html+='<a href="tel:'+esc(l.lead_phone)+'" style="font-family:\'Barlow Condensed\',sans-serif;font-size:20px;font-weight:900;color:var(--orange);text-decoration:none;letter-spacing:.02em">📞 '+esc(l.lead_phone)+'</a>';
-        if(l.lead_email) html+='<div style="font-size:12px;color:var(--fg-2)">✉️ '+esc(l.lead_email)+'</div>';
-        if(l.lead_service) html+='<div style="font-size:12px;color:var(--fg-2)">🔧 '+esc(l.lead_service)+'</div>';
-        html+='</div>';
-      } else {
-        html+='<div class="lead-snippet">"'+snippet+(l.text_snippet&&l.text_snippet.length>200?'…':'')+'"</div>';
-      }
-      if(keywords)html+='<div class="lead-kw">'+keywords.split(',').map(function(k){return'<span>'+esc(k.trim())+'</span>'}).join('')+'</div>';
-      html+='<div style="font-size:11px;font-weight:700;color:var(--fg-2);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase">Suggested reply</div>';
-      html+='<div class="lead-reply" id="reply-'+l.id+'">'+esc(reply)+'</div>';
-      html+='<div class="lead-actions">';
-      html+='<button class="lead-copy" onclick="copyReply(\''+l.id+'\',\''+escAttr(reply)+'\')">📋 Copy Reply</button>';
-      if(l.post_url)html+='<a class="lead-link" href="'+esc(l.post_url)+'" target="_blank">🔗 View Post</a>';
-      html+='</div>';
-      html+='<div class="lead-time">'+when+'</div>';
-      html+='</div>';
-      return html;
-    }).join('');
-    // Mark all as seen
-    leads.forEach(function(l){_seenLeadIds.add(l.id)});
+    // Build picker options
+    picker.innerHTML='<option value="">— pick a lead to auto-fill —</option>'+
+      _lcLeads.map(function(l){
+        var label=l.lead_name||l.text_snippet||'Lead '+l.id;
+        label=label.slice(0,40);
+        var when=l.seen_at?timeAgo(new Date(l.seen_at)):'';
+        return'<option value="'+l.id+'">'+esc(label)+(when?' · '+when:'')+'</option>';
+      }).join('');
+    // Mark all seen
+    _lcLeads.forEach(function(l){_seenLeadIds.add(l.id)});
     try{localStorage.setItem('seenLeadIds',JSON.stringify([..._seenLeadIds].slice(-200)))}catch(e){}
     if(badge)badge.classList.add('hidden');
-  }catch(e){
-    el.innerHTML='<div class="lead-empty">Couldn\'t load leads — check Supabase connection.</div>';
+  }catch(e){console.warn('loadLeads error',e);}
+  lcUpdate();
+}
+
+function lcPickLead(id){
+  if(!id){lcUpdate();return;}
+  var lead=_lcLeads.find(function(l){return String(l.id)===String(id)});
+  if(!lead)return;
+  // Auto-fill name
+  var nameEl=document.getElementById('lcName');
+  if(nameEl)nameEl.value=lead.lead_name||'';
+  // Auto-detect service
+  var svc=document.getElementById('lcService');
+  var raw=(lead.lead_service||'').toLowerCase();
+  if(raw.includes('snow')||raw.includes('plow'))svc.value='snow';
+  else if(raw.includes('gutter'))svc.value='gutter';
+  else if(raw.includes('pressure')||raw.includes('wash'))svc.value='pressure';
+  else if(raw.includes('light')||raw.includes('christmas'))svc.value='lights';
+  else svc.value='snow'; // default for winter season
+  // Auto-detect driveway from lead form fields
+  var drv=document.getElementById('lcDriveway');
+  var driveAns=(lead.driveway_size||lead.text_snippet||'').toLowerCase();
+  if(driveAns.includes('5+')||driveAns.includes('large'))drv.value='large';
+  else if(driveAns.includes('3')||driveAns.includes('4')||driveAns.includes('medium'))drv.value='medium';
+  else if(driveAns.includes('1')||driveAns.includes('2')||driveAns.includes('small'))drv.value='small';
+  else drv.value='unknown';
+  // Property type
+  var prop=document.getElementById('lcProperty');
+  var propAns=(lead.property_type||lead.text_snippet||'').toLowerCase();
+  if(propAns.includes('condo')||propAns.includes('townhouse'))prop.value='condo';
+  else if(propAns.includes('commercial')||propAns.includes('business'))prop.value='commercial';
+  else prop.value='sfh';
+  lcUpdate();
+}
+
+function lcGetVals(){
+  var name=(document.getElementById('lcName')||{}).value||'';
+  var first=name.trim().split(' ')[0]||'';
+  var svc=(document.getElementById('lcService')||{}).value||'snow';
+  var drv=(document.getElementById('lcDriveway')||{}).value||'unknown';
+  var prop=(document.getElementById('lcProperty')||{}).value||'sfh';
+  var priceMap={small:'$299',medium:'$399',large:'$499',unknown:'our seasonal rate'};
+  var price=priceMap[drv];
+  var driveLabel={small:'small driveway (1-2 cars)',medium:'medium driveway (3-4 cars)',large:'large driveway (5+ cars)',unknown:'driveway'};
+  var drive=driveLabel[drv];
+  return{name:name,first:first,svc:svc,drv:drv,prop:prop,price:price,drive:drive};
+}
+
+function lcBuildScript(tab){
+  var v=lcGetVals();
+  var hi=v.first?'Hey '+v.first:'Hey';
+  var svcLabel={snow:'snow removal',gutter:'gutter cleaning',pressure:'pressure washing',lights:'Christmas lights',general:'home services'};
+  var s=svcLabel[v.svc]||'snow removal';
+  if(tab==='first'){
+    if(v.svc==='snow')return hi+', this is Nick from ProServ Homes — just got your inquiry about snow removal! Quick question — are you looking for full season coverage, or more of an as-needed basis? Reply STOP to opt out.';
+    if(v.svc==='gutter')return hi+', this is Nick from ProServ Homes — saw your inquiry about gutter cleaning! Quick question — is this a one-time clean or are you looking for regular seasonal service? Reply STOP to opt out.';
+    if(v.svc==='pressure')return hi+', this is Nick from ProServ Homes — saw your inquiry about pressure washing! Is this for the driveway, house exterior, or both? Reply STOP to opt out.';
+    if(v.svc==='lights')return hi+', this is Nick from ProServ Homes — saw your inquiry about Christmas lights! Are you looking for install only, or install + takedown after the season? Reply STOP to opt out.';
+    return hi+', this is Nick from ProServ Homes — just got your inquiry! What\'s the main thing you\'re looking to get done? Reply STOP to opt out.';
+  }
+  if(tab==='followup'){
+    if(v.svc==='snow')return hi+', just following up on snow removal — we\'re heading into the busy season and seasonal spots are filling up fast. Did you get a chance to think it over? Reply STOP to opt out.';
+    return hi+', just wanted to follow up on your '+s+' inquiry! Did you get a chance to think it over? Reply STOP to opt out.';
+  }
+  if(tab==='quote'){
+    if(v.svc==='snow'&&v.drv!=='unknown')return hi+', for your '+v.drive+' our seasonal snow contract is '+v.price+' for the whole winter — unlimited visits, never charged per storm. Most customers with a '+v.drive+' save $200+ vs paying each time. Want to lock it in before the season starts? Reply STOP to opt out.';
+    if(v.svc==='snow')return hi+', our seasonal snow contract covers the full winter with unlimited visits — never charged per storm. Pricing starts at $299 and depends on driveway size. Can I get your address to give you an exact quote? Reply STOP to opt out.';
+    if(v.svc==='gutter')return hi+', for a single family home gutter clean we typically run $149–$249 depending on linear footage and stories. Can I get your address for an exact quote? Reply STOP to opt out.';
+    if(v.svc==='pressure')return hi+', pressure washing for a standard driveway runs $149–$199. House exterior starts at $299. Want me to give you a more exact number — what\'s the square footage roughly? Reply STOP to opt out.';
+    if(v.svc==='lights')return hi+', Christmas light installs start at $299 for a standard roofline. Can I get your address and a quick description of what you\'re thinking — roofline only, bushes, trees? Reply STOP to opt out.';
+    return hi+', I\'d love to get you a quote! Can I get your address and a quick description of the job? Reply STOP to opt out.';
+  }
+  if(tab==='close'){
+    if(v.svc==='snow'&&v.drv!=='unknown')return hi+', want to make sure you\'re covered before the first storm! I have a spot open for a '+v.drive+' — '+v.price+' locks in the full season. Should I get you set up? Takes 2 minutes. Reply STOP to opt out.';
+    if(v.svc==='snow')return hi+', want to make sure you\'re covered before the first storm hits NJ this season! Should I lock in a spot for you? It takes 2 minutes to get set up. Reply STOP to opt out.';
+    return hi+', just want to make sure we can get this on the schedule for you! Ready to move forward? Reply STOP to opt out.';
+  }
+  return '';
+}
+
+function lcBuildObj(type){
+  var v=lcGetVals();
+  var hi=v.first?'Hey '+v.first:'Hey';
+  var priceMap={small:'$299',medium:'$399',large:'$499',unknown:'our seasonal rate'};
+  var price=priceMap[v.drv];
+  var perStorm={small:'$75–$100',medium:'$100–$150',large:'$150–$200'};
+  var ps=perStorm[v.drv]||'$75–$150';
+  if(type==='price')return hi+', totally get it — it\'s an investment. But think about it this way: at '+ps+' per visit, you\'d break even after just 3–4 storms. With NJ winters averaging 6–10 storms, the seasonal contract at '+price+' is usually the better deal. And you never have to scramble to find someone during a blizzard. Worth it for the peace of mind alone!';
+  if(type==='spouse')return 'No problem at all — totally understand! Just so you have the numbers: '+price+' for the full season, unlimited visits. I\'ll be here whenever you\'re ready. Spots do fill up as we get closer to the season though, so just keep that in mind!';
+  if(type==='someone')return 'No worries! If anything changes or they\'re not able to make it out, just reach out — I\'d be happy to jump in. We cover this area regularly so turnaround is fast. Have a great season!';
+  if(type==='wait')return hi+', totally understand wanting to see what happens first! Only thing I\'d say is we fill up fast once the first storm hits — it\'s hard to get someone out on short notice at that point. If you want, I can hold a spot for you with no commitment needed until the first snow? That way you\'re covered either way.';
+  if(type==='payafter')return hi+', I totally get it — here\'s how we do it: the seasonal contract is paid upfront, which is how we guarantee your spot and keep the price locked in all winter. If you want to do per-visit, that\'s fine too — we charge at time of service. What works best for you?';
+  if(type==='response')return 'Great question! For the seasonal contract, we\'re out within 2 hours of a storm ending — usually sooner for heavy accumulation. You\'re always on the priority list, never waiting behind a last-minute call. That\'s the big difference between seasonal and as-needed.';
+  if(type==='storms')return 'Covered! The seasonal contract is unlimited visits — it doesn\'t matter if we get 3 storms or 15. You pay '+price+' once and you\'re done for the winter. If a storm drops 8 inches and then we get another one 3 days later, we come back both times. No extra charge.';
+  if(type==='insurance')return 'Absolutely — fully insured with general liability. I\'ll send you a copy of our COI (certificate of insurance) right now. Want me to text it or email it to you?';
+  return '';
+}
+
+function lcTab(el,tab){
+  _lcActiveTab=tab;
+  document.querySelectorAll('.lcs-tab').forEach(function(b){b.classList.remove('active')});
+  el.classList.add('active');
+  lcUpdate();
+}
+
+function lcObj(el,type){
+  // Toggle off if already active
+  if(_lcActiveObj===type){
+    _lcActiveObj=null;
+    document.querySelectorAll('.lc-obj-btn').forEach(function(b){b.classList.remove('active')});
+    var box=document.getElementById('lcObjBox');
+    var btn=document.getElementById('lcObjCopyBtn');
+    if(box){box.textContent='';box.classList.add('hidden');}
+    if(btn)btn.classList.add('hidden');
+    return;
+  }
+  _lcActiveObj=type;
+  document.querySelectorAll('.lc-obj-btn').forEach(function(b){b.classList.remove('active')});
+  el.classList.add('active');
+  lcUpdate();
+}
+
+function lcUpdate(){
+  // Update script box
+  var box=document.getElementById('lcScriptBox');
+  if(box)box.textContent=lcBuildScript(_lcActiveTab);
+  // Update objection box if one is selected
+  if(_lcActiveObj){
+    var obox=document.getElementById('lcObjBox');
+    var obtn=document.getElementById('lcObjCopyBtn');
+    if(obox){obox.textContent=lcBuildObj(_lcActiveObj);obox.classList.remove('hidden');}
+    if(obtn)obtn.classList.remove('hidden');
   }
 }
 
-function extractKws(snippet,group){
-  var t=(snippet||'').toLowerCase();
-  var kws=['gutter','gutters','pressure wash','power wash','fence','fencing','dryer vent',
-           'christmas lights','holiday lights','snow removal','snow plow','plowing',
-           'concrete','pavers','patio','handyman'];
-  return kws.filter(function(k){return t.includes(k)}).join(', ');
+function lcCopy(which){
+  var text='';
+  if(which==='script'){text=(document.getElementById('lcScriptBox')||{}).textContent||'';}
+  else{text=(document.getElementById('lcObjBox')||{}).textContent||'';}
+  if(!text)return;
+  var btn=document.querySelector(which==='script'?'.lc-copy-btn':'#lcObjCopyBtn');
+  navigator.clipboard.writeText(text).then(function(){
+    if(btn){var orig=btn.textContent;btn.textContent='✓ Copied!';setTimeout(function(){btn.textContent=orig;},1800);}
+  }).catch(function(){
+    // Fallback
+    var ta=document.createElement('textarea');
+    ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');if(btn){var orig=btn.textContent;btn.textContent='✓ Copied!';setTimeout(function(){btn.textContent=orig;},1800);}}catch(e){}
+    document.body.removeChild(ta);
+  });
 }
 
 function copyReply(leadId,reply){
@@ -2126,7 +2325,6 @@ function copyReply(leadId,reply){
     var btn=document.querySelector('#lead-'+leadId+' .lead-copy');
     if(btn){var orig=btn.innerHTML;btn.innerHTML='✓ Copied!';btn.style.background='var(--orange)';setTimeout(function(){btn.innerHTML=orig;btn.style.background=''},1800);}
   }).catch(function(){
-    // Fallback: select text in the reply div
     var div=document.getElementById('reply-'+leadId);
     if(div){var r=document.createRange();r.selectNodeContents(div);window.getSelection().removeAllRanges();window.getSelection().addRange(r);}
   });
