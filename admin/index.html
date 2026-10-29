@@ -1654,14 +1654,14 @@ async function appAction(action,id){
     }
     // 2. Send welcome email + SMS
     var wErr=await sendSmsNotification({event:'contractor_welcome',applicant:{name:a.name,email:a.email}});
-    if(wErr){showToast('⚠️ Email send failed: '+wErr);return;}
+    if(wErr){showToast('⚠️ Email failed: '+wErr,6000);return;}
     // 3. Mark application welcomed
     await _sb.from('applications').update({status:'welcomed',reviewed_at:new Date().toISOString()}).eq('id',id);
     a.status='welcomed';renderApplications();showToast('Contractor account created + welcome email sent to '+a.name+' 🎉');
   } else if(action==='resend_welcome'){
     if(!confirm('Resend welcome email to '+a.name+' ('+a.email+')?'))return;
     var wErr2=await sendSmsNotification({event:'contractor_welcome',applicant:{name:a.name,email:a.email}});
-    if(wErr2){showToast('⚠️ Resend failed: '+wErr2);return;}
+    if(wErr2){showToast('⚠️ Resend failed: '+wErr2,6000);return;}
     showToast('Welcome email resent to '+a.name+' ✓');
   }
 }
@@ -2095,7 +2095,7 @@ function statusBadge(s){var mp={'New':'badge-new','Scheduled':'badge-sched','In 
 function fmtDate(s){if(!s)return'—';var d=new Date(s+'T12:00:00');return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function closeModal(id){document.getElementById(id).classList.add('hidden')}
-function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
+function showToast(msg,ms){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},ms||2500)}
 
 // ─── NOTIFICATION HELPER (SMS + Email) ────────────────────────────────────
 // Returns null on success, error string on failure (email only — SMS is best-effort)
@@ -2107,9 +2107,10 @@ async function sendSmsNotification(payload){
   try{
     var r=await fetch(SURL+'/functions/v1/send-email',opts);
     var d=await r.json();
-    console.log('[Email]',payload.event,'sent:',d.sent,'failed:',d.failed);
+    console.log('[Email]',payload.event,'full response:',JSON.stringify(d),'status:',r.status);
     if(!r.ok)return 'HTTP '+r.status+': '+(d.error||d.message||'unknown error');
-    if(d.failed&&d.failed.length&&!d.sent)return 'Delivery failed for: '+d.failed.map(function(f){return f.to||f}).join(', ');
+    if(d.sent===0||d.sent==='0')return 'Email not sent: '+(d.message||'no recipients found — check email address in application');
+    if(d.failed&&d.failed>0)return 'Delivery failed for '+d.failed+' recipient(s)';
     return null;
   }catch(e){
     console.warn('[Email] error:',e);
