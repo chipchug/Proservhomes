@@ -1598,6 +1598,9 @@ function openAppDetail(id){
   if(a.status==='approved'){
     html+='<button onclick="appAction(\'welcome\',\''+a.id+'\');closeAppDetail()" style="padding:14px;background:var(--green,#22c55e);border:none;border-radius:12px;color:#fff;font-weight:800;font-size:15px;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">🎉 Send Welcome Email</button>';
   }
+  if(a.status==='welcomed'){
+    html+='<button onclick="appAction(\'resend_welcome\',\''+a.id+'\');closeAppDetail()" style="padding:14px;background:var(--surface-2);border:1px solid var(--green,#22c55e);border-radius:12px;color:var(--green,#22c55e);font-weight:800;font-size:15px;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">↻ Resend Welcome Email</button>';
+  }
   html+='</div>';
   body.innerHTML=html;
   modal.style.display='block';
@@ -1650,10 +1653,16 @@ async function appAction(action,id){
       await _sb.from('contractors').update(updFields).eq('email',a.email.toLowerCase());
     }
     // 2. Send welcome email + SMS
-    await sendSmsNotification({event:'contractor_welcome',applicant:{name:a.name,email:a.email}});
+    var wErr=await sendSmsNotification({event:'contractor_welcome',applicant:{name:a.name,email:a.email}});
+    if(wErr){showToast('⚠️ Email send failed: '+wErr);return;}
     // 3. Mark application welcomed
     await _sb.from('applications').update({status:'welcomed',reviewed_at:new Date().toISOString()}).eq('id',id);
     a.status='welcomed';renderApplications();showToast('Contractor account created + welcome email sent to '+a.name+' 🎉');
+  } else if(action==='resend_welcome'){
+    if(!confirm('Resend welcome email to '+a.name+' ('+a.email+')?'))return;
+    var wErr2=await sendSmsNotification({event:'contractor_welcome',applicant:{name:a.name,email:a.email}});
+    if(wErr2){showToast('⚠️ Resend failed: '+wErr2);return;}
+    showToast('Welcome email resent to '+a.name+' ✓');
   }
 }
 /* ─────────────────────────────────────────────────────────────────── */
@@ -2089,10 +2098,23 @@ function closeModal(id){document.getElementById(id).classList.add('hidden')}
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
 
 // ─── NOTIFICATION HELPER (SMS + Email) ────────────────────────────────────
-function sendSmsNotification(payload){
+// Returns null on success, error string on failure (email only — SMS is best-effort)
+async function sendSmsNotification(payload){
   var opts={method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify(payload)};
+  // SMS — fire and forget (best effort)
   fetch(SURL+'/functions/v1/send-sms',opts).then(function(r){return r.json();}).then(function(d){console.log('[SMS]',payload.event,'sent:',d.sent,'failed:',d.failed);}).catch(function(e){console.warn('[SMS] error:',e);});
-  fetch(SURL+'/functions/v1/send-email',opts).then(function(r){return r.json();}).then(function(d){console.log('[Email]',payload.event,'sent:',d.sent,'failed:',d.failed);}).catch(function(e){console.warn('[Email] error:',e);});
+  // Email — awaited so callers can detect failures
+  try{
+    var r=await fetch(SURL+'/functions/v1/send-email',opts);
+    var d=await r.json();
+    console.log('[Email]',payload.event,'sent:',d.sent,'failed:',d.failed);
+    if(!r.ok)return 'HTTP '+r.status+': '+(d.error||d.message||'unknown error');
+    if(d.failed&&d.failed.length&&!d.sent)return 'Delivery failed for: '+d.failed.map(function(f){return f.to||f}).join(', ');
+    return null;
+  }catch(e){
+    console.warn('[Email] error:',e);
+    return String(e);
+  }
 }
 
 // ─── STRIPE: Send Payment Link ────────────────────────────────────────────
