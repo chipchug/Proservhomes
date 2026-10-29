@@ -1687,7 +1687,7 @@ async function appAction(action,id){
     await _sb.from('applications').update({status:'approved',reviewed_at:new Date().toISOString()}).eq('id',id);
     a.status='approved';renderApplications();showToast('Interview scheduling email sent to '+a.name);
   } else if(action==='welcome'){
-    if(!confirm('Send welcome + onboarding email to '+a.name+' and create their contractor account?'))return;
+    showToast('Sending welcome email…');
     // 1. Create contractor record if one doesn't already exist for this email
     var existing=await _sb.from('contractors').select('id').eq('email',a.email.toLowerCase()).limit(1);
     if(existing.error){showToast('Error checking contractors: '+existing.error.message);return;}
@@ -1728,7 +1728,7 @@ async function appAction(action,id){
     await _sb.from('applications').update({status:'welcomed',reviewed_at:new Date().toISOString()}).eq('id',id);
     a.status='welcomed';renderApplications();showToast('Contractor account created + welcome email sent to '+a.name+' 🎉');
   } else if(action==='resend_welcome'){
-    if(!confirm('Resend welcome email to '+a.name+' ('+a.email+')?'))return;
+    showToast('Resending welcome email…');
     var wErr2=await sendSmsNotification({event:'contractor_welcome',applicant:{name:a.name,email:a.email}});
     if(wErr2){showEmailError('Resending welcome email to '+a.name+' ('+a.email+') failed:\n\n'+wErr2+'\n\nGo to More → Test Email System to diagnose.');return;}
     showToast('Welcome email resent to '+a.name+' ✓');
