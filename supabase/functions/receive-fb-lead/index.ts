@@ -11,11 +11,17 @@
  *   RESEND_API_KEY        — from resend.com dashboard
  *   TWILIO_ACCOUNT_SID
  *   TWILIO_AUTH_TOKEN
+ *   NTFY_TOPIC            — your private ntfy.sh topic string (e.g. proserv-nick-abc123)
  *
  * Meta setup:
  *   1. Meta App → Webhooks → Page → subscribe to "leadgen" field
  *   2. Callback URL: https://chmicqvorgjqlthufgwt.supabase.co/functions/v1/receive-fb-lead
  *   3. Verify Token: whatever you set as FB_VERIFY_TOKEN secret
+ *
+ * Notification stack (fires in parallel, any success = you get notified):
+ *   1. ntfy.sh push notification  — zero dependencies, always works
+ *   2. Email via Resend            — with proservhomes.co → onboarding@resend.dev fallback
+ *   3. SMS to admin via Twilio     — once A2P approved
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -56,6 +62,46 @@ function normalizePhone(raw: string): string {
   if (digits.length === 10) return '+1' + digits;
   if (digits.length === 11 && digits[0] === '1') return '+' + digits;
   return '+' + digits;
+}
+
+// ── ntfy.sh push notification ─────────────────────────────────────────────────
+// Zero dependencies — no API key, no domain, no config beyond a topic string.
+// Nick installs ntfy app → subscribes to the topic → instant push every lead.
+
+async function sendNtfy(topic: string, name: string, phone: string, service: string): Promise<boolean> {
+  if (!topic) {
+    console.warn('NTFY_TOPIC not set — skipping push notification');
+    return false;
+  }
+  try {
+    const title = `🔥 New Lead: ${name || 'Unknown'}`;
+    const lines = [
+      service ? `Service: ${service}` : '',
+      phone   ? `Phone: ${phone}`     : '',
+      'Open the app to respond →',
+    ].filter(Boolean).join('\n');
+
+    const res = await fetch(`https://ntfy.sh/${topic}`, {
+      method: 'POST',
+      headers: {
+        'Title':    title,
+        'Priority': 'urgent',
+        'Tags':     'loudspeaker,money_with_wings',
+        'Content-Type': 'text/plain',
+      },
+      body: lines,
+    });
+    if (res.ok) {
+      console.log('ntfy push sent — topic:', topic);
+      return true;
+    } else {
+      console.error('ntfy push failed — status:', res.status);
+      return false;
+    }
+  } catch (e) {
+    console.error('ntfy push exception:', e);
+    return false;
+  }
 }
 
 // ── Email helper ──────────────────────────────────────────────────────────────
@@ -297,23 +343,30 @@ Deno.serve(async (req: Request) => {
         console.log('Lead saved to fb_leads table');
       }
 
-      // ── 1. Email admin ─────────────────────────────────────────────────────
-      const emailSent = await sendAdminEmail(adminEmail, name, phone, email, service, zip, formName);
+      // ── Notify admin via all channels in parallel ──────────────────────────
+      const ntfyTopic = Deno.env.get('NTFY_TOPIC') || '';
 
-      // ── 2. SMS alert to admin (always fires as fallback) ───────────────────
-      // Fires regardless of email success — this is your guaranteed notification
+      const [ntfySent, emailSent] = await Promise.all([
+        // Channel 1: ntfy.sh push — no API key, no domain, always works
+        sendNtfy(ntfyTopic, name, phone, service),
+        // Channel 2: Email via Resend (proservhomes.co → resend.dev fallback)
+        sendAdminEmail(adminEmail, name, phone, email, service, zip, formName),
+      ]);
+
+      console.log(`Notification results — ntfy:${ntfySent} email:${emailSent}`);
+
+      // Channel 3: SMS to admin via Twilio (backup once A2P approved)
       if (twilioSid && twilioAuth && adminPhone) {
         const smsBody = [
           `🔥 New Lead: ${name || 'Unknown'}`,
           phone   ? `📞 ${phone}`   : '',
           service ? `🔧 ${service}` : '',
-          zip     ? `📍 ${zip}`     : '',
-          emailSent ? '' : '⚠️ Email failed — check Resend',
+          (!ntfySent && !emailSent) ? '⚠️ Push + email both failed' : '',
         ].filter(Boolean).join('\n');
 
         await sendSms(twilioSid, twilioAuth, adminPhone, smsBody);
       } else {
-        console.warn('SMS admin alert skipped — missing TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or ADMIN_PHONE');
+        console.warn('SMS admin alert skipped — missing Twilio creds or ADMIN_PHONE');
       }
 
       // ── 3. Auto-text the prospect ──────────────────────────────────────────
