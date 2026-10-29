@@ -506,9 +506,18 @@ textarea{resize:vertical;min-height:80px}
       <!-- FACEBOOK LEADS -->
       <div id="tabLeads" class="tab-pane">
         <div class="jobs-head" style="display:flex;align-items:center;justify-content:space-between">
-          <div class="jobs-title">Lead Composer</div>
-          <button onclick="loadLeads()" style="background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg-2);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">↻ Refresh</button>
+          <div class="jobs-title" id="leadsViewTitle">Lead Composer</div>
+          <div style="display:flex;gap:8px">
+            <button onclick="lcToggleList()" id="lcListBtn" style="background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg-2);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">📋 Leads</button>
+            <button onclick="loadLeads()" style="background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg-2);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">↻ Refresh</button>
+          </div>
         </div>
+
+        <!-- ── LEADS LIST PANEL (toggled) ── -->
+        <div id="lcLeadsList" style="display:none;padding:0 12px 80px">
+          <div id="lcLeadsListInner" style="display:flex;flex-direction:column;gap:10px;margin-top:4px"></div>
+        </div>
+
         <div id="leadsComposer" style="padding:0 12px 80px">
 
           <!-- ── LEAD SELECTOR ── -->
@@ -570,6 +579,33 @@ textarea{resize:vertical;min-height:80px}
             </div>
             <div id="lcObjBox" class="lc-script-text hidden"></div>
             <button id="lcObjCopyBtn" class="lc-copy-btn hidden" onclick="lcCopy('obj')">📋 Copy Response</button>
+          </div>
+
+          <!-- ── SAVE AS LEAD ── -->
+          <div class="lc-card" style="margin-top:14px">
+            <div class="lc-label">SAVE AS LEAD</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <div class="lc-field-label">Phone</div>
+                <input id="lcPhone" type="tel" placeholder="(609) 000-0000" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif">
+              </div>
+              <div>
+                <div class="lc-field-label">Email</div>
+                <input id="lcEmail" type="email" placeholder="name@email.com" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif">
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <div class="lc-field-label">Address / Area</div>
+              <input id="lcAddress" type="text" placeholder="123 Main St, Toms River NJ" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif">
+            </div>
+            <div style="margin-bottom:12px">
+              <div class="lc-field-label">Notes</div>
+              <textarea id="lcNotes" placeholder="Their specific request, pricing discussed, next step…" rows="2" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;resize:vertical"></textarea>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button id="lcSaveLeadBtn" onclick="lcSaveLead()" style="flex:1;padding:12px;background:var(--accent,#2563eb);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">💾 Save Lead</button>
+              <button onclick="lcClearLead()" style="padding:12px 16px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg-2);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Clear</button>
+            </div>
           </div>
 
         </div>
@@ -2361,8 +2397,142 @@ function lcPickLead(id){
   if(propAns.includes('condo')||propAns.includes('townhouse'))saved.lcProperty='condo';
   else if(propAns.includes('commercial')||propAns.includes('business'))saved.lcProperty='commercial';
   else saved.lcProperty='sfh';
+  // Also populate the contact fields if saved
+  var phoneEl=document.getElementById('lcPhone');
+  var emailEl=document.getElementById('lcEmail');
+  var addrEl=document.getElementById('lcAddress');
+  var notesEl=document.getElementById('lcNotes');
+  if(phoneEl)phoneEl.value=lead.phone||'';
+  if(emailEl)emailEl.value=lead.email||'';
+  if(addrEl)addrEl.value=lead.address||'';
+  if(notesEl)notesEl.value=lead.notes||'';
   lcRenderFields(svc,saved);
   lcUpdate();
+}
+
+// ── SAVE / LIST leads ──────────────────────────────────────────────────────
+var _lcListOpen=false;
+
+function lcToggleList(){
+  _lcListOpen=!_lcListOpen;
+  var list=document.getElementById('lcLeadsList');
+  var composer=document.getElementById('leadsComposer');
+  var title=document.getElementById('leadsViewTitle');
+  var btn=document.getElementById('lcListBtn');
+  if(_lcListOpen){
+    list.style.display='block';
+    composer.style.display='none';
+    title.textContent='Saved Leads';
+    btn.textContent='✏️ Composer';
+    lcRenderLeadsList();
+  }else{
+    list.style.display='none';
+    composer.style.display='block';
+    title.textContent='Lead Composer';
+    btn.textContent='📋 Leads';
+  }
+}
+
+function lcRenderLeadsList(){
+  var el=document.getElementById('lcLeadsListInner');
+  if(!el)return;
+  var leads=_lcLeads.filter(function(l){return l.lead_name||l.phone||l.email;});
+  if(!leads.length){
+    el.innerHTML='<div style="text-align:center;color:var(--fg-3);padding:40px 0;font-size:14px">No saved leads yet.<br>Fill in the composer and tap <strong>Save Lead</strong>.</div>';
+    return;
+  }
+  var svcIcons={snow_seasonal:'❄️',snow_visit:'🌨️',gutter:'🍂',pressure:'💦',lights:'🎄',general:'🏠'};
+  el.innerHTML=leads.map(function(l){
+    var svc=l.lead_service||'general';
+    var icon=svcIcons[svc]||'🏠';
+    var svcLabel=svc.replace('_',' ').replace(/\b\w/g,function(c){return c.toUpperCase();});
+    var when=l.seen_at?timeAgo(new Date(l.seen_at)):'';
+    var contactLine=[l.phone,l.email].filter(Boolean).join(' · ');
+    var addr=l.address||'';
+    return'<div onclick="lcLoadLeadFromList(\''+l.id+'\')" style="background:var(--surface-2);border:1px solid var(--border-2);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .15s" onmouseenter="this.style.borderColor=\'var(--accent,#2563eb)\'" onmouseleave="this.style.borderColor=\'var(--border-2)\'">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+      +'<div style="font-weight:700;font-size:15px;color:var(--fg)">'+esc(l.lead_name||'Unnamed')+'</div>'
+      +'<div style="font-size:11px;color:var(--fg-3)">'+esc(when)+'</div>'
+      +'</div>'
+      +'<div style="font-size:13px;color:var(--fg-2);margin-bottom:4px">'+icon+' '+esc(svcLabel)+(addr?' · '+esc(addr):'')+'</div>'
+      +(contactLine?'<div style="font-size:12px;color:var(--fg-3)">'+esc(contactLine)+'</div>':'')
+      +(l.notes?'<div style="font-size:12px;color:var(--fg-3);margin-top:4px;font-style:italic">'+esc(l.notes.slice(0,80))+(l.notes.length>80?'…':'')+'</div>':'')
+      +'</div>';
+  }).join('');
+}
+
+function lcLoadLeadFromList(id){
+  // Switch to composer view then pick the lead
+  _lcListOpen=true; // force toggle to flip to composer
+  lcToggleList();
+  var picker=document.getElementById('lcPicker');
+  if(picker){picker.value=String(id);}
+  lcPickLead(String(id));
+  document.querySelector('.scroll').scrollTop=0;
+}
+
+async function lcSaveLead(){
+  var name=(document.getElementById('lcName').value||'').trim();
+  if(!name){showToast('Enter a name first');return;}
+  var svc=document.getElementById('lcService').value||'snow_seasonal';
+  var phone=(document.getElementById('lcPhone').value||'').trim();
+  var email=(document.getElementById('lcEmail').value||'').trim();
+  var address=(document.getElementById('lcAddress').value||'').trim();
+  var notes=(document.getElementById('lcNotes').value||'').trim();
+  var btn=document.getElementById('lcSaveLeadBtn');
+  btn.disabled=true;btn.textContent='Saving…';
+  try{
+    // Check if this lead already exists (same name+service or phone)
+    var existing_lead=_lcLeads.find(function(l){
+      return l.lead_name&&l.lead_name.toLowerCase()===name.toLowerCase()&&l.lead_service===svc;
+    });
+    var r;
+    if(existing_lead){
+      // Update
+      r=await fetch(SURL+'/rest/v1/fb_leads?id=eq.'+existing_lead.id,{
+        method:'PATCH',
+        headers:{apikey:SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({lead_name:name,lead_service:svc,phone:phone||null,email:email||null,address:address||null,notes:notes||null,seen_at:new Date().toISOString()})
+      });
+    }else{
+      r=await fetch(SURL+'/rest/v1/fb_leads',{
+        method:'POST',
+        headers:{apikey:SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({lead_name:name,lead_service:svc,phone:phone||null,email:email||null,address:address||null,notes:notes||null,seen_at:new Date().toISOString(),group_url:'manual'})
+      });
+    }
+    if(!r.ok){var e=await r.text();throw new Error(e);}
+    showToast(existing_lead?'Lead updated ✓':'Lead saved ✓');
+    await loadLeads();
+  }catch(e){
+    console.error(e);
+    // If column missing (phone/email/address/notes not in table yet), save what we can
+    if(e.message.indexOf('column')>=0||e.message.indexOf('400')>=0){
+      try{
+        var r2=await fetch(SURL+'/rest/v1/fb_leads',{
+          method:'POST',
+          headers:{apikey:SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+          body:JSON.stringify({lead_name:name,lead_service:svc,text_snippet:(phone?'📞 '+phone+' ':'')+notes,seen_at:new Date().toISOString(),group_url:'manual'})
+        });
+        if(!r2.ok)throw new Error(await r2.text());
+        showToast('Lead saved (add columns for full info — see console)');
+        console.warn('fb_leads missing columns phone/email/address/notes — run migration');
+        await loadLeads();
+      }catch(e2){showToast('Save failed: '+e2.message,5000);}
+    }else{
+      showToast('Save failed: '+e.message,5000);
+    }
+  }
+  btn.disabled=false;btn.textContent='💾 Save Lead';
+}
+
+function lcClearLead(){
+  var ids=['lcName','lcPhone','lcEmail','lcAddress','lcNotes'];
+  ids.forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  var picker=document.getElementById('lcPicker');
+  if(picker)picker.value='';
+  lcUpdate();
+  showToast('Cleared');
 }
 
 // Context fields config — what secondary fields each service needs
