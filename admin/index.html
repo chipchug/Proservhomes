@@ -531,25 +531,7 @@ textarea{resize:vertical;min-height:80px}
                 </select>
               </div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-              <div>
-                <div class="lc-field-label">Driveway Size</div>
-                <select id="lcDriveway" onchange="lcUpdate()" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif">
-                  <option value="unknown">Unknown</option>
-                  <option value="small">Small (1-2 cars) — $299</option>
-                  <option value="medium">Medium (3-4 cars) — $399</option>
-                  <option value="large">Large (5+ cars) — $499</option>
-                </select>
-              </div>
-              <div>
-                <div class="lc-field-label">Property Type</div>
-                <select id="lcProperty" onchange="lcUpdate()" style="width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif">
-                  <option value="sfh">Single Family Home</option>
-                  <option value="condo">Condo / Townhouse</option>
-                  <option value="commercial">Commercial</option>
-                </select>
-              </div>
-            </div>
+            <div id="lcContextFields" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
           </div>
 
           <!-- ── TEXT SCRIPTS ── -->
@@ -2167,6 +2149,7 @@ async function loadLeads(){
     try{localStorage.setItem('seenLeadIds',JSON.stringify([..._seenLeadIds].slice(-200)))}catch(e){}
     if(badge)badge.classList.add('hidden');
   }catch(e){console.warn('loadLeads error',e);}
+  lcRenderFields('snow',{});
   lcUpdate();
 }
 
@@ -2178,40 +2161,80 @@ function lcPickLead(id){
   var nameEl=document.getElementById('lcName');
   if(nameEl)nameEl.value=lead.lead_name||'';
   // Auto-detect service
-  var svc=document.getElementById('lcService');
+  var svcEl=document.getElementById('lcService');
   var raw=(lead.lead_service||'').toLowerCase();
-  if(raw.includes('snow')||raw.includes('plow'))svc.value='snow';
-  else if(raw.includes('gutter'))svc.value='gutter';
-  else if(raw.includes('pressure')||raw.includes('wash'))svc.value='pressure';
-  else if(raw.includes('light')||raw.includes('christmas'))svc.value='lights';
-  else svc.value='snow'; // default for winter season
-  // Auto-detect driveway from lead form fields
-  var drv=document.getElementById('lcDriveway');
+  var svc='snow';
+  if(raw.includes('gutter'))svc='gutter';
+  else if(raw.includes('pressure')||raw.includes('wash'))svc='pressure';
+  else if(raw.includes('light')||raw.includes('christmas'))svc='lights';
+  svcEl.value=svc;
+  // Build saved context values for auto-detect
+  var saved={};
   var driveAns=(lead.driveway_size||lead.text_snippet||'').toLowerCase();
-  if(driveAns.includes('5+')||driveAns.includes('large'))drv.value='large';
-  else if(driveAns.includes('3')||driveAns.includes('4')||driveAns.includes('medium'))drv.value='medium';
-  else if(driveAns.includes('1')||driveAns.includes('2')||driveAns.includes('small'))drv.value='small';
-  else drv.value='unknown';
-  // Property type
-  var prop=document.getElementById('lcProperty');
+  if(driveAns.includes('5+')||driveAns.includes('large'))saved.lcDriveway='large';
+  else if(driveAns.includes('3')||driveAns.includes('4')||driveAns.includes('medium'))saved.lcDriveway='medium';
+  else if(driveAns.includes('1')||driveAns.includes('2')||driveAns.includes('small'))saved.lcDriveway='small';
   var propAns=(lead.property_type||lead.text_snippet||'').toLowerCase();
-  if(propAns.includes('condo')||propAns.includes('townhouse'))prop.value='condo';
-  else if(propAns.includes('commercial')||propAns.includes('business'))prop.value='commercial';
-  else prop.value='sfh';
+  if(propAns.includes('condo')||propAns.includes('townhouse'))saved.lcProperty='condo';
+  else if(propAns.includes('commercial')||propAns.includes('business'))saved.lcProperty='commercial';
+  else saved.lcProperty='sfh';
+  lcRenderFields(svc,saved);
   lcUpdate();
+}
+
+// Context fields config — what secondary fields each service needs
+var _lcFieldDefs={
+  snow:[
+    {id:'lcDriveway',label:'Driveway Size',opts:[['unknown','Unknown'],['small','Small (1-2 cars) — $299'],['medium','Medium (3-4 cars) — $399'],['large','Large (5+ cars) — $499']]},
+    {id:'lcProperty',label:'Property Type',opts:[['sfh','Single Family Home'],['condo','Condo / Townhouse'],['commercial','Commercial']]}
+  ],
+  gutter:[
+    {id:'lcStories',label:'Stories',opts:[['unknown','Unknown'],['1','1 Story'],['2','2 Story'],['3','3+ Stories']]},
+    {id:'lcProperty',label:'Property Type',opts:[['sfh','Single Family Home'],['condo','Condo / Townhouse'],['commercial','Commercial']]}
+  ],
+  pressure:[
+    {id:'lcWashArea',label:'Wash Area',opts:[['unknown','Unknown'],['driveway','Driveway'],['exterior','House Exterior'],['both','Driveway + Exterior'],['deck','Deck / Patio']]},
+    {id:'lcProperty',label:'Property Type',opts:[['sfh','Single Family Home'],['condo','Condo / Townhouse'],['commercial','Commercial']]}
+  ],
+  lights:[
+    {id:'lcLightScope',label:'Install Scope',opts:[['unknown','Unknown'],['roofline','Roofline Only'],['roofline_bushes','Roofline + Bushes'],['full','Full Property']]},
+    {id:'lcLightService',label:'Service Type',opts:[['install','Install Only'],['install_takedown','Install + Takedown']]}
+  ],
+  general:[
+    {id:'lcProperty',label:'Property Type',opts:[['sfh','Single Family Home'],['condo','Condo / Townhouse'],['commercial','Commercial']]}
+  ]
+};
+
+function lcRenderFields(svc,saved){
+  var container=document.getElementById('lcContextFields');
+  if(!container)return;
+  var defs=_lcFieldDefs[svc]||_lcFieldDefs.snow;
+  var sel='width:100%;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg);border-radius:9px;font-size:14px;font-family:\'DM Sans\',sans-serif';
+  container.innerHTML=defs.map(function(f){
+    var opts=f.opts.map(function(o){
+      var sel2=(saved&&saved[f.id]===o[0])?' selected':'';
+      return'<option value="'+o[0]+'"'+sel2+'>'+o[1]+'</option>';
+    }).join('');
+    return'<div><div class="lc-field-label">'+f.label+'</div><select id="'+f.id+'" onchange="lcUpdate()" style="'+sel+'">'+opts+'</select></div>';
+  }).join('');
 }
 
 function lcGetVals(){
   var name=(document.getElementById('lcName')||{}).value||'';
   var first=name.trim().split(' ')[0]||'';
   var svc=(document.getElementById('lcService')||{}).value||'snow';
+  // Read whichever context fields are currently rendered
   var drv=(document.getElementById('lcDriveway')||{}).value||'unknown';
   var prop=(document.getElementById('lcProperty')||{}).value||'sfh';
+  var stories=(document.getElementById('lcStories')||{}).value||'unknown';
+  var washArea=(document.getElementById('lcWashArea')||{}).value||'unknown';
+  var lightScope=(document.getElementById('lcLightScope')||{}).value||'unknown';
+  var lightService=(document.getElementById('lcLightService')||{}).value||'install';
   var priceMap={small:'$299',medium:'$399',large:'$499',unknown:'our seasonal rate'};
   var price=priceMap[drv];
   var driveLabel={small:'small driveway (1-2 cars)',medium:'medium driveway (3-4 cars)',large:'large driveway (5+ cars)',unknown:'driveway'};
   var drive=driveLabel[drv];
-  return{name:name,first:first,svc:svc,drv:drv,prop:prop,price:price,drive:drive};
+  return{name:name,first:first,svc:svc,drv:drv,prop:prop,stories:stories,washArea:washArea,lightScope:lightScope,lightService:lightService,price:price,drive:drive};
 }
 
 function lcBuildScript(tab){
@@ -2233,9 +2256,23 @@ function lcBuildScript(tab){
   if(tab==='quote'){
     if(v.svc==='snow'&&v.drv!=='unknown')return hi+', for your '+v.drive+' our seasonal snow contract is '+v.price+' for the whole winter — unlimited visits, never charged per storm. Most customers with a '+v.drive+' save $200+ vs paying each time. Want to lock it in before the season starts? Reply STOP to opt out.';
     if(v.svc==='snow')return hi+', our seasonal snow contract covers the full winter with unlimited visits — never charged per storm. Pricing starts at $299 and depends on driveway size. Can I get your address to give you an exact quote? Reply STOP to opt out.';
-    if(v.svc==='gutter')return hi+', for a single family home gutter clean we typically run $149–$249 depending on linear footage and stories. Can I get your address for an exact quote? Reply STOP to opt out.';
-    if(v.svc==='pressure')return hi+', pressure washing for a standard driveway runs $149–$199. House exterior starts at $299. Want me to give you a more exact number — what\'s the square footage roughly? Reply STOP to opt out.';
-    if(v.svc==='lights')return hi+', Christmas light installs start at $299 for a standard roofline. Can I get your address and a quick description of what you\'re thinking — roofline only, bushes, trees? Reply STOP to opt out.';
+    if(v.svc==='gutter'){
+      var storyMap={'1':'1-story','2':'2-story','3':'3-story'};
+      var stLabel=storyMap[v.stories]||'';
+      if(stLabel)return hi+', for a '+stLabel+' home gutter clean we typically run '+(v.stories==='1'?'$149–$179':v.stories==='2'?'$199–$249':'$269–$349')+'. Can I get your address for an exact quote? Reply STOP to opt out.';
+      return hi+', gutter cleaning runs $149–$349 depending on stories and linear footage. Can I get your address so I can give you an exact number? Reply STOP to opt out.';
+    }
+    if(v.svc==='pressure'){
+      var areaMap={driveway:'driveway — typically $149–$199',exterior:'house exterior — typically $299–$399',both:'driveway + house exterior — typically $399–$549',deck:'deck or patio — typically $149–$229',unknown:'the area you need done'};
+      var aLabel=areaMap[v.washArea]||areaMap.unknown;
+      return hi+', for a '+aLabel+'. Can I get your address and a quick look at the size to nail down the exact price? Reply STOP to opt out.';
+    }
+    if(v.svc==='lights'){
+      var scopeMap={roofline:'roofline only — starts at $299',roofline_bushes:'roofline + bushes — starts at $449',full:'full property — starts at $599',unknown:'your install'};
+      var scLabel=scopeMap[v.lightScope]||scopeMap.unknown;
+      var tdLabel=v.lightService==='install_takedown'?' (install + takedown after the season)':' (install only)';
+      return hi+', for '+scLabel+tdLabel+'. Can I get your address to finalize the quote? Reply STOP to opt out.';
+    }
     return hi+', I\'d love to get you a quote! Can I get your address and a quick description of the job? Reply STOP to opt out.';
   }
   if(tab==='close'){
@@ -2289,6 +2326,19 @@ function lcObj(el,type){
 }
 
 function lcUpdate(){
+  // Re-render context fields if service changed
+  var svcEl=document.getElementById('lcService');
+  var svc=svcEl?svcEl.value:'snow';
+  var container=document.getElementById('lcContextFields');
+  // Only re-render if service changed (check first field id against current defs)
+  if(container){
+    var defs=_lcFieldDefs[svc]||_lcFieldDefs.snow;
+    var firstId=defs[0]&&defs[0].id;
+    if(!document.getElementById(firstId)){
+      // Fields don't match current service — re-render (no saved vals, keep defaults)
+      lcRenderFields(svc,{});
+    }
+  }
   // Update script box
   var box=document.getElementById('lcScriptBox');
   if(box)box.textContent=lcBuildScript(_lcActiveTab);
