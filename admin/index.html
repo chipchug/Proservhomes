@@ -3480,11 +3480,10 @@ function initMap(){
     if(!document.getElementById('mapContainer'))return;
     _map=L.map('mapContainer',{zoomControl:true,attributionControl:true}).setView([40.1,-74.1],10);
     // Carto dark matter — modern, clean, no API key needed
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png',{
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}.png',{
       attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains:'abcd',
-      maxZoom:19,
-      detectRetina:true
+      maxZoom:19
     }).addTo(_map);
     loadMapData();
   },150);
