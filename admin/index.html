@@ -768,11 +768,9 @@ textarea{resize:vertical;min-height:80px}
           <div class="bs-tile"><div class="bs-val" id="finPayTotal" style="color:var(--orange)">$0</div><div class="bs-lbl">Paid Out</div></div>
           <div class="bs-tile"><div class="bs-val" id="finNetTotal" style="color:var(--fg)">$0</div><div class="bs-lbl">Net Profit</div></div>
         </div>
-        <!-- Chart -->
+        <!-- Chart — SVG bar chart (no canvas/Chart.js dependency) -->
         <div style="padding:0 14px 12px">
-          <div style="position:relative;height:180px">
-            <canvas id="finChart"></canvas>
-          </div>
+          <svg id="finChart" width="100%" height="160" style="display:block;overflow:visible"></svg>
         </div>
         <!-- Service breakdown -->
         <div style="padding:0 14px 12px">
@@ -1950,33 +1948,47 @@ function renderFinancials(){
     else buckets[k]=Number(j.price||0);
   });
   var vals=labels.map(function(l){return buckets[l]||0;});
-  // Chart — use responsive:false with explicit pixel dims to avoid hidden-canvas issue
-  var canvas=document.getElementById('finChart');
-  if(!canvas)return;
-  if(typeof Chart==='undefined'){showToast('Chart.js not loaded — refresh page');return;}
-  if(_finChart){try{_finChart.destroy();_finChart=null;}catch(e){}}
-  var wrap=canvas.parentElement;
-  var w=wrap?wrap.clientWidth:0;
-  if(w<10){w=document.getElementById('tabMore')?document.getElementById('tabMore').clientWidth-28:320;}
-  if(w<10)w=320;
-  canvas.width=w;
-  canvas.height=160;
-  var ctx=canvas.getContext('2d');
+  // SVG bar chart — no canvas/Chart.js, always renders regardless of tab visibility
+  var svg=document.getElementById('finChart');
+  if(!svg)return;
+  var maxVal=Math.max.apply(null,vals.concat([1]));
+  var W=svg.parentElement?svg.parentElement.clientWidth||320:320;
+  var H=150;var PAD_L=44;var PAD_B=28;var PAD_T=8;var PAD_R=8;
+  var chartW=W-PAD_L-PAD_R;var chartH=H-PAD_B-PAD_T;
   var isDark=document.documentElement.getAttribute('data-theme')==='dark'||(document.documentElement.getAttribute('data-theme')!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches);
-  var gridColor=isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';
-  var labelColor=isDark?'#888':'#aaa';
-  _finChart=new Chart(ctx,{
-    type:'bar',
-    data:{labels:labels,datasets:[{data:vals,backgroundColor:'rgba(99,216,143,0.75)',borderRadius:5,borderSkipped:false}]},
-    options:{
-      responsive:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+Number(c.raw).toLocaleString();}}}},
-      scales:{
-        x:{grid:{color:gridColor},ticks:{color:labelColor,font:{size:10},maxRotation:45,minRotation:0}},
-        y:{grid:{color:gridColor},ticks:{color:labelColor,font:{size:10},callback:function(v){return'$'+(v>=1000?(v/1000).toFixed(1)+'k':v);}}}
-      }
+  var gridC=isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';
+  var lblC=isDark?'#666':'#aaa';
+  var barColor='rgba(34,197,94,0.8)';
+  // Thin out labels if too many
+  var maxLabels=Math.floor(chartW/28);
+  var step=labels.length>maxLabels?Math.ceil(labels.length/maxLabels):1;
+  var html='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'">';
+  // Y gridlines + labels (4 lines)
+  for(var gi=0;gi<=4;gi++){
+    var yv=(maxVal/4)*gi;
+    var yp=PAD_T+chartH-(chartH*(gi/4));
+    var ylbl=yv>=1000?'$'+(yv/1000).toFixed(yv%1000===0?0:1)+'k':'$'+Math.round(yv);
+    html+='<line x1="'+PAD_L+'" y1="'+yp+'" x2="'+(W-PAD_R)+'" y2="'+yp+'" stroke="'+gridC+'" stroke-width="1"/>';
+    html+='<text x="'+(PAD_L-4)+'" y="'+(yp+4)+'" text-anchor="end" font-size="9" fill="'+lblC+'">'+ylbl+'</text>';
+  }
+  // Bars
+  var bw=Math.max(2,chartW/labels.length*0.7);
+  var gap=chartW/labels.length;
+  for(var bi=0;bi<labels.length;bi++){
+    var bh=vals[bi]>0?Math.max(2,chartH*(vals[bi]/maxVal)):0;
+    var bx=PAD_L+gap*bi+(gap-bw)/2;
+    var by=PAD_T+chartH-bh;
+    if(bh>0)html+='<rect x="'+bx.toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="3" fill="'+barColor+'"/>';
+    if(bi%step===0){
+      html+='<text x="'+(bx+bw/2).toFixed(1)+'" y="'+(PAD_T+chartH+16)+'" text-anchor="middle" font-size="9" fill="'+lblC+'">'+labels[bi]+'</text>';
     }
-  });
+  }
+  // No data message
+  if(!filtered.length){
+    html+='<text x="'+(W/2)+'" y="'+(H/2)+'" text-anchor="middle" font-size="12" fill="'+lblC+'">No completed jobs in this period</text>';
+  }
+  html+='</svg>';
+  svg.outerHTML=html;
   // Service breakdown
   var svcTotals={};
   filtered.forEach(function(j){
