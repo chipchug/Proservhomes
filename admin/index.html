@@ -1948,6 +1948,9 @@ function renderFinancials(){
   // Chart
   var canvas=document.getElementById('finChart');
   if(!canvas)return;
+  if(typeof Chart==='undefined')return;
+  // Force canvas visible dimensions — Chart.js fails on hidden (display:none) canvas
+  if(!canvas.offsetParent&&canvas.offsetWidth===0){canvas.style.width='100%';canvas.style.height='180px';}
   var ctx=canvas.getContext('2d');
   if(_finChart){try{_finChart.destroy();}catch(e){}}
   var isDark=document.documentElement.getAttribute('data-theme')==='dark'||(document.documentElement.getAttribute('data-theme')!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches);
@@ -2359,9 +2362,9 @@ async function toggleStripe(id, currentlyActive){
   openEditCtx(id); // refresh modal
 }
 function openHwDetail(idx){
-  var h=typeof idx==='number'?_homeowners[idx]:_homeowners.find(function(x){return(x.email||'').toLowerCase()===(idx||'').toLowerCase()});
+  var h=_homeowners[parseInt(idx)];
   if(!h)return;
-  _hwCurrentIdx=typeof idx==='number'?idx:_homeowners.indexOf(h);
+  _hwCurrentIdx=parseInt(idx);
   var init=(h.name||h.email||'?')[0].toUpperCase();
   var avEl=document.getElementById('hwAv');
   avEl.innerHTML='';avEl.style.padding='';avEl.textContent=init;
@@ -3829,7 +3832,10 @@ async function loadMapData(){
     var j=jobs[i];
     if(!j.address)continue;
     var pos=null;
-    if(j.lat&&j.lng){pos={lat:j.lat,lng:j.lng};}
+    // Validate stored coords are within NJ bounding box; if not, force re-geocode
+    var NJ_LAT_MIN=38.9,NJ_LAT_MAX=41.5,NJ_LNG_MIN=-75.7,NJ_LNG_MAX=-73.8;
+    var storedValid=j.lat&&j.lng&&j.lat>=NJ_LAT_MIN&&j.lat<=NJ_LAT_MAX&&j.lng>=NJ_LNG_MIN&&j.lng<=NJ_LNG_MAX;
+    if(storedValid){pos={lat:j.lat,lng:j.lng};}
     else{
       // Nominatim rate limit: 1 req/sec
       var now2=Date.now();var wait=1100-(now2-_lastGeocode);
@@ -3863,6 +3869,9 @@ async function loadMapData(){
       for(var li=0;li<lr.data.length;li++){
         var lead=lr.data[li];
         if(!lead.address)continue;
+        var ln2=Date.now();var lw=1100-(ln2-_lastGeocode);
+        if(lw>0)await new Promise(function(res){setTimeout(res,lw);});
+        _lastGeocode=Date.now();
         var lpos=await geocodeAddress(lead.address);
         if(!lpos)continue;
         pins.push({lat:lpos.lat,lng:lpos.lng,label:lead.name||'Lead',address:lead.address,type:'lead',id:lead.id});
