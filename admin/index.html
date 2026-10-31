@@ -918,7 +918,7 @@ textarea{resize:vertical;min-height:80px}
     <div class="field"><label>Address</label><input id="jAddr" placeholder="Street, City ST"></div>
     <div class="form-row">
       <div class="field"><label>Service</label><select id="jSvc" onchange="jSvcFill()"></select></div>
-      <div class="field"><label>Status</label><select id="jStatus"><option>New</option><option>Scheduled</option><option>In Progress</option><option>Complete</option><option>Invoiced</option></select></div>
+      <div class="field"><label>Status</label><select id="jStatus"><option>New</option><option>Scheduled</option><option>In Progress</option><option>Complete</option><option>Invoiced</option><option>Paid</option></select></div>
     </div>
     <div class="field" style="display:none"><label>Add-ons / Upgrades</label><select id="jSvcAddon" onchange="jAddonFill()"></select></div>
     <div class="form-row">
@@ -1410,7 +1410,7 @@ var SEED_JOBS=[
 ];
 var SEED_CONTRACTORS=[{id:'c1',name:'Jake R.',phone:'(732) 555-1234',specialty:'Gutters · Pressure Washing · Dryer Vents'},{id:'c2',name:'Marcus T.',phone:'(732) 555-5678',specialty:'Fence · Concrete · Pavers · Landscaping'}];
 
-var jobs=[];var contractors=[];var requests=[];
+var jobs=[];var contractors=[];var requests=[];var _dismissedPayouts=new Set();
 
 function toggleTheme(){
   var cur = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -1547,7 +1547,7 @@ async function loadPayoutRequests(){
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--fg-3);font-size:13px">Loading…</div>';
   var r=await _sb.from('payout_requests').select('*').not('status','eq','dismissed').order('requested_at',{ascending:false}).limit(20);
   if(r.error){ el.innerHTML='<div style="padding:14px;color:var(--orange);font-size:13px">Error loading: '+r.error.message+'</div>'; return; }
-  var rows=r.data||[];
+  var rows=(r.data||[]).filter(function(p){return!_dismissedPayouts.has(String(p.id));});
   if(!rows.length){ el.innerHTML='<div style="text-align:center;padding:24px;color:var(--fg-3);font-size:13px">No payout requests yet</div>'; return; }
   el.innerHTML=rows.map(function(p){
     var isPaid=p.status==='paid';
@@ -1606,7 +1606,9 @@ async function approvePayout(prId, ctName, amount){
   }
 }
 async function deletePayoutRequest(id){
-  // Instantly remove the row from the DOM — RLS blocks anon delete+update
+  // Track dismissed in session so refresh doesn't bring it back
+  _dismissedPayouts.add(String(id));
+  // Instantly remove the row from the DOM
   var list=document.getElementById('payoutList');
   if(list){
     var rows=list.querySelectorAll('[data-payout-id]');
@@ -1913,7 +1915,8 @@ function renderFinancials(){
   var filtered=jobs.filter(function(j){
     if(!j.date)return false;
     var d=new Date(j.date+'T12:00:00');
-    return d>=range.from&&d<=range.to&&(j.status||'').toLowerCase()==='paid';
+    var s=(j.status||'').toLowerCase();
+    return d>=range.from&&d<=range.to&&(s==='paid'||s==='complete'||s==='invoiced');
   });
   var totRev=filtered.reduce(function(s,j){return s+Number(j.price||0);},0);
   var totPay=filtered.reduce(function(s,j){return s+Number(j.contractorPay||0);},0);
