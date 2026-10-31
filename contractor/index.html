@@ -1394,7 +1394,7 @@ function startDriving(){
   _ctUpdateNavBanner();
   // Place van marker at route start and zoom in on it
   if(window._ctMap&&_ctNavSteps.length>0){
-    var startLoc=_ctNavSteps[0].location;// [lng,lat]
+    var startLoc=_ctNavSteps[0].maneuver&&_ctNavSteps[0].maneuver.location;// [lng,lat]
     if(!window._ctUserMarker){
       var vanEl=document.createElement('img');
       vanEl.src=_CT_VAN_B64;
