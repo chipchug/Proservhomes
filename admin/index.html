@@ -318,10 +318,14 @@ textarea{resize:vertical;min-height:80px}
 /* ── MAP TAB ───────────────────────────────────────── */
 #mapWrap{position:relative;display:flex;flex-direction:column;height:100%;padding:0}
 #mapContainer{flex:1;min-height:0;border-radius:0}
-.map-filters{display:flex;gap:6px;padding:10px 16px 8px;flex-wrap:wrap;flex-shrink:0;background:var(--bg)}
-.mf-btn{padding:6px 12px;border-radius:20px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg-2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.map-controls{flex-shrink:0;background:var(--bg);padding:8px 14px 6px;display:flex;flex-direction:column;gap:6px}
+.map-filters{display:flex;gap:6px;flex-wrap:wrap}
+.map-contractor-row{display:flex;gap:8px;align-items:center}
+.mf-btn{padding:6px 13px;border-radius:20px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg-2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;user-select:none}
+.mf-btn:hover{border-color:var(--fg-3);color:var(--fg)}
 .mf-btn.active{background:var(--orange);border-color:var(--orange);color:#fff}
-.map-legend{position:absolute;bottom:16px;right:10px;z-index:1000;background:var(--surface);border:1px solid var(--border-2);border-radius:12px;padding:10px 14px;font-size:11px;font-weight:600;display:flex;flex-direction:column;gap:6px}
+.map-legend{position:absolute;bottom:16px;right:10px;z-index:1000;background:rgba(20,20,28,.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 14px;font-size:11px;font-weight:600;display:flex;flex-direction:column;gap:6px}
+.ter-tooltip{background:rgba(20,20,28,.9);border:1px solid rgba(255,255,255,.1);color:#f1f5f9;font-size:12px;font-weight:600;border-radius:8px;padding:4px 10px;box-shadow:0 4px 12px rgba(0,0,0,.4)}
 .ml-row{display:flex;align-items:center;gap:7px;color:var(--fg-2)}
 .ml-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .map-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px 16px;flex-shrink:0;background:var(--bg)}
@@ -684,14 +688,22 @@ textarea{resize:vertical;min-height:80px}
             <div class="ms-tile"><div class="ms-val" id="msPerVisit" style="color:var(--blue)">0</div><div class="ms-lbl">Per Visit</div></div>
             <div class="ms-tile"><div class="ms-val" id="msCommercial" style="color:#f59e0b">0</div><div class="ms-lbl">Commercial</div></div>
           </div>
-          <div class="map-filters">
-            <button class="mf-btn active" onclick="mapFilter('all',this)">All</button>
-            <button class="mf-btn" onclick="mapFilter('seasonal',this)">🟢 Seasonal</button>
-            <button class="mf-btn" onclick="mapFilter('per_visit',this)">🔵 Per Visit</button>
-            <button class="mf-btn" onclick="mapFilter('commercial',this)">🟠 Commercial</button>
-            <button class="mf-btn" onclick="mapFilter('leads',this)">🔴 Leads</button>
+          <div class="map-controls">
+            <div class="map-filters">
+              <button class="mf-btn active" data-filter="all" onclick="mapFilter('all',this)">All</button>
+              <button class="mf-btn" data-filter="seasonal" onclick="mapFilter('seasonal',this)">🟢 Seasonal</button>
+              <button class="mf-btn" data-filter="per_visit" onclick="mapFilter('per_visit',this)">🔵 Per Visit</button>
+              <button class="mf-btn" data-filter="commercial" onclick="mapFilter('commercial',this)">🟠 Commercial</button>
+              <button class="mf-btn" data-filter="leads" onclick="mapFilter('leads',this)">🔴 Leads</button>
+            </div>
+            <div class="map-contractor-row">
+              <select id="mapContractorSelect" onchange="renderTerritoryOverlays()" style="flex:1;padding:7px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px">
+                <option value="">🏗 All Contractors</option>
+              </select>
+              <button onclick="loadMapData()" style="padding:7px 14px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px;cursor:pointer;white-space:nowrap">↺ Refresh</button>
+            </div>
           </div>
-          <div id="mapContainer" style="height:calc(100vh - 300px)"></div>
+          <div id="mapContainer" style="height:calc(100vh - 330px)"></div>
           <div class="map-legend">
             <div class="ml-row"><div class="ml-dot" style="background:#22c55e"></div>Seasonal</div>
             <div class="ml-row"><div class="ml-dot" style="background:#3b82f6"></div>Per Visit</div>
@@ -801,8 +813,7 @@ textarea{resize:vertical;min-height:80px}
 
   <nav class="bnav">
     <button class="nb active" onclick="switchTab('Overview',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</button>
-    <button class="nb" onclick="switchTab('Requests',this)" id="navRequests" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Requests<span id="reqBadge" class="req-badge hidden"></span></button>
-    <button class="nb" onclick="switchTab('Jobs',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Jobs</button>
+    <button class="nb" onclick="switchTab('Jobs',this)" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Jobs<span id="reqBadge" class="req-badge hidden"></span></button>
     <button class="nb" onclick="switchTab('Customers',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Contractors</button>
     <button class="nb" onclick="switchTab('Leads',this);loadLeads()" id="navLeads" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Leads<span id="leadsBadge" class="req-badge hidden"></span></button>
     <button class="nb" onclick="switchTab('Map',this);initMap()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Map</button>
@@ -1347,7 +1358,7 @@ async function genPaymentLink(priceId,linkId,svcId,btn,jobIdOverride){
 
 // Field mapping: local camelCase <-> DB snake_case
 function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,paymentLink:r.payment_link||'',status:r.status||'New',notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null,lat:r.lat||null,lng:r.lng||null,service_type:r.service_type||'per_visit',customer_type:r.customer_type||'residential'}}
-function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,email:j.email||'',address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,contractor_paid:!!j.contractorPaid,payment_link:j.paymentLink||'',status:j.status||'New',notes:j.notes||''}}
+function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,email:j.email||'',address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,contractor_paid:!!j.contractorPaid,payment_link:j.paymentLink||'',status:j.status||'New',notes:j.notes||'',lat:j.lat||null,lng:j.lng||null,service_type:j.service_type||'per_visit',customer_type:j.customer_type||'residential'}}
 function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',margin:Number(r.margin)||30,photo_url:r.photo_url||null,bio:r.bio||'',insurance_url:r.insurance_url||null,service_interests:r.service_interests||null,stripe_onboarded:!!r.stripe_onboarded}}
 function cl2r(c){return{id:c.id,name:c.name,phone:c.phone,email:c.email||'',specialty:c.specialty||c.spec||'',margin:c.margin||30}}
 
@@ -1817,7 +1828,7 @@ async function enterApp(){
   if(_jp)setTimeout(function(){openJobDetail(_jp);},300);
 }
 
-function switchTab(n,el){['Overview','Requests','Jobs','Customers','Leads','Map','More'].forEach(function(t){document.getElementById('tab'+t).classList.remove('active')});document.getElementById('tab'+n).classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;}
+function switchTab(n,el){['Overview','Requests','Jobs','Customers','Leads','Map','More'].forEach(function(t){var e=document.getElementById('tab'+t);if(e)e.classList.remove('active')});var tgt=document.getElementById('tab'+n);if(tgt)tgt.classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;}
 
 /* ── Earnings Tracker ──────────────────────────────────────────────────── */
 var _etPricing={
@@ -1939,13 +1950,27 @@ function renderDashboard(){
 
 function renderJobsTable(){
   var q=(document.getElementById('jobSearch')||{}).value||'';
-  var flt=jobs.filter(function(j){var m=!q||(j.client+j.service+j.address+j.status).toLowerCase().includes(q.toLowerCase());return m&&(_filterSt==='All'||j.status===_filterSt)});
-  flt=flt.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date)});
-  // pipeline
+  var pendReqs=(requests||[]).filter(function(r){return r.status!=='confirmed'&&r.status!=='dismissed'});
+  // pipeline counts
   var counts={};STATUSES.forEach(function(s){counts[s]=jobs.filter(function(j){return j.status===s}).length});
   var total=jobs.length;var pEl=document.getElementById('pipeline');
-  pEl.innerHTML='<button class="pl-chip'+(_filterSt==='All'?' active':'')+ '" onclick="setPipFilter(\'All\')">All <span class="pl-n">'+total+'</span></button>'+STATUSES.map(function(s){return'<button class="pl-chip'+(_filterSt===s?' active':'')+ '" onclick="setPipFilter(\''+s+'\')">'+s+' <span class="pl-n">'+(counts[s]||0)+'</span></button>'}).join('');
-  var el=document.getElementById('jobsList');if(!flt.length){el.innerHTML='<div style="text-align:center;padding:48px;color:var(--fg-3)">No jobs found</div>';return}
+  var reqPill=pendReqs.length?'<button class="pl-chip'+(_filterSt==='Requests'?' active':'')+'" onclick="setPipFilter(\'Requests\')" style="border-color:#f97316;color:#f97316">Requests <span class="pl-n" style="background:#f97316">'+pendReqs.length+'</span></button>':'';
+  pEl.innerHTML=reqPill+'<button class="pl-chip'+(_filterSt==='All'?' active':'')+ '" onclick="setPipFilter(\'All\')">All <span class="pl-n">'+total+'</span></button>'+STATUSES.map(function(s){return'<button class="pl-chip'+(_filterSt===s?' active':'')+ '" onclick="setPipFilter(\''+s+'\')">'+s+' <span class="pl-n">'+(counts[s]||0)+'</span></button>'}).join('');
+  var el=document.getElementById('jobsList');
+  // Show pending requests when that filter is active
+  if(_filterSt==='Requests'){
+    if(!pendReqs.length){el.innerHTML='<div style="text-align:center;padding:48px;color:var(--fg-3)">No pending requests</div>';return;}
+    el.innerHTML=pendReqs.map(function(r){
+      var dstr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'—';
+      var svc=r.service||'Service Request';
+      var ackBadge=r.status==='acknowledged'?'<span style="background:#e3f0ff;color:#1a6bc4;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;margin-left:5px">Acked</span>':'<span style="background:var(--orange-dim);color:var(--orange);border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;margin-left:5px">New</span>';
+      return'<div class="jr" style="border-left:3px solid var(--orange)"><div class="jr-thumb" style="background:var(--orange-dim);font-size:20px;display:flex;align-items:center;justify-content:center">'+(r.photos&&r.photos.length?'📷':'📋')+'</div><div class="jr-body"><div class="jr-svc">'+esc(svc)+ackBadge+'</div><div class="jr-client">'+esc(r.homeowner_phone||r.name||'')+'</div><div class="jr-meta">'+dstr+(r.address?' — '+esc(r.address):'')+'</div></div><div class="jr-chev"><button class="mbtn mbtn-primary" style="padding:8px 12px;font-size:12px;white-space:nowrap" onclick="openConfirmRequest(\''+r.id+'\')">Review →</button></div></div>';
+    }).join('');
+    return;
+  }
+  var flt=jobs.filter(function(j){var m=!q||(j.client+j.service+j.address+j.status).toLowerCase().includes(q.toLowerCase());return m&&(_filterSt==='All'||j.status===_filterSt)});
+  flt=flt.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date)});
+  if(!flt.length){el.innerHTML='<div style="text-align:center;padding:48px;color:var(--fg-3)">No jobs found</div>';return}
   el.innerHTML=flt.map(jrow).join('')
 }
 function setPipFilter(s){_filterSt=s;renderJobsTable()}
@@ -2576,14 +2601,20 @@ function lcRenderLeadsList(){
     var when=l.seen_at?timeAgo(new Date(l.seen_at)):'';
     var contactLine=[l.phone,l.email].filter(Boolean).join(' · ');
     var addr=l.address||'';
-    return'<div onclick="lcLoadLeadFromList(\''+l.id+'\')" style="background:var(--surface-2);border:1px solid var(--border-2);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .15s" onmouseenter="this.style.borderColor=\'var(--accent,#2563eb)\'" onmouseleave="this.style.borderColor=\'var(--border-2)\'">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
-      +'<div style="font-weight:700;font-size:15px;color:var(--fg)">'+esc(l.lead_name||'Unnamed')+'</div>'
-      +'<div style="font-size:11px;color:var(--fg-3)">'+esc(when)+'</div>'
+    var converted=l.converted_to_job_id?'<span style="background:#d1fae5;color:#065f46;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;margin-left:4px">✓ Client</span>':'';
+    return'<div style="background:var(--surface-2);border:1px solid var(--border-2);border-radius:12px;padding:14px 16px;transition:border-color .15s">'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'
+      +'<div style="cursor:pointer;flex:1;min-width:0" onclick="lcLoadLeadFromList(\''+l.id+'\')">'
+      +'<div style="display:flex;align-items:center;margin-bottom:4px">'
+      +'<div style="font-weight:700;font-size:15px;color:var(--fg)">'+esc(l.lead_name||'Unnamed')+'</div>'+converted
+      +'<div style="font-size:11px;color:var(--fg-3);margin-left:auto;padding-left:8px">'+esc(when)+'</div>'
       +'</div>'
       +'<div style="font-size:13px;color:var(--fg-2);margin-bottom:4px">'+icon+' '+esc(svcLabel)+(addr?' · '+esc(addr):'')+'</div>'
       +(contactLine?'<div style="font-size:12px;color:var(--fg-3)">'+esc(contactLine)+'</div>':'')
       +(l.notes?'<div style="font-size:12px;color:var(--fg-3);margin-top:4px;font-style:italic">'+esc(l.notes.slice(0,80))+(l.notes.length>80?'…':'')+'</div>':'')
+      +'</div>'
+      +'<button onclick="convertLeadToJob(\''+l.id+'\')" style="flex-shrink:0;padding:7px 10px;border-radius:8px;border:1.5px solid '+(l.converted_to_job_id?'var(--green)':'var(--border-2)')+';background:transparent;color:'+(l.converted_to_job_id?'var(--green)':'var(--fg-3)')+';font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.03em;white-space:nowrap">'+(l.converted_to_job_id?'View Job':'→ Job')+'</button>'
+      +'</div>'
       +'</div>';
   }).join('');
 }
@@ -2596,6 +2627,35 @@ function lcLoadLeadFromList(id){
   if(picker){picker.value=String(id);}
   lcPickLead(String(id));
   document.querySelector('.scroll').scrollTop=0;
+}
+
+async function convertLeadToJob(leadId){
+  var lead=_lcLeads.find(function(l){return String(l.id)===String(leadId)});
+  if(!lead)return;
+  // If already converted, jump to that job
+  if(lead.converted_to_job_id){
+    switchTab('Jobs',document.querySelectorAll('.nb')[2]);
+    setPipFilter('All');
+    setTimeout(function(){openJobDetail(lead.converted_to_job_id);},100);
+    return;
+  }
+  // Map service
+  var svcMap={snow_seasonal:'Snow Removal — Seasonal',snow_visit:'Snow Removal — Per Visit',gutter:'Gutter Cleaning',pressure:'Pressure Washing',lights:'Christmas Lights',general:'General'};
+  var svcLabel=svcMap[lead.lead_service||'general']||lead.lead_service||'General';
+  // Create new job from lead
+  var jobId='j'+Date.now();
+  var newJob={id:jobId,client:lead.lead_name||'',phone:lead.phone||'',email:lead.email||'',address:lead.address||'',service:svcLabel,date:'',price:0,contractorId:'',contractorPay:0,contractorPaid:false,paymentLink:'',status:'New',notes:lead.notes||'',lat:null,lng:null,service_type:'per_visit',customer_type:'residential'};
+  jobs.unshift(newJob);
+  var res=await _sb.from('jobs').upsert([jl2r(newJob)]);
+  if(res.error){showToast('Error creating job');return;}
+  // Mark lead as converted
+  var li=_lcLeads.findIndex(function(l){return String(l.id)===String(leadId)});
+  if(li>=0)_lcLeads[li].converted_to_job_id=jobId;
+  try{await _sb.from('fb_leads').update({converted_to_job_id:jobId}).eq('id',leadId);}catch(e){}
+  renderDashboard();renderJobsTable();lcRenderLeadsList();
+  showToast('Lead converted to job ✓');
+  // Open job editor so Nick can fill in price, contractor etc
+  setTimeout(function(){openEditJob(jobId);},150);
 }
 
 async function lcSaveLead(){
@@ -2961,13 +3021,16 @@ function timeAgo(d){
 function renderRequests(){
   var el=document.getElementById('requestsList');
   var badge=document.getElementById('reqBadge');
+  // Update Jobs tab badge
+  var pendCount=(requests||[]).filter(function(r){return r.status!=='confirmed'&&r.status!=='dismissed'}).length;
+  if(badge){if(pendCount>0){badge.textContent=pendCount;badge.classList.remove('hidden');}else{badge.classList.add('hidden');}}
+  // Also refresh pipeline if Jobs tab is visible
+  renderJobsTable();
   if(!el)return;
   if(!requests||!requests.length){
     el.innerHTML='<div style="text-align:center;padding:48px;color:var(--fg-3)">No pending requests</div>';
-    if(badge)badge.classList.add('hidden');
     return;
   }
-  if(badge){badge.textContent=requests.length;badge.classList.remove('hidden');}
   el.innerHTML=requests.map(function(r){
     var dstr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'No date';
     var svc=r.service||'Service Request';
@@ -3407,17 +3470,24 @@ function openContractorStatementPicker(){
 }
 
 /* ── Territory Map ─────────────────────────────────────────────────────── */
-var _map=null,_mapPins=[],_mapFilter='all',_mapInitialized=false,_geocodeCache={};
+var _map=null,_mapPins=[],_mapActiveFilters=new Set(),_mapInitialized=false,_geocodeCache={};
+var _mapAllPins=[],_territoryLayers=[];
 
 function initMap(){
   if(_mapInitialized){if(_map)setTimeout(function(){_map.invalidateSize();},100);return;}
   _mapInitialized=true;
   setTimeout(function(){
     if(!document.getElementById('mapContainer'))return;
-    _map=L.map('mapContainer',{zoomControl:true}).setView([40.1,-74.1],10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-      attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom:19
+    _map=L.map('mapContainer',{zoomControl:true,attributionControl:true}).setView([40.1,-74.1],10);
+    // Carto Positron (clean, modern, light/dark aware)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter_nolabels/{z}/{x}/{y}{r}.png',{
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains:'abcd',
+      maxZoom:20
+    }).addTo(_map);
+    // Label layer on top so pins appear over base but under labels
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter_only_labels/{z}/{x}/{y}{r}.png',{
+      subdomains:'abcd',maxZoom:20,pane:'shadowPane'
     }).addTo(_map);
     loadMapData();
   },150);
@@ -3520,9 +3590,12 @@ async function loadMapData(){
     }
   }catch(e){}
 
-  // Place pins on map
+  // Store all pins for filter re-renders
+  _mapAllPins=pins;
   renderMapPins(pins);
   updateMapStats(pins);
+  populateContractorDropdown();
+  renderTerritoryOverlays();
 }
 
 function renderMapPins(pins){
@@ -3531,11 +3604,14 @@ function renderMapPins(pins){
   if(!_map)return;
 
   pins.forEach(function(p){
-    if(_mapFilter!=='all'){
-      if(_mapFilter==='seasonal'&&(p.type!=='job'||p.service_type!=='seasonal'))return;
-      if(_mapFilter==='per_visit'&&(p.type!=='job'||p.service_type!=='per_visit'))return;
-      if(_mapFilter==='commercial'&&(p.type!=='job'||p.customer_type!=='commercial'))return;
-      if(_mapFilter==='leads'&&p.type!=='lead')return;
+    // Multi-select filter: if any filters active, pin must match at least one
+    if(_mapActiveFilters.size>0){
+      var match=false;
+      if(_mapActiveFilters.has('seasonal')&&p.type==='job'&&p.service_type==='seasonal')match=true;
+      if(_mapActiveFilters.has('per_visit')&&p.type==='job'&&p.service_type==='per_visit')match=true;
+      if(_mapActiveFilters.has('commercial')&&p.type==='job'&&p.customer_type==='commercial')match=true;
+      if(_mapActiveFilters.has('leads')&&p.type==='lead')match=true;
+      if(!match)return;
     }
 
     var icon=p.type==='lead'?makeLeadIcon():makeMarkerIcon(pinColor(p));
@@ -3577,19 +3653,91 @@ function updateMapStats(pins){
 }
 
 function mapFilter(f,btn){
-  _mapFilter=f;
-  document.querySelectorAll('.mf-btn').forEach(function(b){b.classList.remove('active');});
-  if(btn)btn.classList.add('active');
-  // Re-render with current data
-  var jobs=window.jobs||[];
-  var pins=[];
-  jobs.forEach(function(j){
-    if(!j.lat||!j.lng)return;
-    pins.push({lat:j.lat,lng:j.lng,label:j.client||j.address,address:j.address,
-      service_type:j.service_type||'per_visit',customer_type:j.customer_type||'residential',
-      price:j.price,type:'job',id:j.id});
+  var allBtn=document.querySelector('.mf-btn[data-filter="all"]');
+  if(f==='all'){
+    // Clear all filters → show everything
+    _mapActiveFilters.clear();
+    document.querySelectorAll('.mf-btn').forEach(function(b){b.classList.remove('active');});
+    if(allBtn)allBtn.classList.add('active');
+  } else {
+    // Toggle this filter on/off
+    if(_mapActiveFilters.has(f)){
+      _mapActiveFilters.delete(f);
+    } else {
+      _mapActiveFilters.add(f);
+    }
+    // Keep "All" active only if nothing else is selected
+    if(allBtn){
+      if(_mapActiveFilters.size===0){allBtn.classList.add('active');}
+      else{allBtn.classList.remove('active');}
+    }
+    if(btn){
+      if(_mapActiveFilters.has(f)){btn.classList.add('active');}
+      else{btn.classList.remove('active');}
+    }
+  }
+  renderMapPins(_mapAllPins);
+}
+
+function populateContractorDropdown(){
+  var sel=document.getElementById('mapContractorSelect');
+  if(!sel)return;
+  var contractors=window.contractors||[];
+  // Keep first option
+  sel.innerHTML='<option value="">🏗 All Contractors</option>';
+  contractors.forEach(function(c){
+    var opt=document.createElement('option');
+    opt.value=c.id;
+    opt.textContent=(c.name||c.id);
+    sel.appendChild(opt);
   });
-  renderMapPins(pins);
+}
+
+// ZIP→approximate bounding box center for NJ/PA zip codes
+// Uses Nominatim to look up zip, then draws a circle
+var _zipGeoCache={};
+async function zipToLatLng(zip){
+  if(_zipGeoCache[zip])return _zipGeoCache[zip];
+  try{
+    var r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&postalcode='+encodeURIComponent(zip)+'&countrycodes=us',{headers:{'User-Agent':'ProServHomes/1.0'}});
+    if(!r.ok)return null;
+    var d=await r.json();
+    if(d&&d.length>0){var pos={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};_zipGeoCache[zip]=pos;return pos;}
+  }catch(e){}
+  return null;
+}
+
+var _contractorColors=['#f97316','#8b5cf6','#06b6d4','#ec4899','#10b981','#f59e0b','#ef4444','#6366f1'];
+
+async function renderTerritoryOverlays(){
+  if(!_map)return;
+  // Clear existing overlays
+  _territoryLayers.forEach(function(l){_map.removeLayer(l);});
+  _territoryLayers=[];
+
+  var selectedId=(document.getElementById('mapContractorSelect')||{}).value||'';
+  var contractors=window.contractors||[];
+  var toShow=selectedId?contractors.filter(function(c){return c.id===selectedId;}):contractors;
+
+  for(var ci=0;ci<toShow.length;ci++){
+    var c=toShow[ci];
+    var zips=c.territory_zips||[];
+    if(!zips.length)continue;
+    var color=_contractorColors[ci%_contractorColors.length];
+
+    for(var zi=0;zi<zips.length;zi++){
+      var pos=await zipToLatLng(zips[zi]);
+      if(!pos)continue;
+      // Draw a circle ~3 mile radius per zip
+      var circle=L.circle([pos.lat,pos.lng],{
+        radius:5000,
+        color:color,fillColor:color,fillOpacity:0.12,weight:2,opacity:0.7,dashArray:'6 4'
+      });
+      circle.bindTooltip((c.name||'Contractor')+' — '+zips[zi],{sticky:true,className:'ter-tooltip'});
+      circle.addTo(_map);
+      _territoryLayers.push(circle);
+    }
+  }
 }
 
 function escHtml(s){
