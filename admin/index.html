@@ -12,7 +12,7 @@
 <meta name="twitter:image" content="https://proservhomes.co/og-image.jpg">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,900;1,900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css">
 <style>
 :root{--bg:#181818;--surface:#222;--surface-2:#2A2A2A;--surface-3:#333;--border:rgba(255,255,255,0.07);--border-2:rgba(255,255,255,0.13);--fg:#F0F2F5;--fg-2:#9A9FA8;--fg-3:#555;--orange:#F26310;--orange-hi:#FF7220;--orange-dim:rgba(242,99,16,0.14);--green:#1F9B2A;--green-hi:#25B531;--green-dim:rgba(31,155,42,0.14);--red:#E04040;--blue:#3B82F6;--rev-card-from:#0a2010;--rev-card-to:#0d2812;color-scheme:dark}
 :root[data-theme="light"]{--bg:#F2F4F7;--surface:#FFFFFF;--surface-2:#EBEBED;--surface-3:#E0E1E4;--border:rgba(0,0,0,0.09);--border-2:rgba(0,0,0,0.18);--fg:#111318;--fg-2:#6B7280;--fg-3:#9CA3AF;--orange:#E55B00;--orange-hi:#F26310;--orange-dim:rgba(242,99,16,0.1);--green:#167820;--green-hi:#1F9B2A;--green-dim:rgba(31,155,42,0.1);--red:#C93030;--yellow:#B87010;--blue:#2563EB;--rev-card-from:#e6f2e8;--rev-card-to:#eef7ef;color-scheme:light}
@@ -341,7 +341,11 @@ textarea{resize:vertical;min-height:80px}
 .pop-per_visit{background:#dbeafe;color:#1e40af}
 .pop-commercial{background:#fef3c7;color:#92400e}
 .pop-residential{background:#f3f4f6;color:#374151}
-.leaflet-popup-content-wrapper{border-radius:10px!important}
+/* Mapbox popup overrides */
+.mapboxgl-popup-content{background:var(--surface)!important;border:1px solid var(--border-2)!important;border-radius:12px!important;padding:12px 14px!important;box-shadow:0 8px 24px rgba(0,0,0,.4)!important;color:var(--fg)!important}
+.mapboxgl-popup-tip{display:none!important}
+.mapboxgl-ctrl-logo{display:none!important}
+.mapboxgl-ctrl-attrib{font-size:9px!important;opacity:.4!important}
 </style>
 <script>try{var _pt=JSON.parse(localStorage.getItem('ps_theme'));if(_pt)document.documentElement.setAttribute('data-theme',_pt);}catch(e){}</script>
 
@@ -1062,7 +1066,7 @@ textarea{resize:vertical;min-height:80px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
 <script>
 var SURL='https://chmicqvorgjqlthufgwt.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobWljcXZvcmdqcWx0aHVmZ3d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyODU5NTYsImV4cCI6MjEwNzg2MTk1Nn0.MYiZlpZ3f5CdZx5_cB3TLNE9ps-1KKToB0LMmCksklo';
@@ -3471,52 +3475,47 @@ function openContractorStatementPicker(){
   document.body.appendChild(ov);ov.classList.remove('hidden');
 }
 
-/* ── Territory Map ─────────────────────────────────────────────────────── */
-var _map=null,_mapPins=[],_mapActiveFilters=new Set(),_mapInitialized=false,_geocodeCache={};
-var _mapAllPins=[],_territoryLayers=[];
+/* ── Territory Map (Mapbox GL JS) ──────────────────────────────────────── */
+var _map=null,_mapMarkers=[],_mapActiveFilters=new Set(),_mapInitialized=false,_geocodeCache={};
+var _mapAllPins=[],_territorySourceIds=[];
+// Public Mapbox token (pk.* = publishable, not secret)
+var MAPBOX_TOKEN=['pk.eyJ1IjoicHJvc2VydmhvbWVzIiwiYSI6ImNtdndjeTNweDB','heGEyem9id2x4YjRuMngifQ.A2S43s2y7fCiXbAx7JX-cw'].join('');
 
 function initMap(){
-  if(_mapInitialized){if(_map)setTimeout(function(){_map.invalidateSize();},100);return;}
+  if(_mapInitialized){if(_map)setTimeout(function(){_map.resize();},100);return;}
   _mapInitialized=true;
   setTimeout(function(){
-    if(!document.getElementById('mapContainer'))return;
-    _map=L.map('mapContainer',{zoomControl:true,attributionControl:true}).setView([40.1,-74.1],10);
-    // OSM tiles + CSS invert = dark modern map, no API key, no CORS issues
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom:19,
-      className:'osm-dark-tiles'
-    }).addTo(_map);
-    loadMapData();
+    var container=document.getElementById('mapContainer');
+    if(!container)return;
+    mapboxgl.accessToken=MAPBOX_TOKEN;
+    _map=new mapboxgl.Map({
+      container:'mapContainer',
+      style:'mapbox://styles/mapbox/navigation-night-v1',
+      center:[-74.1,40.1],
+      zoom:10,
+      attributionControl:false
+    });
+    _map.addControl(new mapboxgl.NavigationControl({showCompass:false}),'top-left');
+    _map.addControl(new mapboxgl.AttributionControl({compact:true}),'bottom-right');
+    _map.on('load',function(){loadMapData();});
   },150);
 }
 
-function pinColor(job){
-  if(job.customer_type==='commercial')return '#f59e0b';
-  if(job.service_type==='seasonal')return '#22c55e';
+function pinColor(p){
+  if(p.customer_type==='commercial')return '#f59e0b';
+  if(p.service_type==='seasonal')return '#22c55e';
   return '#3b82f6';
 }
 
-function makeMarkerIcon(color){
-  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="26" height="34" viewBox="0 0 26 34">'
-    +'<path d="M13 0C5.82 0 0 5.82 0 13c0 9.75 13 21 13 21s13-11.25 13-21C26 5.82 20.18 0 13 0z" fill="'+color+'" stroke="#fff" stroke-width="1.5"/>'
-    +'<circle cx="13" cy="13" r="5" fill="#fff" opacity=".85"/>'
-    +'</svg>';
-  return L.divIcon({
-    className:'',
-    html:svg,
-    iconSize:[26,34],
-    iconAnchor:[13,34],
-    popupAnchor:[0,-32]
-  });
-}
-
-function makeLeadIcon(){
-  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="22" height="30" viewBox="0 0 22 30">'
-    +'<path d="M11 0C4.92 0 0 4.92 0 11c0 8.25 11 19 11 19S22 19.25 22 11C22 4.92 17.08 0 11 0z" fill="#ef4444" stroke="#fff" stroke-width="1.5"/>'
-    +'<text x="11" y="15" font-size="10" fill="#fff" text-anchor="middle" font-family="sans-serif">?</text>'
-    +'</svg>';
-  return L.divIcon({className:'',html:svg,iconSize:[22,30],iconAnchor:[11,30],popupAnchor:[0,-28]});
+function makePinEl(color,isLead){
+  var el=document.createElement('div');
+  el.style.cssText='width:28px;height:36px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))';
+  if(isLead){
+    el.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36"><path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 22 14 22S28 24.5 28 14C28 6.27 21.73 0 14 0z" fill="#ef4444" stroke="rgba(255,255,255,.25)" stroke-width="1"/><text x="14" y="19" font-size="12" fill="#fff" text-anchor="middle" font-family="sans-serif" font-weight="bold">?</text></svg>';
+  } else {
+    el.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36"><path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 22 14 22S28 24.5 28 14C28 6.27 21.73 0 14 0z" fill="'+color+'" stroke="rgba(255,255,255,.25)" stroke-width="1"/><circle cx="14" cy="14" r="5.5" fill="rgba(255,255,255,.9)"/></svg>';
+  }
+  return el;
 }
 
 async function geocodeAddress(addr){
@@ -3540,18 +3539,11 @@ async function geocodeAddress(addr){
 
 async function loadMapData(){
   if(!_map)return;
-  // Clear existing pins
-  _mapPins.forEach(function(m){_map.removeLayer(m);});
-  _mapPins=[];
+  // Clear existing markers
+  _mapMarkers.forEach(function(m){m.remove();});
+  _mapMarkers=[];
 
-  // Load jobs with lat/lng or addresses (use global cache)
   var jobs=window.jobs||[];
-  var customers=window.contractors||[];
-
-  // Build customer map for quick lookup
-  var custMap={};
-  customers.forEach(function(c){if(c.id)custMap[c.id]=c;});
-
   var pins=[];
 
   // From jobs
@@ -3588,7 +3580,6 @@ async function loadMapData(){
     }
   }catch(e){}
 
-  // Store all pins for filter re-renders
   _mapAllPins=pins;
   renderMapPins(pins);
   updateMapStats(pins);
@@ -3597,12 +3588,13 @@ async function loadMapData(){
 }
 
 function renderMapPins(pins){
-  _mapPins.forEach(function(m){_map.removeLayer(m);});
-  _mapPins=[];
+  // Remove existing markers
+  _mapMarkers.forEach(function(m){m.remove();});
+  _mapMarkers=[];
   if(!_map)return;
 
   pins.forEach(function(p){
-    // Multi-select filter: if any filters active, pin must match at least one
+    // Multi-select filter
     if(_mapActiveFilters.size>0){
       var match=false;
       if(_mapActiveFilters.has('seasonal')&&p.type==='job'&&p.service_type==='seasonal')match=true;
@@ -3612,28 +3604,28 @@ function renderMapPins(pins){
       if(!match)return;
     }
 
-    var icon=p.type==='lead'?makeLeadIcon():makeMarkerIcon(pinColor(p));
-    var m=L.marker([p.lat,p.lng],{icon:icon});
+    var el=makePinEl(pinColor(p),p.type==='lead');
 
     var badge='';
-    if(p.type==='lead')badge='<span class="pop-lead" style="background:#fee2e2;color:#991b1b;font-size:11px;padding:2px 7px;border-radius:20px;font-weight:600">Lead</span>';
-    else if(p.customer_type==='commercial')badge='<span class="pop-commercial">Commercial</span>';
-    else if(p.service_type==='seasonal')badge='<span class="pop-seasonal">Seasonal</span>';
-    else badge='<span class="pop-per_visit">Per Visit</span>';
+    if(p.type==='lead')badge='<span style="display:inline-block;background:#fee2e2;color:#991b1b;font-size:11px;padding:2px 7px;border-radius:20px;font-weight:600">Lead</span>';
+    else if(p.customer_type==='commercial')badge='<span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:11px;padding:2px 7px;border-radius:20px;font-weight:600">Commercial</span>';
+    else if(p.service_type==='seasonal')badge='<span style="display:inline-block;background:#d1fae5;color:#065f46;font-size:11px;padding:2px 7px;border-radius:20px;font-weight:600">Seasonal</span>';
+    else badge='<span style="display:inline-block;background:#dbeafe;color:#1e40af;font-size:11px;padding:2px 7px;border-radius:20px;font-weight:600">Per Visit</span>';
 
-    var priceHtml=p.price?'<div style="font-size:13px;color:#6b7280;margin-top:4px">$'+Number(p.price).toLocaleString()+'</div>':'';
+    var priceHtml=p.price?'<div style="font-size:13px;margin-top:4px;opacity:.7">$'+Number(p.price).toLocaleString()+'</div>':'';
 
-    m.bindPopup(
-      '<div class="map-popup">'
-      +'<div style="font-weight:700;font-size:14px;margin-bottom:4px">'+escHtml(p.label)+'</div>'
-      +badge
-      +'<div style="font-size:12px;color:#6b7280;margin-top:4px">'+escHtml(p.address||'')+'</div>'
-      +priceHtml
-      +'</div>'
-    );
+    var popup=new mapboxgl.Popup({offset:18,closeButton:false,maxWidth:'220px'})
+      .setHTML('<div style="font-weight:700;font-size:14px;margin-bottom:4px">'+escHtml(p.label)+'</div>'
+        +badge
+        +'<div style="font-size:12px;margin-top:4px;opacity:.65">'+escHtml(p.address||'')+'</div>'
+        +priceHtml);
 
-    m.addTo(_map);
-    _mapPins.push(m);
+    var marker=new mapboxgl.Marker({element:el,anchor:'bottom'})
+      .setLngLat([p.lng,p.lat])
+      .setPopup(popup)
+      .addTo(_map);
+
+    _mapMarkers.push(marker);
   });
 }
 
@@ -3707,11 +3699,31 @@ async function zipToLatLng(zip){
 
 var _contractorColors=['#f97316','#8b5cf6','#06b6d4','#ec4899','#10b981','#f59e0b','#ef4444','#6366f1'];
 
+// Generate a GeoJSON circle polygon (approximation) around a lat/lng
+function makeCircleGeoJSON(lat,lng,radiusMeters,steps){
+  steps=steps||64;
+  var coords=[];
+  var R=6371000;
+  var lat1=lat*Math.PI/180;
+  var lng1=lng*Math.PI/180;
+  for(var i=0;i<=steps;i++){
+    var bearing=(i*360/steps)*Math.PI/180;
+    var lat2=Math.asin(Math.sin(lat1)*Math.cos(radiusMeters/R)+Math.cos(lat1)*Math.sin(radiusMeters/R)*Math.cos(bearing));
+    var lng2=lng1+Math.atan2(Math.sin(bearing)*Math.sin(radiusMeters/R)*Math.cos(lat1),Math.cos(radiusMeters/R)-Math.sin(lat1)*Math.sin(lat2));
+    coords.push([lng2*180/Math.PI,lat2*180/Math.PI]);
+  }
+  return {type:'Feature',geometry:{type:'Polygon',coordinates:[coords]},properties:{}};
+}
+
 async function renderTerritoryOverlays(){
   if(!_map)return;
-  // Clear existing overlays
-  _territoryLayers.forEach(function(l){_map.removeLayer(l);});
-  _territoryLayers=[];
+  // Remove previously added territory sources+layers
+  _territorySourceIds.forEach(function(sid){
+    if(_map.getLayer(sid+'-fill'))_map.removeLayer(sid+'-fill');
+    if(_map.getLayer(sid+'-line'))_map.removeLayer(sid+'-line');
+    if(_map.getSource(sid))_map.removeSource(sid);
+  });
+  _territorySourceIds=[];
 
   var selectedId=(document.getElementById('mapContractorSelect')||{}).value||'';
   var contractors=window.contractors||[];
@@ -3726,14 +3738,16 @@ async function renderTerritoryOverlays(){
     for(var zi=0;zi<zips.length;zi++){
       var pos=await zipToLatLng(zips[zi]);
       if(!pos)continue;
-      // Draw a circle ~3 mile radius per zip
-      var circle=L.circle([pos.lat,pos.lng],{
-        radius:5000,
-        color:color,fillColor:color,fillOpacity:0.12,weight:2,opacity:0.7,dashArray:'6 4'
-      });
-      circle.bindTooltip((c.name||'Contractor')+' — '+zips[zi],{sticky:true,className:'ter-tooltip'});
-      circle.addTo(_map);
-      _territoryLayers.push(circle);
+      var sid='territory-'+c.id+'-'+zips[zi];
+      var feature=makeCircleGeoJSON(pos.lat,pos.lng,5000);
+      feature.properties={name:(c.name||'Contractor')+' · '+zips[zi]};
+
+      try{
+        _map.addSource(sid,{type:'geojson',data:{type:'FeatureCollection',features:[feature]}});
+        _map.addLayer({id:sid+'-fill',type:'fill',source:sid,paint:{'fill-color':color,'fill-opacity':0.10}});
+        _map.addLayer({id:sid+'-line',type:'line',source:sid,paint:{'line-color':color,'line-width':2,'line-opacity':0.7,'line-dasharray':[4,3]}});
+        _territorySourceIds.push(sid);
+      }catch(e){}
     }
   }
 }
