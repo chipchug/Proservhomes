@@ -1,8 +1,9 @@
-const CACHE = 'proserv-co-v4';
-const SHELL = ['/contractor/', '/contractor/index.html', '/icons/icon-192.png', '/icons/icon-512.png'];
+const CACHE = 'proserv-co-v5';
+// HTML is always fetched fresh; only static assets are cached
+const STATIC = ['/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -16,6 +17,16 @@ self.addEventListener('fetch', e => {
   const url = e.request.url;
   // Never intercept Supabase, auth, or any cross-origin requests
   if (!url.startsWith(self.location.origin)) return;
+
+  // Always network-first for HTML pages so updates land immediately
+  if (url.includes('/contractor/') || url.endsWith('/contractor') || url.endsWith('index.html')) {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Cache-first for static assets
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
