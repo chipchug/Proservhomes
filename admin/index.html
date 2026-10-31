@@ -757,7 +757,7 @@ textarea{resize:vertical;min-height:80px}
           <button class="fin-period" onclick="setFinPeriod('custom',this)">Custom</button>
         </div>
         <!-- Custom date range (hidden by default) -->
-        <div id="finCustomDates" style="display:none;padding:8px 14px 0;display:none;gap:8px;align-items:center">
+        <div id="finCustomDates" style="display:none;padding:8px 14px 0;gap:8px;align-items:center">
           <input type="date" id="finDateFrom" onchange="renderFinancials()" style="flex:1;padding:7px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px">
           <span style="color:var(--fg-3);font-size:12px">to</span>
           <input type="date" id="finDateTo" onchange="renderFinancials()" style="flex:1;padding:7px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px">
@@ -821,7 +821,7 @@ textarea{resize:vertical;min-height:80px}
     <button class="nb" onclick="switchTab('Customers',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Contractors</button>
     <button class="nb" onclick="switchTab('Leads',this);loadLeads()" id="navLeads" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Leads<span id="leadsBadge" class="req-badge hidden"></span></button>
     <button class="nb" onclick="switchTab('Map',this);initMap()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Map</button>
-    <button class="nb" onclick="switchTab('More',this);renderFinancials()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>More</button>
+    <button class="nb" onclick="switchTab('More',this);setTimeout(renderFinancials,50)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>More</button>
   </nav>
 </div>
 
@@ -1545,7 +1545,7 @@ async function loadPayoutRequests(){
   var el=document.getElementById('payoutList');
   if(!el) return;
   el.innerHTML='<div style="text-align:center;padding:24px;color:var(--fg-3);font-size:13px">Loading…</div>';
-  var r=await _sb.from('payout_requests').select('*').order('requested_at',{ascending:false}).limit(20);
+  var r=await _sb.from('payout_requests').select('*').not('status','eq','dismissed').order('requested_at',{ascending:false}).limit(20);
   if(r.error){ el.innerHTML='<div style="padding:14px;color:var(--orange);font-size:13px">Error loading: '+r.error.message+'</div>'; return; }
   var rows=r.data||[];
   if(!rows.length){ el.innerHTML='<div style="text-align:center;padding:24px;color:var(--fg-3);font-size:13px">No payout requests yet</div>'; return; }
@@ -1606,10 +1606,15 @@ async function approvePayout(prId, ctName, amount){
   }
 }
 async function deletePayoutRequest(id){
-  showToast('Deleting…');
+  showToast('Removing…');
+  // Try hard delete first; fall back to status=dismissed if RLS blocks it
   var r=await _sb.from('payout_requests').delete().eq('id',id);
-  if(r.error){ showToast('Error: '+r.error.message); return; }
-  showToast('Payout request deleted ✓');
+  if(r.error){
+    // Fall back: mark dismissed so it disappears from the list
+    var r2=await _sb.from('payout_requests').update({status:'dismissed'}).eq('id',id);
+    if(r2.error){ showToast('Error: '+r2.error.message); return; }
+  }
+  showToast('Removed ✓');
   loadPayoutRequests();
 }
 /* ── Applications ─────────────────────────────────────────────────── */
@@ -1869,7 +1874,7 @@ async function enterApp(){
   document.getElementById('ovSub').textContent="Here's your business overview.";
   var rr=await _sb.from('job_requests').select('*').order('id',{ascending:false});
   requests=(rr.data||[]).filter(function(r){return r.status==='pending'||r.status==='acknowledged'||r.status==='quoted'});
-  populateBooksMonths();populateContractorSelect();buildSvcSelect('jSvc');renderDashboard();renderJobsTable();renderContractors();renderBooks();renderFinancials();renderRequests();loadPayoutRequests();
+  populateBooksMonths();populateContractorSelect();buildSvcSelect('jSvc');renderDashboard();renderJobsTable();renderContractors();renderBooks();renderRequests();loadPayoutRequests();
   var _jp=new URLSearchParams(window.location.search).get('job');
   if(_jp)setTimeout(function(){openJobDetail(_jp);},300);
 }
@@ -3819,16 +3824,22 @@ async function loadMapData(){
   var pins=[];
 
   // From jobs
+  var _lastGeocode=0;
   for(var i=0;i<jobs.length;i++){
     var j=jobs[i];
     if(!j.address)continue;
     var pos=null;
     if(j.lat&&j.lng){pos={lat:j.lat,lng:j.lng};}
     else{
+      // Nominatim rate limit: 1 req/sec
+      var now2=Date.now();var wait=1100-(now2-_lastGeocode);
+      if(wait>0)await new Promise(function(res){setTimeout(res,wait);});
+      _lastGeocode=Date.now();
       pos=await geocodeAddress(j.address);
-      // Persist back to DB so we don't re-geocode every load
+      // Persist back to DB so Tommy and others don't re-geocode on next load
       if(pos&&_sb){
-        _sb.from('jobs').update({lat:pos.lat,lng:pos.lng}).eq('id',j.id).then(function(){});
+        var jid=j.id;
+        _sb.from('jobs').update({lat:pos.lat,lng:pos.lng}).eq('id',jid).then(function(){});
         j.lat=pos.lat;j.lng=pos.lng;
       }
     }
