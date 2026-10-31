@@ -1366,6 +1366,23 @@ function _ctUpdateNavBanner(){
   if(badge)badge.textContent=(_ctNavStepIdx===_ctNavSteps.length-1)?'Arriving':'Step '+(_ctNavStepIdx+1)+' / '+_ctNavSteps.length;
 }
 
+var _CT_VAN_B64='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABfCAYAAAB/R0B4AAAjvElEQVR42u28eZBd133f+fmdc5e3995AA03sBMAVpChqo2SClChKoihT1jTHccYp2ZOU4pqMJlaNR7JlB2QlmUwSL3HissVYw4ntsWQBWijbksnIEgGSokWJgLgJJEFiJwE2GkCvr997995zfvnj3ve6qdhTqVFTbFV4qroKje6+797v/Z3f8v19fwfeWG+sN9Yb6421KtbExISdmJiwf8eP5cYbbwzeQOlvWaoqqirLvjeqavbu3Wu7//7h313++//drT179hhVDZYDA/Ce933wxne/+7bdf9vf7Nhx7bpbbvnQz77KJEVQVftgfi357wW0/+pBP3vfffW/fPCxte98183H337D7he//d0fXPudx5982+NPHnnbt7/79DtePDl13ftv+5nffue73q2//Cu/euOhI0dG9txzT+VvsWTz4IM/XjB/LB+0d+9ee+edd7ru93/14N9s2rF1y/8aReEV3vuxwAZDZ8++Uvurr91X3bZ1q+y69npbq9cwRvBesTbg0W8/xJnTx9OxS7ay+6ab51uLzXlj7ZQRObPY6hx68vmjf/CRW284t/yF3X333f4nHkBVNSLi77//0W07r9j6UTHBDYuLi9deum28b34hI0kSsiyl2Vzk4vlJf/rki1y8cFFHRkZQrzjnSNKEmemLXHf9WyUs1WXN2rUSBAFhGBHHEaVYOH7i5XPlcuVQmiX373vgL+/95D/8h/M/DhCD13rbioj/8p8/8P7tl239443jo8PT8wnWGs6fn09a7Q5iRCiCQhiEMjvbZDHx0nFClnoUIcmE+cUE9R5jA59lDu9V0yzTxcVFKuVYa9XaaLVWfV+jErzvQzfe+nPjX/zLv/dzH7ntOPCagiivpeUB+vW//psrhwYahy7bsS3wqp35hUUTBIFxmZPMZXivqCpJmurcxXMyPzfL4OgYpbhUBApADCePH2eor4LENQYGBhERjDFqrSUIrIigWZb5gf4+h0jp0KGnnvz+9x5668c//vFERAD0tXhO81oBuH//fiMiGgb2H4+OjgZipJNmLkTVOuck8444jmk0GjrQ30+tWhFjLHMzFzj63NOceOEwLz77FC8++xRHnjnEmZMv4JyjVqlQr9fo62tQr9cljELSNMN7Lyg2SdLIpUln7dq1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';
+
+// Retry-based route layer adder — fixes race condition on reused map
+function _ctAddRouteLayer(map,geometry){
+  var srcId='ct-route',lyrId='ct-route-line',attempts=0;
+  function tryAdd(){
+    if(++attempts>25)return;
+    try{
+      if(map.getLayer(lyrId))map.removeLayer(lyrId);
+      if(map.getSource(srcId))map.removeSource(srcId);
+      map.addSource(srcId,{type:'geojson',data:{type:'Feature',geometry:geometry}});
+      map.addLayer({id:lyrId,type:'line',source:srcId,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#F26310','line-width':6,'line-opacity':0.95}});
+    }catch(e){setTimeout(tryAdd,100);}
+  }
+  tryAdd();
+}
+
 function startDriving(){
   _ctNavMode='driving';
   _ctNavStepIdx=0;
@@ -1398,6 +1415,13 @@ function _ctOnGpsUpdate(p){
   var camOpts={center:[lng,lat],pitch:60,zoom:17,duration:600};
   if(heading!=null&&heading>=0)camOpts.bearing=heading;
   if(window._ctMap)window._ctMap.easeTo(camOpts);
+  // Create van marker on first GPS tick in driving mode
+  if(_ctNavMode==='driving'&&!window._ctUserMarker&&window._ctMap){
+    var vanEl=document.createElement('img');
+    vanEl.src=_CT_VAN_B64;
+    vanEl.style.cssText='width:56px;height:66px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(0,0,0,.7))';
+    window._ctUserMarker=new mapboxgl.Marker({element:vanEl,anchor:'center'}).setLngLat([lng,lat]).addTo(window._ctMap);
+  }
   // Move user marker
   if(window._ctUserMarker)window._ctUserMarker.setLngLat([lng,lat]);
   // Advance step if close to next maneuver
@@ -1444,6 +1468,8 @@ function _ctEstAvgSpeed(speedMs){
 function endNavigation(){
   // Stop GPS watch
   if(_ctWatchId!=null){navigator.geolocation.clearWatch(_ctWatchId);_ctWatchId=null;}
+  // Remove van marker
+  if(window._ctUserMarker){window._ctUserMarker.remove();window._ctUserMarker=null;}
   _ctNavMode='overview';
   // Reset UI
   document.getElementById('ctNavBanner').style.display='none';
@@ -1573,15 +1599,7 @@ async function getDirectionsEnRoute(jobId,address,phone,email){
         _ctNavRouteDur=route.duration;
         // Draw route on map
         var map=window._ctMap;
-        var srcId='ct-route',lyrId='ct-route-line';
-        if(map.getLayer(lyrId))map.removeLayer(lyrId);
-        if(map.getSource(srcId))map.removeSource(srcId);
-        var addRoute=function(){
-          map.addSource(srcId,{type:'geojson',data:{type:'Feature',geometry:route.geometry}});
-          map.addLayer({id:lyrId,type:'line',source:srcId,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#F26310','line-width':6,'line-opacity':0.95}});
-        };
-        if(map.isStyleLoaded())addRoute();
-        else map.once('load',addRoute);
+        _ctAddRouteLayer(map,route.geometry);
         // Show Drive Now overlay
         var driveBtn=document.getElementById('ctDriveNow');
         if(driveBtn)driveBtn.style.display='block';
@@ -1640,11 +1658,8 @@ async function openNavOnly(address){
         if(etaEl)etaEl.textContent=mins+' min  ·  '+miles+' mi';
         _ctNavSteps=(route.legs&&route.legs[0]&&route.legs[0].steps)||[];
         _ctNavRouteDist=route.distance;_ctNavRouteDur=route.duration;
-        var map=window._ctMap,srcId='ct-route',lyrId='ct-route-line';
-        if(map.getLayer(lyrId))map.removeLayer(lyrId);
-        if(map.getSource(srcId))map.removeSource(srcId);
-        var addRoute=function(){map.addSource(srcId,{type:'geojson',data:{type:'Feature',geometry:route.geometry}});map.addLayer({id:lyrId,type:'line',source:srcId,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#F26310','line-width':6,'line-opacity':0.95}});};
-        if(map.isStyleLoaded())addRoute();else map.once('load',addRoute);
+        var map=window._ctMap;
+        _ctAddRouteLayer(map,route.geometry);
         var driveBtn=document.getElementById('ctDriveNow');if(driveBtn)driveBtn.style.display='block';
       }else{if(etaEl)etaEl.textContent='Navigate to: '+address;}
     }catch(e){if(etaEl)etaEl.textContent='Navigate to: '+address;}
