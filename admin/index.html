@@ -982,6 +982,11 @@ textarea{resize:vertical;min-height:80px}
     <div class="field"><label>Phone</label><input type="tel" id="ctPhone" placeholder="(732) 555-0000" maxlength="14"></div>
     <div class="field"><label>Email</label><input type="email" id="ctEmail" placeholder="contractor@email.com"></div>
     <div class="field"><label>Specialty / Services</label><input id="ctSpec" placeholder="Fence · Concrete · Pavers"></div>
+    <div class="field">
+      <label>Service Area ZIPs <span style="font-weight:400;color:var(--fg-3)">(up to 4, comma-separated)</span></label>
+      <input id="ctZips" placeholder="07701, 07722, 07712, 07731" maxlength="80">
+      <div style="font-size:11px;color:var(--fg-3);margin-top:4px">These ZIPs show as territory circles on the map</div>
+    </div>
     <div class="field"><label>Pay Margin</label><select id="ctMargin"><option value="30">30% (Standard)</option><option value="20">20% (Reduced)</option><option value="25">25%</option><option value="35">35%</option></select></div>
     <div class="mbtn-row">
       <button class="mbtn mbtn-primary" onclick="saveContractor()">Save</button>
@@ -1365,8 +1370,8 @@ async function genPaymentLink(priceId,linkId,svcId,btn,jobIdOverride){
 // Field mapping: local camelCase <-> DB snake_case
 function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,paymentLink:r.payment_link||'',status:r.status||'New',notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null,lat:r.lat||null,lng:r.lng||null,service_type:r.service_type||'per_visit',customer_type:r.customer_type||'residential'}}
 function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,email:j.email||'',address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,contractor_paid:!!j.contractorPaid,payment_link:j.paymentLink||'',status:j.status||'New',notes:j.notes||'',lat:j.lat||null,lng:j.lng||null,service_type:j.service_type||'per_visit',customer_type:j.customer_type||'residential'}}
-function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',margin:Number(r.margin)||30,photo_url:r.photo_url||null,bio:r.bio||'',insurance_url:r.insurance_url||null,service_interests:r.service_interests||null,stripe_onboarded:!!r.stripe_onboarded}}
-function cl2r(c){return{id:c.id,name:c.name,phone:c.phone,email:c.email||'',specialty:c.specialty||c.spec||'',margin:c.margin||30}}
+function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',margin:Number(r.margin)||30,photo_url:r.photo_url||null,bio:r.bio||'',insurance_url:r.insurance_url||null,service_interests:r.service_interests||null,stripe_onboarded:!!r.stripe_onboarded,territory_zips:Array.isArray(r.territory_zips)?r.territory_zips:[]}}
+function cl2r(c){return{id:c.id,name:c.name,phone:c.phone,email:c.email||'',specialty:c.specialty||c.spec||'',margin:c.margin||30,territory_zips:Array.isArray(c.territory_zips)?c.territory_zips:[]}}
 
 var SEED_JOBS=[
   {id:'j1',client:'Robert French',phone:'(732) 555-0101',address:'14 Bayview Ln, Toms River NJ',service:'Gutter Cleaning',date:'2026-10-15',price:175,contractorId:'c1',contractorPay:65,status:'Complete',notes:'Second story on left side only'},
@@ -2140,7 +2145,7 @@ function renderHomeowners(){
       +'</div><div class="ct-jobs">'+jc+'<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left:3px"><polyline points="9 18 15 12 9 6"/></svg></div></div>';
   }).join('');
 }
-function openAddContractor(){_editCtId=null;document.getElementById('ctEditId').value='';document.getElementById('ctName').value='';document.getElementById('ctPhone').value='';document.getElementById('ctEmail').value='';document.getElementById('ctSpec').value='';document.getElementById('ctMargin').value='30';document.getElementById('ctModalTitle').textContent='Add Contractor';document.getElementById('delCtBtn').classList.add('hidden');document.getElementById('ctModal').classList.remove('hidden')}
+function openAddContractor(){_editCtId=null;document.getElementById('ctEditId').value='';document.getElementById('ctName').value='';document.getElementById('ctPhone').value='';document.getElementById('ctEmail').value='';document.getElementById('ctSpec').value='';document.getElementById('ctZips').value='';document.getElementById('ctMargin').value='30';document.getElementById('ctModalTitle').textContent='Add Contractor';document.getElementById('delCtBtn').classList.add('hidden');document.getElementById('ctModal').classList.remove('hidden')}
 async function openEditCtx(id){
   // Always fetch fresh data from Supabase so profile updates show immediately
   var fresh=await _sb.from('contractors').select('*').eq('id',id).limit(1);
@@ -2155,6 +2160,7 @@ async function openEditCtx(id){
   document.getElementById('ctPhone').value=c.phone||'';
   document.getElementById('ctEmail').value=c.email||'';
   document.getElementById('ctSpec').value=c.spec||c.specialty||'';
+  document.getElementById('ctZips').value=(c.territory_zips||[]).join(', ');
   document.getElementById('ctMargin').value=String(c.margin||30);
   document.getElementById('ctModalTitle').textContent=c.name||'Contractor';
   document.getElementById('delCtBtn').classList.remove('hidden');
@@ -2235,7 +2241,7 @@ function openHwDetail(email){
   if(nw&&nt){nw.style.display=h.tech_notes?'':'none';nt.textContent=h.tech_notes||'';}
   document.getElementById('hwModal').classList.remove('hidden');
 }
-async function saveContractor(){var name=document.getElementById('ctName').value.trim();if(!name){showToast('Name required');return}var id=_editCtId||('c'+Date.now());var i=contractors.findIndex(function(x){return x.id===id});var margin=Number(document.getElementById('ctMargin').value)||30;var c={id:id,name:name,phone:document.getElementById('ctPhone').value,email:document.getElementById('ctEmail').value.trim().toLowerCase(),specialty:document.getElementById('ctSpec').value,spec:document.getElementById('ctSpec').value,margin:margin,jobs:0};if(i>=0)contractors[i]=c;else contractors.push(c);await _sb.from('contractors').upsert([cl2r(c)]);populateContractorSelect();renderContractors();closeModal('ctModal');showToast(name+' saved')}
+async function saveContractor(){var name=document.getElementById('ctName').value.trim();if(!name){showToast('Name required');return}var id=_editCtId||('c'+Date.now());var i=contractors.findIndex(function(x){return x.id===id});var margin=Number(document.getElementById('ctMargin').value)||30;var rawZips=document.getElementById('ctZips').value;var zips=rawZips.split(',').map(function(z){return z.trim().replace(/\D/g,'');}).filter(function(z){return z.length===5;}).slice(0,4);var c={id:id,name:name,phone:document.getElementById('ctPhone').value,email:document.getElementById('ctEmail').value.trim().toLowerCase(),specialty:document.getElementById('ctSpec').value,spec:document.getElementById('ctSpec').value,margin:margin,territory_zips:zips,jobs:0};if(i>=0)contractors[i]=c;else contractors.push(c);await _sb.from('contractors').upsert([cl2r(c)]);populateContractorSelect();renderContractors();renderTerritoryOverlays();closeModal('ctModal');showToast(name+' saved ✓'+(zips.length?' · '+zips.length+' ZIP'+(zips.length>1?'s':'')+'':''))}
 async function deleteContractor(){var id=document.getElementById('ctEditId').value;if(!id)return;contractors=contractors.filter(function(c){return c.id!==id});await _sb.from('contractors').delete().eq('id',id);populateContractorSelect();renderContractors();closeModal('ctModal');showToast('Contractor removed')}
 
 function populateBooksMonths(){var months={};jobs.forEach(function(j){if(j.date){var d=new Date(j.date+'T12:00:00');var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(!months[k]){var lbl=d.toLocaleDateString('en-US',{month:'long',year:'numeric'});months[k]=lbl}}});var sel=document.getElementById('booksMonth');var now=new Date();var ck=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');if(!months[ck])months[ck]=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});sel.innerHTML=Object.keys(months).sort().reverse().map(function(k){return'<option value="'+k+'"'+(k===ck?' selected':'')+'>'+months[k]+'</option>'}).join('')}
@@ -2619,7 +2625,12 @@ function lcRenderLeadsList(){
       +(contactLine?'<div style="font-size:12px;color:var(--fg-3)">'+esc(contactLine)+'</div>':'')
       +(l.notes?'<div style="font-size:12px;color:var(--fg-3);margin-top:4px;font-style:italic">'+esc(l.notes.slice(0,80))+(l.notes.length>80?'…':'')+'</div>':'')
       +'</div>'
-      +'<button onclick="convertLeadToJob(\''+l.id+'\')" style="flex-shrink:0;padding:7px 10px;border-radius:8px;border:1.5px solid '+(l.converted_to_job_id?'var(--green)':'var(--border-2)')+';background:transparent;color:'+(l.converted_to_job_id?'var(--green)':'var(--fg-3)')+';font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.03em;white-space:nowrap">'+(l.converted_to_job_id?'View Job':'→ Job')+'</button>'
+      +(l.converted_to_job_id
+        ?'<button onclick="convertLeadToJob(\''+l.id+'\')" style="flex-shrink:0;padding:7px 12px;border-radius:8px;border:1.5px solid var(--green);background:transparent;color:var(--green);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">View Job</button>'
+        :'<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">'
+         +'<button onclick="convertLeadToJob(\''+l.id+'\')" style="padding:7px 10px;border-radius:8px;border:1.5px solid var(--border-2);background:transparent;color:var(--fg-3);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">→ New Job</button>'
+         +'<button onclick="linkLeadToJob(\''+l.id+'\')" style="padding:5px 10px;border-radius:8px;border:1.5px solid var(--border-2);background:transparent;color:var(--fg-3);font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap">🔗 Link Job</button>'
+         +'</div>')
       +'</div>'
       +'</div>';
   }).join('');
@@ -2662,6 +2673,47 @@ async function convertLeadToJob(leadId){
   showToast('Lead converted to job ✓');
   // Open job editor so Nick can fill in price, contractor etc
   setTimeout(function(){openEditJob(jobId);},150);
+}
+
+function linkLeadToJob(leadId){
+  var lead=_lcLeads.find(function(l){return String(l.id)===String(leadId)});
+  if(!lead)return;
+  // Build job picker modal
+  var sorted=jobs.slice().sort(function(a,b){return(b.date||'').localeCompare(a.date||'');});
+  var rows=sorted.map(function(j){
+    var label=(j.client||'Unknown')+' — '+(j.service||'')+(j.date?' ('+j.date+')':'');
+    return '<div onclick="confirmLinkLeadToJob(\''+leadId+'\',\''+j.id+'\')" style="padding:10px 14px;border-radius:8px;cursor:pointer;border:1.5px solid var(--border-2);background:var(--bg-2);margin-bottom:6px;font-size:13px;transition:background .15s" onmouseover="this.style.background=\'var(--bg-3)\'" onmouseout="this.style.background=\'var(--bg-2)\'">'+label+'</div>';
+  }).join('');
+  var html='<div style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center" id="linkJobOverlay" onclick="if(event.target.id===\'linkJobOverlay\')this.remove()">'
+    +'<div style="background:var(--bg-1);border-radius:14px;padding:24px;width:420px;max-width:90vw;max-height:70vh;display:flex;flex-direction:column;gap:12px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center">'
+    +'<div style="font-weight:700;font-size:16px">Link to Existing Job</div>'
+    +'<button onclick="document.getElementById(\'linkJobOverlay\').remove()" style="background:none;border:none;color:var(--fg-3);font-size:20px;cursor:pointer;line-height:1">×</button>'
+    +'</div>'
+    +'<div style="font-size:12px;color:var(--fg-3)">Linking lead: <strong style="color:var(--fg-1)">'+(lead.lead_name||'Unknown')+'</strong></div>'
+    +'<input id="linkJobSearch" placeholder="Search jobs…" oninput="filterLinkJobList(this.value)" style="padding:8px 12px;border-radius:8px;border:1.5px solid var(--border-2);background:var(--bg-2);color:var(--fg-1);font-size:13px;outline:none">'
+    +'<div id="linkJobList" style="overflow-y:auto;flex:1">'+rows+'</div>'
+    +'</div>'
+    +'</div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+}
+
+function filterLinkJobList(q){
+  var list=document.getElementById('linkJobList');
+  if(!list)return;
+  var items=list.querySelectorAll('div');
+  items.forEach(function(el){
+    el.style.display=el.textContent.toLowerCase().indexOf(q.toLowerCase())>-1?'':'none';
+  });
+}
+
+async function confirmLinkLeadToJob(leadId,jobId){
+  document.getElementById('linkJobOverlay').remove();
+  var li=_lcLeads.findIndex(function(l){return String(l.id)===String(leadId)});
+  if(li>=0)_lcLeads[li].converted_to_job_id=jobId;
+  try{await _sb.from('fb_leads').update({converted_to_job_id:jobId}).eq('id',leadId);}catch(e){showToast('Error linking lead');return;}
+  lcRenderLeadsList();
+  showToast('Lead linked to job ✓');
 }
 
 async function lcSaveLead(){
