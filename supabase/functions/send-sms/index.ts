@@ -56,7 +56,7 @@ interface PersonInfo {
 }
 
 interface SmsPayload {
-  event: "job_booked" | "job_accepted" | "job_completed" | "job_cancelled" | "otp" | "payout_request" | "review_request" | "payment_reminder" | "referral_ask";
+  event: "job_booked" | "job_accepted" | "job_completed" | "job_cancelled" | "otp" | "payout_request" | "review_request" | "payment_reminder" | "referral_ask" | "contractor_en_route";
   job?: JobInfo;
   homeowner?: PersonInfo;
   contractor?: PersonInfo;
@@ -221,6 +221,21 @@ function buildMessages(payload: SmsPayload): Array<{ to: string; body: string; r
         to: homeowner.phone,
         recipient: "homeowner",
         body: `Hi ${homeowner.name ?? "there"}! Just a reminder — your ProServ Homes invoice is still open.\n\n${jobLine}${job?.amount ? `\nAmount due: ${formatCurrency(job.amount)}` : ""}\n\nPay securely: https://proservhomes.co/homeowner/`,
+      });
+    }
+    return msgs;
+  }
+
+  if (event === "contractor_en_route") {
+    // → Homeowner: your pro is on the way
+    const phone = payload.phone || homeowner?.phone;
+    const name = homeowner?.name || "there";
+    const firstName = name.split(" ")[0];
+    if (phone) {
+      msgs.push({
+        to: phone,
+        recipient: "homeowner",
+        body: `Hi ${firstName}! Your ProServ Pro is on the way 🚗 They should arrive shortly.\n\n${jobLine}\n\nQuestions? Reply here or visit proservhomes.co`,
       });
     }
     return msgs;

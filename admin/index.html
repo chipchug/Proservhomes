@@ -428,6 +428,26 @@ textarea{resize:vertical;min-height:80px}
             <div class="sg-sub" id="stOutstandingCount">0 unpaid jobs</div>
           </div>
         </div>
+        <!-- Stripe payment breakdown -->
+        <div style="margin:14px 14px 0;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3)">Stripe Payments</div>
+            <button id="syncStripeBtn" onclick="syncStripe()" style="display:flex;align-items:center;gap:5px;background:var(--bg-2);border:1.5px solid var(--border-2);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--fg-2);cursor:pointer">↻ Sync</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="background:var(--bg-2);border-radius:10px;padding:12px">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Seasonal Paid</div>
+              <div id="stSeasonalAmt" style="font-size:22px;font-weight:900;color:var(--green)">$0</div>
+              <div id="stSeasonalCount" style="font-size:11px;color:var(--fg-3)">0 clients</div>
+            </div>
+            <div style="background:var(--bg-2);border-radius:10px;padding:12px">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Per-Visit Paid</div>
+              <div id="stPerVisitAmt" style="font-size:22px;font-weight:900;color:var(--blue)">$0</div>
+              <div id="stPerVisitCount" style="font-size:11px;color:var(--fg-3)">0 jobs</div>
+            </div>
+          </div>
+          <div id="stripeSyncStatus" style="font-size:11px;color:var(--fg-3);margin-top:8px;min-height:16px"></div>
+        </div>
         <div class="fu-tile" id="fuTile"></div>
         <div style="padding:14px 14px 0">
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:10px">Portal Links</div>
@@ -1941,6 +1961,15 @@ function renderDashboard(){
   document.getElementById('stMargin').textContent='$'+margin.toLocaleString();
   document.getElementById('stMarginPct').textContent=mPct+'% margin';
   document.getElementById('stOpen').textContent=open;
+  // Stripe breakdown: seasonal (upfront paid) vs per-visit
+  var seasonalJobs=jobs.filter(function(j){return j.service_type==='seasonal'&&j.status==='Paid'});
+  var perVisitJobs=jobs.filter(function(j){return j.service_type!=='seasonal'&&j.status==='Paid'});
+  var seasonalAmt=seasonalJobs.reduce(function(s,j){return s+Number(j.price||0)},0);
+  var perVisitAmt=perVisitJobs.reduce(function(s,j){return s+Number(j.price||0)},0);
+  document.getElementById('stSeasonalAmt').textContent='$'+seasonalAmt.toLocaleString();
+  document.getElementById('stSeasonalCount').textContent=seasonalJobs.length+' client'+(seasonalJobs.length!==1?'s':'');
+  document.getElementById('stPerVisitAmt').textContent='$'+perVisitAmt.toLocaleString();
+  document.getElementById('stPerVisitCount').textContent=perVisitJobs.length+' job'+(perVisitJobs.length!==1?'s':'');
   // sparkline — 7 fake-ish data points building up to current total
   var base=Math.max(rev*0.3,50);var pts=[];for(var i=0;i<7;i++){pts.push(Math.round(base+((rev-base)*(i/6))+Math.random()*30-15))}pts[pts.length-1]=rev;
   var mx=Math.max.apply(null,pts)||1;var mn2=Math.min.apply(null,pts)||0;var range=mx-mn2||1;var W=200;var H=44;
@@ -1957,6 +1986,44 @@ function renderDashboard(){
   // recent jobs
   var recent=jobs.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date)}).slice(0,5);
   document.getElementById('recentList').innerHTML=recent.map(jrow).join('')
+}
+
+async function syncStripe(){
+  var btn=document.getElementById('syncStripeBtn');
+  var status=document.getElementById('stripeSyncStatus');
+  if(btn){btn.disabled=true;btn.textContent='Syncing…';}
+  if(status)status.textContent='Pulling from Stripe…';
+  try{
+    var res=await fetch(SURL+'/functions/v1/stripe-sync',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({lookback_days:90})
+    });
+    var data=await res.json();
+    if(data.ok){
+      // Reload jobs from Supabase to pick up any newly created ones
+      var r=await _sb.from('jobs').select('*').order('date',{ascending:false});
+      if(!r.error&&r.data){
+        jobs=r.data.map(jr2l);
+        renderDashboard();renderJobsTable();
+      }
+      var msg='';
+      if(data.created)msg+=data.created+' new job'+(data.created!==1?'s':'')+' imported';
+      if(data.updated)msg+=(msg?', ':'')+data.updated+' updated';
+      if(data.skipped)msg+=(msg?', ':'')+data.skipped+' already synced';
+      if(!msg)msg='All up to date';
+      if(status)status.textContent='✓ '+msg+' · '+data.sessions_pulled+' sessions checked';
+      showToast('Stripe synced ✓ '+( data.created?data.created+' new job'+(data.created!==1?'s':''):''));
+    } else {
+      if(status)status.textContent='Sync error: '+(data.error||'Unknown');
+      showToast('Sync failed');
+    }
+  }catch(e){
+    if(status)status.textContent='Sync failed — check edge function logs';
+    showToast('Sync failed');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='↻ Sync';}
+  }
 }
 
 function renderJobsTable(){
