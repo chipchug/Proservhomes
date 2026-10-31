@@ -511,9 +511,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- MAP TAB — flex sibling to .scroll, fills its space when active -->
   <div id="tabMap" style="display:none;flex:1;flex-direction:column;min-height:0;background:#0d0d0d;overflow:hidden">
-    <!-- top bar -->
-    <div id="ctMapBar" style="display:flex;align-items:center;gap:10px;padding:10px 14px 8px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0">
-      <button onclick="swTab('Jobs',document.querySelector('.nb[data-tab=Jobs]'))" style="background:rgba(255,255,255,0.08);border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+
+    <!-- OVERVIEW header (hidden during driving) -->
+    <div id="ctMapBar" style="display:flex;align-items:center;gap:10px;padding:10px 14px 8px;background:#111;border-bottom:1px solid rgba(255,255,255,0.1);flex-shrink:0">
+      <button onclick="endNavigation()" style="background:rgba(255,255,255,0.08);border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
         <svg width="16" height="16" fill="none" stroke="#F0F2F5" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
       <div style="flex:1;min-width:0">
@@ -521,10 +522,55 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div id="ctMapEta" style="font-size:11px;color:#9A9FA8;margin-top:1px"> </div>
       </div>
     </div>
-    <!-- map fills remaining space -->
-    <div id="ctMapEl" style="flex:1;position:relative;min-height:0"></div>
-    <!-- turn-by-turn steps panel (collapsed by default, tap to expand) -->
-    <div id="ctMapSteps" style="background:#111;border-top:1px solid rgba(255,255,255,0.08);max-height:200px;overflow-y:auto;flex-shrink:0"></div>
+
+    <!-- DRIVING — top maneuver banner (shown during driving) -->
+    <div id="ctNavBanner" style="display:none;flex-shrink:0;background:#111;border-bottom:2px solid #F26310;padding:12px 16px;align-items:center;gap:14px">
+      <div id="ctNavIcon" style="width:52px;height:52px;background:rgba(242,99,16,0.15);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div id="ctNavNextDist" style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:#F0F2F5;line-height:1">—</div>
+        <div id="ctNavStreet" style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#9A9FA8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Calculating…</div>
+      </div>
+      <div id="ctNavDestBadge" style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#F26310;background:rgba(242,99,16,0.12);border:1px solid rgba(242,99,16,0.3);border-radius:8px;padding:4px 8px;white-space:nowrap;flex-shrink:0"></div>
+    </div>
+
+    <!-- MAP container — fills remaining space -->
+    <div id="ctMapEl" style="flex:1;position:relative;min-height:0">
+      <!-- Drive Now overlay (shown after route loads, before driving) -->
+      <div id="ctDriveNow" style="display:none;position:absolute;bottom:0;left:0;right:0;z-index:10;padding:16px;background:linear-gradient(transparent,rgba(0,0,0,0.85) 40%)">
+        <div style="display:flex;gap:10px">
+          <button onclick="startDriving()" style="flex:1;background:#F26310;color:#fff;border:none;border-radius:14px;padding:16px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+            Start Navigation
+          </button>
+          <button onclick="endNavigation()" style="background:rgba(255,255,255,0.1);color:#F0F2F5;border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:16px 18px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DRIVING — bottom HUD (shown during driving) -->
+    <div id="ctNavHUD" style="display:none;flex-shrink:0;background:#111;border-top:1px solid rgba(255,255,255,0.08)">
+      <div style="display:flex;align-items:stretch">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;border-right:1px solid rgba(255,255,255,0.08)">
+          <div id="ctNavETA" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#F0F2F5;line-height:1">—</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#55595f;margin-top:3px">ETA</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;border-right:1px solid rgba(255,255,255,0.08)">
+          <div id="ctNavSpeed" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#F0F2F5;line-height:1">—</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#55595f;margin-top:3px">mph</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px;border-right:1px solid rgba(255,255,255,0.08)">
+          <div id="ctNavRemDist" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#F0F2F5;line-height:1">—</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#55595f;margin-top:3px">mi left</div>
+        </div>
+        <button onclick="endNavigation()" style="background:none;border:none;color:#E04040;padding:12px 16px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex-shrink:0">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span style="font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">End</span>
+        </button>
+      </div>
+    </div>
+
   </div>
 
   <nav class="bnav">
@@ -1266,6 +1312,147 @@ async function savePhotos(){
 // ─── IN-APP GPS NAVIGATION ─────────────────────────────────────────────────
 var _ctMap=null;
 var _ctNavJobId=null;
+var _ctNavSteps=[];
+var _ctNavStepIdx=0;
+var _ctWatchId=null;
+var _ctNavRouteDist=0;
+var _ctNavRouteDur=0;
+var _ctNavMode='overview'; // 'overview' | 'driving'
+var _ctNavRemDist=0; // remaining meters
+var _ctNavRemDur=0;  // remaining seconds
+
+function _ctHaverDist(lat1,lng1,lat2,lng2){
+  var R=6371000,dL=(lat2-lat1)*Math.PI/180,dl=(lng2-lng1)*Math.PI/180;
+  var a=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dl/2)*Math.sin(dl/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function _ctManeuverSvg(modifier,type){
+  var mod=(modifier||'').toLowerCase();
+  var t=(type||'').toLowerCase();
+  var col='#F26310';
+  if(t==='arrive'||t==='destination')
+    return'<svg width="26" height="26" fill="none" stroke="'+col+'" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+  if(mod.indexOf('uturn')>=0)
+    return'<svg width="26" height="26" fill="none" stroke="'+col+'" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 14l-4-4 4-4"/><path d="M5 10h7a4 4 0 0 1 0 8h-1"/></svg>';
+  if(mod==='right'||mod==='sharp right')
+    return'<svg width="26" height="26" fill="none" stroke="'+col+'" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>';
+  if(mod==='left'||mod==='sharp left')
+    return'<svg width="26" height="26" fill="none" stroke="'+col+'" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>';
+  if(mod.indexOf('slight right')>=0)
+    return'<svg width="26" height="26" fill="none" stroke="'+col+'" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="8 9 12 5 16 9"/><path d="M12 5 L18 14"/></svg>';
+  if(mod.indexOf('slight left')>=0)
+    return'<svg width="26" height="26" fill="none" stroke="'+col+'" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="8 9 12 5 16 9"/><path d="M12 5 L6 14"/></svg>';
+  // straight / default
+  return'<svg width="26" height="26" fill="none" stroke="'+col+'" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="8 9 12 5 16 9"/></svg>';
+}
+
+function _ctFmtDist(meters){
+  if(meters<402)return Math.round(meters*3.28084/100)*100+' ft';
+  if(meters<1609)return Math.round(meters*3.28084/100)*100+' ft';
+  return(meters/1609.34).toFixed(1)+' mi';
+}
+
+function _ctUpdateNavBanner(){
+  var step=_ctNavSteps[_ctNavStepIdx];
+  if(!step)return;
+  var icon=_ctManeuverSvg(step.maneuver&&step.maneuver.modifier,step.maneuver&&step.maneuver.type);
+  document.getElementById('ctNavIcon').innerHTML=icon;
+  document.getElementById('ctNavStreet').textContent=step.name||(step.maneuver&&step.maneuver.instruction)||'Continue';
+  // Destination badge: show when on last step
+  var badge=document.getElementById('ctNavDestBadge');
+  if(badge)badge.textContent=(_ctNavStepIdx===_ctNavSteps.length-1)?'Arriving':'Step '+(_ctNavStepIdx+1)+' / '+_ctNavSteps.length;
+}
+
+function startDriving(){
+  _ctNavMode='driving';
+  _ctNavStepIdx=0;
+  // Swap UI: hide overview bar & drive button, show driving UI
+  document.getElementById('ctMapBar').style.display='none';
+  document.getElementById('ctDriveNow').style.display='none';
+  document.getElementById('ctNavBanner').style.display='flex';
+  document.getElementById('ctNavHUD').style.display='flex';
+  _ctUpdateNavBanner();
+  // Tilt map to driving perspective
+  if(window._ctMap){
+    window._ctMap.easeTo({pitch:60,zoom:17,duration:900});
+  }
+  // Start GPS watch
+  if(navigator.geolocation){
+    _ctWatchId=navigator.geolocation.watchPosition(function(p){
+      _ctOnGpsUpdate(p);
+    },function(e){console.warn('GPS watch error',e);},{enableHighAccuracy:true,maximumAge:2000,timeout:10000});
+  }
+}
+
+function _ctOnGpsUpdate(p){
+  var lat=p.coords.latitude,lng=p.coords.longitude;
+  var heading=p.coords.heading;
+  var speedMs=p.coords.speed;
+  // Update speed
+  var speedEl=document.getElementById('ctNavSpeed');
+  if(speedEl){var mph=speedMs!=null&&speedMs>=0?Math.round(speedMs*2.23694):'—';speedEl.textContent=mph;}
+  // Follow map camera
+  var camOpts={center:[lng,lat],pitch:60,zoom:17,duration:600};
+  if(heading!=null&&heading>=0)camOpts.bearing=heading;
+  if(window._ctMap)window._ctMap.easeTo(camOpts);
+  // Move user marker
+  if(window._ctUserMarker)window._ctUserMarker.setLngLat([lng,lat]);
+  // Advance step if close to next maneuver
+  if(_ctNavSteps.length>0&&_ctNavStepIdx<_ctNavSteps.length-1){
+    var nextStep=_ctNavSteps[_ctNavStepIdx+1];
+    var mloc=nextStep.maneuver&&nextStep.maneuver.location;
+    if(mloc){
+      var distToNext=_ctHaverDist(lat,lng,mloc[1],mloc[0]);
+      if(distToNext<25){_ctNavStepIdx++;_ctUpdateNavBanner();}
+      // Update distance display in banner
+      var ndEl=document.getElementById('ctNavNextDist');
+      if(ndEl)ndEl.textContent=_ctFmtDist(distToNext);
+    }
+  }else if(_ctNavStepIdx===_ctNavSteps.length-1&&_ctNavSteps.length>0){
+    var lastStep=_ctNavSteps[_ctNavStepIdx];
+    var lloc=lastStep.maneuver&&lastStep.maneuver.location;
+    if(lloc){
+      var distToArrive=_ctHaverDist(lat,lng,lloc[1],lloc[0]);
+      var ndEl2=document.getElementById('ctNavNextDist');
+      if(ndEl2)ndEl2.textContent=_ctFmtDist(distToArrive);
+      if(distToArrive<20){toast('🏁 You have arrived!');endNavigation();}
+    }
+  }
+  // Rough remaining distance & ETA
+  var distToDest=_ctNavSteps.length?_ctHaverDist(lat,lng,
+    _ctNavSteps[_ctNavSteps.length-1].maneuver.location[1],
+    _ctNavSteps[_ctNavSteps.length-1].maneuver.location[0]):0;
+  var rdEl=document.getElementById('ctNavRemDist');
+  if(rdEl)rdEl.textContent=(distToDest/1609.34).toFixed(1);
+  var etaEl2=document.getElementById('ctNavETA');
+  if(etaEl2){
+    var remMins=Math.max(1,Math.round(distToDest/1609.34/_ctEstAvgSpeed(speedMs)*60));
+    var etaD=new Date(Date.now()+remMins*60000);
+    etaEl2.textContent=etaD.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  }
+}
+
+function _ctEstAvgSpeed(speedMs){
+  // Use live speed if available and >5mph, else assume 30mph avg
+  if(speedMs!=null&&speedMs>2.2)return speedMs*2.23694;
+  return 30;
+}
+
+function endNavigation(){
+  // Stop GPS watch
+  if(_ctWatchId!=null){navigator.geolocation.clearWatch(_ctWatchId);_ctWatchId=null;}
+  _ctNavMode='overview';
+  // Reset UI
+  document.getElementById('ctNavBanner').style.display='none';
+  document.getElementById('ctNavHUD').style.display='none';
+  document.getElementById('ctDriveNow').style.display='none';
+  document.getElementById('ctMapBar').style.display='flex';
+  // Flatten map
+  if(window._ctMap){window._ctMap.easeTo({pitch:0,bearing:0,zoom:10,duration:700});}
+  // Return to Jobs tab
+  swTab('Jobs',document.querySelector('.nb[data-tab=Jobs]'));
+}
 
 async function geocodeCtAddress(addr){
   if(!addr)return null;
@@ -1378,6 +1565,10 @@ async function getDirectionsEnRoute(jobId,address,phone,email){
         var mins=Math.round(route.duration/60);
         var miles=(route.distance*0.000621371).toFixed(1);
         if(etaEl)etaEl.textContent=mins+' min  ·  '+miles+' mi';
+        // Store route data for driving mode
+        _ctNavSteps=(route.legs&&route.legs[0]&&route.legs[0].steps)||[];
+        _ctNavRouteDist=route.distance;
+        _ctNavRouteDur=route.duration;
         // Draw route on map
         var map=window._ctMap;
         var srcId='ct-route',lyrId='ct-route-line';
@@ -1385,20 +1576,13 @@ async function getDirectionsEnRoute(jobId,address,phone,email){
         if(map.getSource(srcId))map.removeSource(srcId);
         var addRoute=function(){
           map.addSource(srcId,{type:'geojson',data:{type:'Feature',geometry:route.geometry}});
-          map.addLayer({id:lyrId,type:'line',source:srcId,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#F26310','line-width':5,'line-opacity':0.9}});
+          map.addLayer({id:lyrId,type:'line',source:srcId,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#F26310','line-width':6,'line-opacity':0.95}});
         };
         if(map.isStyleLoaded())addRoute();
         else map.once('load',addRoute);
-        // Show turn-by-turn steps
-        var stepsEl=document.getElementById('ctMapSteps');
-        if(stepsEl&&route.legs&&route.legs[0]&&route.legs[0].steps){
-          var steps=route.legs[0].steps;
-          stepsEl.innerHTML='<div style="padding:10px 14px 4px;font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#55595f">Turn-by-Turn</div>'+steps.map(function(s,idx){
-            var instr=s.maneuver&&s.maneuver.instruction?s.maneuver.instruction:'Continue';
-            var d=s.distance>=1000?(s.distance/1609.34).toFixed(1)+' mi':Math.round(s.distance*3.28084)+' ft';
-            return'<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid rgba(255,255,255,0.05)"><span style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:800;color:#F26310;min-width:18px;text-align:right">'+(idx+1)+'</span><span style="flex:1;font-size:13px;color:#F0F2F5">'+instr+'</span><span style="font-size:11px;color:#9A9FA8;white-space:nowrap">'+d+'</span></div>';
-          }).join('');
-        }
+        // Show Drive Now overlay
+        var driveBtn=document.getElementById('ctDriveNow');
+        if(driveBtn)driveBtn.style.display='block';
       }else{
         if(etaEl)etaEl.textContent='Route found — tap pin for details';
       }
