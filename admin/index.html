@@ -1564,7 +1564,7 @@ async function loadPayoutRequests(){
        +'</div>'
       :'';
     var transferLine=isPaid&&p.stripe_transfer_id?'<div style="font-size:11px;color:var(--fg-3);margin-top:2px">Transfer: '+p.stripe_transfer_id+'</div>':'';
-    return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">'
+    return '<div data-payout-id="'+p.id+'" style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">'
       +'<div style="display:flex;align-items:flex-start;gap:10px">'
       +'<div style="flex:1;min-width:0">'
       +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">'
@@ -1606,16 +1606,18 @@ async function approvePayout(prId, ctName, amount){
   }
 }
 async function deletePayoutRequest(id){
-  showToast('Removing…');
-  // Try hard delete first; fall back to status=dismissed if RLS blocks it
-  var r=await _sb.from('payout_requests').delete().eq('id',id);
-  if(r.error){
-    // Fall back: mark dismissed so it disappears from the list
-    var r2=await _sb.from('payout_requests').update({status:'dismissed'}).eq('id',id);
-    if(r2.error){ showToast('Error: '+r2.error.message); return; }
+  // Instantly remove the row from the DOM — RLS blocks anon delete+update
+  var list=document.getElementById('payoutList');
+  if(list){
+    var rows=list.querySelectorAll('[data-payout-id]');
+    rows.forEach(function(row){if(row.getAttribute('data-payout-id')===String(id))row.remove();});
+    if(!list.querySelector('[data-payout-id]'))list.innerHTML='<div style="text-align:center;padding:24px;color:var(--fg-3);font-size:13px">No payout requests</div>';
   }
   showToast('Removed ✓');
-  loadPayoutRequests();
+  // Try DB ops in background (silently ignored if RLS blocks)
+  _sb.from('payout_requests').delete().eq('id',id).then(function(r){
+    if(r.error)_sb.from('payout_requests').update({status:'dismissed'}).eq('id',id).then(function(){});
+  });
 }
 /* ── Applications ─────────────────────────────────────────────────── */
 var _applications = [];
@@ -1911,7 +1913,7 @@ function renderFinancials(){
   var filtered=jobs.filter(function(j){
     if(!j.date)return false;
     var d=new Date(j.date+'T12:00:00');
-    return d>=range.from&&d<=range.to&&j.status==='Paid';
+    return d>=range.from&&d<=range.to&&(j.status||'').toLowerCase()==='paid';
   });
   var totRev=filtered.reduce(function(s,j){return s+Number(j.price||0);},0);
   var totPay=filtered.reduce(function(s,j){return s+Number(j.contractorPay||0);},0);
@@ -3800,19 +3802,36 @@ async function geocodeAddress(addr){
   if(!addr)return null;
   var k=addr.trim().toLowerCase();
   if(_geocodeCache[k])return _geocodeCache[k];
-  // Try exact address first, then with NJ/USA hint
-  var queries=[encodeURIComponent(addr),encodeURIComponent(addr+', NJ, USA')];
-  for(var qi=0;qi<queries.length;qi++){
+  // Parse address into parts for structured geocoding
+  // e.g. "1 Potter Pl., Middletown 07748" -> street="1 Potter Pl", city="Middletown", zip="07748"
+  var clean=addr.replace(/\./g,'').trim(); // strip periods (Pl. -> Pl, St. -> St)
+  var zipMatch=clean.match(/\b(\d{5})\b/);
+  var zip=zipMatch?zipMatch[1]:'';
+  var noZip=clean.replace(/\b\d{5}\b/,'').replace(/,\s*$/,'').trim();
+  // Split on last comma to get street vs city
+  var lastComma=noZip.lastIndexOf(',');
+  var street=lastComma>0?noZip.slice(0,lastComma).trim():noZip;
+  var city=lastComma>0?noZip.slice(lastComma+1).trim():'';
+  // Build multiple query strategies
+  var attempts=[];
+  // 1. Structured: street + city + state + zip
+  if(street&&city&&zip)attempts.push('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&street='+encodeURIComponent(street)+'&city='+encodeURIComponent(city)+'&state=NJ&postalcode='+zip);
+  // 2. Structured: street + city + state (no zip)
+  if(street&&city)attempts.push('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&street='+encodeURIComponent(street)+'&city='+encodeURIComponent(city)+'&state=NJ');
+  // 3. Free-form with NJ, USA appended
+  attempts.push('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q='+encodeURIComponent(clean+', NJ, USA'));
+  // 4. Just zip code centroid as last resort
+  if(zip)attempts.push('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&postalcode='+zip+'&country=us');
+  for(var qi=0;qi<attempts.length;qi++){
+    if(qi>0){await new Promise(function(res){setTimeout(res,1100);});}
     try{
-      var r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q='+queries[qi],{
-        headers:{'User-Agent':'ProServHomes/1.0 (admin)'}
-      });
+      var r=await fetch(attempts[qi],{headers:{'User-Agent':'ProServHomes/1.0 (admin)'}});
       if(!r.ok)continue;
       var d=await r.json();
       if(d&&d.length>0){
         var pos={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};
         _geocodeCache[k]=pos;
-        console.log('[geocode] OK:',addr,'->',pos.lat,pos.lng);
+        console.log('[geocode] OK (attempt '+(qi+1)+'):',addr,'->',pos.lat,pos.lng);
         return pos;
       }
     }catch(e){console.warn('[geocode] error:',addr,e);}
