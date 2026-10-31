@@ -611,6 +611,7 @@ textarea{resize:vertical;min-height:80px}
               <button class="lcs-tab" onclick="lcTab(this,'followup')">Follow Up</button>
               <button class="lcs-tab" onclick="lcTab(this,'quote')">Quote</button>
               <button class="lcs-tab" onclick="lcTab(this,'close')">Close</button>
+              <button class="lcs-tab" onclick="lcTab(this,'yourin')">You're In ✓</button>
             </div>
             <div id="lcScriptBox" class="lc-script-text"></div>
             <button class="lc-copy-btn" onclick="lcCopy('script')">📋 Copy Text</button>
@@ -2882,14 +2883,15 @@ function lcRenderAddons(svc){
   if(!defs.length){wrap.style.display='none';return;}
   wrap.style.display='block';
   container.innerHTML=defs.map(function(a){
-    return'<label class="lc-addon" id="lca-'+a.id+'" onclick="lcToggleAddon(this)">'+
-      '<input type="checkbox" id="lcac-'+a.id+'" onchange="lcUpdate()" onclick="event.stopPropagation()">'+
+    return'<label class="lc-addon" id="lca-'+a.id+'" onclick="lcToggleAddon(event,this)">'+
+      '<input type="checkbox" id="lcac-'+a.id+'">'+
       '<span>'+a.label+' <span style="color:var(--orange);font-weight:700">+$'+a.price+'</span></span>'+
     '</label>';
   }).join('');
 }
 
-function lcToggleAddon(label){
+function lcToggleAddon(e,label){
+  e.preventDefault();
   var cb=label.querySelector('input[type=checkbox]');
   if(cb){cb.checked=!cb.checked;label.classList.toggle('checked',cb.checked);lcUpdate();}
 }
@@ -2906,11 +2908,11 @@ function lcGetAddons(svc){
 
 var _lcFieldDefs={
   snow_seasonal:[
-    {id:'lcDriveway',label:'Driveway Size',opts:[['unknown','Unknown'],['small','Small (1-2 cars) — $299'],['medium','Medium (3-4 cars) — $399'],['large','Large (5+ cars) — $499']]},
+    {id:'lcDriveway',label:'Driveway Size',opts:[['unknown','Unknown'],['small','Small (1-2 cars) - $299'],['medium','Medium (3-4 cars) - $399'],['large','Large (5+ cars) - $499'],['xlarge','XL (circular/very large) - $599']]},
     {id:'lcProperty',label:'Property Type',opts:[['sfh','Single Family Home'],['condo','Condo / Townhouse'],['commercial','Commercial']]}
   ],
   snow_visit:[
-    {id:'lcDriveway',label:'Driveway Size',opts:[['unknown','Unknown'],['small','Small (1-2 cars) — $100/visit'],['medium','Medium (3-4 cars) — $135/visit'],['large','Large (5+ cars) — $170/visit']]},
+    {id:'lcDriveway',label:'Driveway Size',opts:[['unknown','Unknown'],['small','Small (1-2 cars) - $100/visit'],['medium','Medium (3-4 cars) - $135/visit'],['large','Large (5+ cars) - $170/visit'],['xlarge','XL (circular/very large) - $200/visit']]},
     {id:'lcProperty',label:'Property Type',opts:[['sfh','Single Family Home'],['condo','Condo / Townhouse'],['commercial','Commercial']]}
   ],
   gutter:[
@@ -2956,9 +2958,9 @@ function lcGetVals(){
   var washArea=(document.getElementById('lcWashArea')||{}).value||'unknown';
   var lightScope=(document.getElementById('lcLightScope')||{}).value||'unknown';
   var lightService=(document.getElementById('lcLightService')||{}).value||'install';
-  var priceMap={small:'$299',medium:'$399',large:'$499',unknown:'our seasonal rate'};
+  var priceMap={small:'$299',medium:'$399',large:'$499',xlarge:'$599',unknown:'our seasonal rate'};
   var price=priceMap[drv];
-  var driveLabel={small:'small driveway (1-2 cars)',medium:'medium driveway (3-4 cars)',large:'large driveway (5+ cars)',unknown:'driveway'};
+  var driveLabel={small:'small driveway (1-2 cars)',medium:'medium driveway (3-4 cars)',large:'large driveway (5+ cars)',xlarge:'extra-large/circular driveway',unknown:'driveway'};
   var drive=driveLabel[drv];
   var addons=lcGetAddons(svc);
   var addonTotal=addons.reduce(function(sum,a){return sum+a.price;},0);
@@ -2976,52 +2978,58 @@ function lcBuildScript(tab){
   var hi=v.first?'Hey '+v.first:'Hey';
   var svcLabel={snow_seasonal:'snow removal',snow_visit:'snow removal',gutter:'gutter cleaning',pressure:'pressure washing',lights:'Christmas lights',general:'home services'};
   var s=svcLabel[v.svc]||'snow removal';
-  var perVisitMap={small:'$100',medium:'$135',large:'$170',unknown:'our per-visit rate'};
+  var perVisitMap={small:'$100',medium:'$135',large:'$170',xlarge:'$200',unknown:'our per-visit rate'};
   var pvPrice=perVisitMap[v.drv];
   if(tab==='first'){
-    if(v.svc==='snow_seasonal')return hi+', this is Nick from ProServ Homes — just got your inquiry about snow removal! We do seasonal contracts that cover you all winter — unlimited visits, one flat rate. Want me to shoot you the numbers for your driveway? Reply STOP to opt out.';
-    if(v.svc==='snow_visit')return hi+', this is Nick from ProServ Homes — just got your inquiry about snow removal! We do per-visit plowing — you call, we come out. No contract needed. What\'s your address so I can confirm we cover your area? Reply STOP to opt out.';
-    if(v.svc==='gutter')return hi+', this is Nick from ProServ Homes — saw your inquiry about gutter cleaning! Quick question — is this a one-time clean or are you looking for regular seasonal service? Reply STOP to opt out.';
-    if(v.svc==='pressure')return hi+', this is Nick from ProServ Homes — saw your inquiry about pressure washing! Is this for the driveway, house exterior, or both? Reply STOP to opt out.';
-    if(v.svc==='lights')return hi+', this is Nick from ProServ Homes — saw your inquiry about Christmas lights! Are you looking for install only, or install + takedown after the season? Reply STOP to opt out.';
-    return hi+', this is Nick from ProServ Homes — just got your inquiry! What\'s the main thing you\'re looking to get done? Reply STOP to opt out.';
+    if(v.svc==='snow_seasonal')return hi+', this is Nick from ProServ Homes - just got your inquiry about snow removal! We do seasonal contracts that cover you all winter - unlimited visits, one flat rate. Want me to shoot you the numbers for your driveway?';
+    if(v.svc==='snow_visit')return hi+', this is Nick from ProServ Homes - just got your inquiry about snow removal! We do per-visit plowing - you call, we come out. No contract needed. What\'s your address so I can confirm we cover your area?';
+    if(v.svc==='gutter')return hi+', this is Nick from ProServ Homes - saw your inquiry about gutter cleaning! Quick question - is this a one-time clean or are you looking for regular seasonal service?';
+    if(v.svc==='pressure')return hi+', this is Nick from ProServ Homes - saw your inquiry about pressure washing! Is this for the driveway, house exterior, or both?';
+    if(v.svc==='lights')return hi+', this is Nick from ProServ Homes - saw your inquiry about Christmas lights! Are you looking for install only, or install + takedown after the season?';
+    return hi+', this is Nick from ProServ Homes - just got your inquiry! What\'s the main thing you\'re looking to get done?';
   }
   if(tab==='followup'){
-    if(v.svc==='snow_seasonal')return hi+', just following up on snow removal — seasonal spots are filling up as we head into the season. Did you get a chance to think it over? Reply STOP to opt out.';
-    if(v.svc==='snow_visit')return hi+', just checking in on snow removal — we\'re still taking on per-visit customers in your area. Let me know if you want to get added to the list! Reply STOP to opt out.';
-    return hi+', just wanted to follow up on your '+s+' inquiry! Did you get a chance to think it over? Reply STOP to opt out.';
+    if(v.svc==='snow_seasonal')return hi+', just following up on snow removal - seasonal spots are filling up as we head into the season. Did you get a chance to think it over?';
+    if(v.svc==='snow_visit')return hi+', just checking in on snow removal - we\'re still taking on per-visit customers in your area. Let me know if you want to get added to the list!';
+    return hi+', just wanted to follow up on your '+s+' inquiry! Did you get a chance to think it over?';
   }
   if(tab==='quote'){
-    if(v.svc==='snow_seasonal'&&v.drv!=='unknown')return hi+', for your '+v.drive+' our seasonal snow contract is '+v.price+' for the whole winter — unlimited visits, never charged per storm.'+lcAddonLine(v)+' Most customers with a '+v.drive+' save $200+ vs paying each time. Want to lock it in before the season starts? Reply STOP to opt out.';
-    if(v.svc==='snow_seasonal')return hi+', our seasonal snow contract covers the full winter with unlimited visits — never charged per storm. Pricing starts at $299 and depends on driveway size. Can I get your address to give you an exact quote? Reply STOP to opt out.';
-    if(v.svc==='snow_visit'&&v.drv!=='unknown')return hi+', per-visit plowing for your '+v.drive+' is '+pvPrice+' per visit — you only pay when it snows. No contract, no commitment.'+lcAddonLine(v)+' Want to get on the schedule? Reply STOP to opt out.';
-    if(v.svc==='snow_visit')return hi+', per-visit plowing — you pay only when we come out, no contract needed. Pricing depends on driveway size, starts at $100/visit. What\'s your address? Reply STOP to opt out.';
+    if(v.svc==='snow_seasonal'&&v.drv!=='unknown')return hi+', for your '+v.drive+' our seasonal snow contract is '+v.price+' for the whole winter - unlimited visits, never charged per storm.'+lcAddonLine(v)+' Most customers with a '+v.drive+' save $200+ vs paying each time. Want to lock it in before the season starts?';
+    if(v.svc==='snow_seasonal')return hi+', our seasonal snow contract covers the full winter with unlimited visits - never charged per storm. Pricing starts at $299 and depends on driveway size. Can I get your address to give you an exact quote?';
+    if(v.svc==='snow_visit'&&v.drv!=='unknown')return hi+', per-visit plowing for your '+v.drive+' is '+pvPrice+' per visit - you only pay when it snows. No contract, no commitment.'+lcAddonLine(v)+' Want to get on the schedule?';
+    if(v.svc==='snow_visit')return hi+', per-visit plowing - you pay only when we come out, no contract needed. Pricing depends on driveway size, starts at $100/visit. What\'s your address?';
     if(v.svc==='gutter'){
       var storyMap={'1':'1-story','2':'2-story','3':'3-story'};
       var stLabel=storyMap[v.stories]||'';
-      var gBase=stLabel?(v.stories==='1'?'$149–$179':v.stories==='2'?'$199–$249':'$269–$349'):'$149–$349';
+      var gBase=stLabel?(v.stories==='1'?'$149-$179':v.stories==='2'?'$199-$249':'$269-$349'):'$149-$349';
       var gAddons=lcAddonLine(v);
-      if(stLabel)return hi+', for a '+stLabel+' home gutter clean we typically run '+gBase+'.'+gAddons+' Can I get your address for an exact quote? Reply STOP to opt out.';
-      return hi+', gutter cleaning runs '+gBase+' depending on stories and linear footage.'+gAddons+' Can I get your address so I can give you an exact number? Reply STOP to opt out.';
+      if(stLabel)return hi+', for a '+stLabel+' home gutter clean we typically run '+gBase+'.'+gAddons+' Can I get your address for an exact quote?';
+      return hi+', gutter cleaning runs '+gBase+' depending on stories and linear footage.'+gAddons+' Can I get your address so I can give you an exact number?';
     }
     if(v.svc==='pressure'){
-      var areaMap={driveway:'driveway — typically $149–$199',exterior:'house exterior — typically $299–$399',both:'driveway + house exterior — typically $399–$549',deck:'deck or patio — typically $149–$229',unknown:'the area you need done'};
+      var areaMap={driveway:'driveway - typically $149-$199',exterior:'house exterior - typically $299-$399',both:'driveway + house exterior - typically $399-$549',deck:'deck or patio - typically $149-$229',unknown:'the area you need done'};
       var aLabel=areaMap[v.washArea]||areaMap.unknown;
-      return hi+', for a '+aLabel+'.'+lcAddonLine(v)+' Can I get your address and a quick look at the size to nail down the exact price? Reply STOP to opt out.';
+      return hi+', for a '+aLabel+'.'+lcAddonLine(v)+' Can I get your address and a quick look at the size to nail down the exact price?';
     }
     if(v.svc==='lights'){
-      var scopeMap={roofline:'roofline only — starts at $299',roofline_bushes:'roofline + bushes — starts at $449',full:'full property — starts at $599',unknown:'your install'};
+      var scopeMap={roofline:'roofline only - starts at $299',roofline_bushes:'roofline + bushes - starts at $449',full:'full property - starts at $599',unknown:'your install'};
       var scLabel=scopeMap[v.lightScope]||scopeMap.unknown;
       var tdLabel=v.lightService==='install_takedown'?' (install + takedown after the season)':' (install only)';
-      return hi+', for '+scLabel+tdLabel+'.'+lcAddonLine(v)+' Can I get your address to finalize the quote? Reply STOP to opt out.';
+      return hi+', for '+scLabel+tdLabel+'.'+lcAddonLine(v)+' Can I get your address to finalize the quote?';
     }
-    return hi+', I\'d love to get you a quote! Can I get your address and a quick description of the job? Reply STOP to opt out.';
+    return hi+', I\'d love to get you a quote! Can I get your address and a quick description of the job?';
   }
   if(tab==='close'){
-    if(v.svc==='snow_seasonal'&&v.drv!=='unknown')return hi+', want to make sure you\'re covered before the first storm! I have a spot open for a '+v.drive+' — '+v.price+' locks in the full season. Should I get you set up? Takes 2 minutes. Reply STOP to opt out.';
-    if(v.svc==='snow_seasonal')return hi+', want to make sure you\'re covered before the first storm hits NJ this season! Should I lock in a spot for you? It takes 2 minutes to get set up. Reply STOP to opt out.';
-    if(v.svc==='snow_visit')return hi+', just want to make sure you\'re on the list before the season kicks off! No contract — you just text me when you need it and we\'ll come out. Should I add you? Reply STOP to opt out.';
-    return hi+', just want to make sure we can get this on the schedule for you! Ready to move forward? Reply STOP to opt out.';
+    if(v.svc==='snow_seasonal'&&v.drv!=='unknown')return hi+', want to make sure you\'re covered before the first storm! I have a spot open for a '+v.drive+' - '+v.price+' locks in the full season. Should I get you set up? Takes 2 minutes.';
+    if(v.svc==='snow_seasonal')return hi+', want to make sure you\'re covered before the first storm hits NJ this season! Should I lock in a spot for you? It takes 2 minutes to get set up.';
+    if(v.svc==='snow_visit')return hi+', just want to make sure you\'re on the list before the season kicks off! No contract - you just text me when you need it and we\'ll come out. Should I add you?';
+    return hi+', just want to make sure we can get this on the schedule for you! Ready to move forward?';
+  }
+  if(tab==='yourin'){
+    var name=v.first?v.first:'there';
+    if(v.svc==='snow_seasonal')return 'Hey '+name+', you\'re in! Welcome to ProServ Homes. Here\'s what to expect: we\'re out within 2 hours of a storm ending, every time - no calls needed, we track the weather. Your driveway and walkways are covered all winter for one flat rate. If you ever have a question just reply to this text. See you when it snows! - Nick @ ProServ Homes';
+    if(v.svc==='snow_visit')return 'Hey '+name+', you\'re on the list! Welcome to ProServ Homes. Here\'s how it works: when a storm is coming, just text me and we\'ll get you scheduled. We\'ll confirm the night before and be out same day or day after the storm. Questions anytime - just reply here. Talk soon! - Nick @ ProServ Homes';
+    return 'Hey '+name+', you\'re all set! Welcome to ProServ Homes. We\'ll be reaching out shortly to confirm your appointment details. In the meantime, if you have any questions just reply to this text. Looking forward to taking care of your home! - Nick @ ProServ Homes';
   }
   return '';
 }
@@ -3029,7 +3037,7 @@ function lcBuildScript(tab){
 function lcBuildObj(type){
   var v=lcGetVals();
   var hi=v.first?'Hey '+v.first:'Hey';
-  var priceMap={small:'$299',medium:'$399',large:'$499',unknown:'our seasonal rate'};
+  var priceMap={small:'$299',medium:'$399',large:'$499',xlarge:'$599',unknown:'our seasonal rate'};
   var price=priceMap[v.drv];
   var perStorm={small:'$75–$100',medium:'$100–$150',large:'$150–$200'};
   var ps=perStorm[v.drv]||'$75–$150';

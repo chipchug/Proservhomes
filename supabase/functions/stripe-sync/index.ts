@@ -163,6 +163,42 @@ Deno.serve(async (req) => {
       results.created++;
       results.jobs.push(jobId);
       console.log(`Imported job ${jobId} from Stripe session ${stripeSessionId} ($${amountPaid})`);
+
+      // Auto-create homeowner account if email present
+      if (customerEmail) {
+        const { data: existingUsers } = await supabase.auth.admin.listUsers();
+        const alreadyExists = existingUsers?.users?.some(
+          (u) => u.email?.toLowerCase() === customerEmail.toLowerCase()
+        );
+        if (!alreadyExists) {
+          const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({
+            email: customerEmail,
+            email_confirm: true,
+            user_metadata: {
+              role: "homeowner",
+              job_id: jobId,
+              created_via: "stripe_sync",
+              full_name: customerName,
+            },
+          });
+          if (createErr) {
+            console.error(`Failed to create homeowner for ${customerEmail}:`, createErr.message);
+          } else {
+            console.log(`Homeowner account created for ${customerEmail}`);
+            if (newUser?.user?.id) {
+              await supabase.from("jobs").update({ homeowner_id: newUser.user.id }).eq("id", jobId);
+            }
+          }
+        } else {
+          console.log(`Homeowner account already exists for ${customerEmail}`);
+          const existingUser = existingUsers?.users?.find(
+            (u) => u.email?.toLowerCase() === customerEmail.toLowerCase()
+          );
+          if (existingUser?.id) {
+            await supabase.from("jobs").update({ homeowner_id: existingUser.id }).eq("id", jobId);
+          }
+        }
+      }
     } else {
       console.error("Insert error:", insertErr);
     }
