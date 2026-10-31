@@ -9,6 +9,8 @@
 <meta name="theme-color" content="#080808">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,900;1,900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
 <style>
 :root{--bg:#181818;--surface:#222;--surface-2:#2A2A2A;--surface-3:#333;--border:rgba(255,255,255,0.07);--border-2:rgba(255,255,255,0.13);--fg:#F0F2F5;--fg-2:#9A9FA8;--fg-3:#55595f;--orange:#F26310;--orange-hi:#FF7220;--orange-dim:rgba(242,99,16,0.14);--green:#1F9B2A;--green-dim:rgba(31,155,42,0.14);--red:#E04040;--yellow:#E8A020;--blue:#3B82F6;color-scheme:dark}
 :root[data-theme="light"]{--bg:#F2F4F7;--surface:#FFFFFF;--surface-2:#EBEBED;--surface-3:#E0E1E4;--border:rgba(0,0,0,0.09);--border-2:rgba(0,0,0,0.18);--fg:#111318;--fg-2:#6B7280;--fg-3:#9CA3AF;--orange:#E55B00;--orange-hi:#F26310;--orange-dim:rgba(242,99,16,0.1);--green:#167820;--green-hi:#1F9B2A;--green-dim:rgba(31,155,42,0.1);--red:#C93030;--yellow:#B87010;--blue:#2563EB;color-scheme:light}
@@ -84,7 +86,7 @@ input:focus{border-color:var(--orange)}input::placeholder{color:var(--fg-3)}
 .otpi{text-align:center;letter-spacing:.3em;font-size:28px;font-family:'Barlow Condensed',sans-serif;font-weight:800}
 
 /* APP SHELL */
-#appShell{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+#appShell{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;position:relative}
 .app-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top,0px));background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
 .user-pill{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:100px;padding:4px 10px 4px 4px;cursor:pointer}
 .uavatar{width:30px;height:30px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;flex-shrink:0;overflow:hidden}
@@ -507,11 +509,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </div>
 
+  <!-- MAP TAB — full-screen overlay, shown when active -->
+  <div id="tabMap" style="display:none;position:absolute;inset:0;bottom:0;z-index:10;flex-direction:column;background:#0d0d0d">
+    <!-- top bar -->
+    <div id="ctMapBar" style="display:flex;align-items:center;gap:10px;padding:10px 14px 8px;padding-top:max(10px,env(safe-area-inset-top,0px));background:#111;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;z-index:2">
+      <button onclick="swTab('Jobs',document.querySelector('.nb[data-tab=Jobs]'))" style="background:rgba(255,255,255,0.08);border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+        <svg width="16" height="16" fill="none" stroke="#F0F2F5" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="flex:1;min-width:0">
+        <div id="ctMapDest" style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#F0F2F5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Directions</div>
+        <div id="ctMapEta" style="font-size:11px;color:#9A9FA8;margin-top:1px"> </div>
+      </div>
+    </div>
+    <!-- map fills remaining space -->
+    <div id="ctMapEl" style="flex:1;position:relative;min-height:0"></div>
+    <!-- turn-by-turn steps panel (collapsed by default, tap to expand) -->
+    <div id="ctMapSteps" style="background:#111;border-top:1px solid rgba(255,255,255,0.08);max-height:200px;overflow-y:auto;flex-shrink:0"></div>
+  </div>
+
   <nav class="bnav">
-    <button class="nb active" onclick="swTab('Home',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
-    <button class="nb" onclick="swTab('Jobs',this)" id="ctJobsNavBtn" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Jobs<span id="ctJobsBadge" class="hidden" style="position:absolute;top:4px;right:4px;background:#F26310;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px"></span></button>
-    <button class="nb" onclick="swTab('Earnings',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Earnings</button>
-    <button class="nb" onclick="swTab('Profile',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
+    <button class="nb active" data-tab="Home" onclick="swTab('Home',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
+    <button class="nb" data-tab="Jobs" onclick="swTab('Jobs',this)" id="ctJobsNavBtn" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Jobs<span id="ctJobsBadge" class="hidden" style="position:absolute;top:4px;right:4px;background:#F26310;color:#fff;border-radius:50%;min-width:16px;height:16px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px"></span></button>
+    <button class="nb" data-tab="Map" id="ctMapNavBtn" onclick="swTab('Map',this)" style="display:none"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Nav</button>
+    <button class="nb" data-tab="Earnings" onclick="swTab('Earnings',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Earnings</button>
+    <button class="nb" data-tab="Profile" onclick="swTab('Profile',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </nav>
 </div>
 
@@ -934,7 +955,32 @@ async function enterApp(){
   if(typeof cobShowIfNew==='function') cobShowIfNew();
 }
 
-function swTab(n,el){['Home','Jobs','Earnings','Profile'].forEach(function(t){var el2=document.getElementById('tab'+t);if(el2)el2.classList.remove('active')});var tp=document.getElementById('tab'+n);if(tp)tp.classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;if(n==='Jobs'){var jb=document.getElementById('ctJobsBadge');if(jb){jb.classList.add('hidden');jb.textContent='';}}if(n==='Profile'){pfLoadProfile();}}
+function swTab(n,el){
+  // Handle Map tab separately — it's a full-screen overlay, not a .tab-pane
+  var mapEl=document.getElementById('tabMap');
+  var scrollEl=document.querySelector('.scroll');
+  if(n==='Map'){
+    // Hide all regular tab panes + header scroll area
+    ['Home','Jobs','Quotes','Earnings','Profile'].forEach(function(t){var e=document.getElementById('tab'+t);if(e)e.classList.remove('active');});
+    if(scrollEl)scrollEl.style.display='none';
+    if(mapEl){mapEl.style.display='flex';}
+    document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});
+    if(el)el.classList.add('active');
+    // Resize map after it becomes visible
+    if(window._ctMap){setTimeout(function(){window._ctMap.resize();},50);}
+    return;
+  }
+  // Leaving Map tab — restore scroll area
+  if(mapEl)mapEl.style.display='none';
+  if(scrollEl)scrollEl.style.display='';
+  ['Home','Jobs','Quotes','Earnings','Profile'].forEach(function(t){var el2=document.getElementById('tab'+t);if(el2)el2.classList.remove('active')});
+  var tp=document.getElementById('tab'+n);if(tp)tp.classList.add('active');
+  document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});
+  if(el)el.classList.add('active');
+  document.querySelector('.scroll').scrollTop=0;
+  if(n==='Jobs'){var jb=document.getElementById('ctJobsBadge');if(jb){jb.classList.add('hidden');jb.textContent='';}}
+  if(n==='Profile'){pfLoadProfile();}
+}
 function _updateJobsBadge(){var newJ=mj().filter(function(j){return j.status==='New'||j.status==='Scheduled'});var badge=document.getElementById('ctJobsBadge');if(!badge)return;if(newJ.length){badge.textContent=newJ.length;badge.classList.remove('hidden');}else{badge.classList.add('hidden');}}
 function mj(){return jobs.filter(function(j){return cc&&j.contractorId===cc.id})}
 
@@ -1214,27 +1260,151 @@ async function savePhotos(){
     }
   }
 }
+// ─── IN-APP GPS NAVIGATION ─────────────────────────────────────────────────
+var _ctMap=null;
+var _ctNavJobId=null;
+
+async function geocodeCtAddress(addr){
+  if(!addr)return null;
+  var clean=addr.replace(/\./g,'').trim();
+  var zipMatch=clean.match(/\b(\d{5})\b/);
+  var zip=zipMatch?zipMatch[1]:'';
+  var noZip=clean.replace(/\b\d{5}\b/,'').replace(/,\s*$/,'').trim();
+  var lastComma=noZip.lastIndexOf(',');
+  var street=lastComma>0?noZip.slice(0,lastComma).trim():noZip;
+  var city=lastComma>0?noZip.slice(lastComma+1).trim():'';
+  var attempts=[];
+  if(street&&city&&zip)attempts.push('https://nominatim.openstreetmap.org/search?format=json&limit=1&street='+encodeURIComponent(street)+'&city='+encodeURIComponent(city)+'&state=NJ&postalcode='+encodeURIComponent(zip)+'&countrycodes=us');
+  if(street&&city)attempts.push('https://nominatim.openstreetmap.org/search?format=json&limit=1&street='+encodeURIComponent(street)+'&city='+encodeURIComponent(city)+'&state=NJ&countrycodes=us');
+  attempts.push('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(addr+', NJ, USA'));
+  for(var i=0;i<attempts.length;i++){
+    if(i>0)await new Promise(function(r){setTimeout(r,1100);});
+    try{
+      var r=await fetch(attempts[i],{headers:{'Accept':'application/json','User-Agent':'ProServHomes/1.0'}});
+      if(!r.ok)continue;
+      var d=await r.json();
+      if(d&&d.length){return{lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};}
+    }catch(e){}
+  }
+  return null;
+}
+
 async function getDirectionsEnRoute(jobId,address,phone,email){
-  // 1. Open native maps (iOS → Apple Maps, Android → Google Maps, desktop → Google Maps)
-  var encoded=encodeURIComponent(address);
-  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
-  var mapsUrl=isIOS?'maps://maps.apple.com/?daddr='+encoded:'https://www.google.com/maps/dir/?api=1&destination='+encoded;
-  window.open(mapsUrl,'_blank');
+  closeS();
 
-  // 2. Update job status to "En Route"
-  try{
-    await _sb.from('jobs').update({status:'En Route'}).eq('id',jobId);
-  }catch(e){console.warn('En Route status update failed',e);}
+  // Show Map nav button and switch to Map tab
+  var mapBtn=document.getElementById('ctMapNavBtn');
+  if(mapBtn)mapBtn.style.display='';
+  swTab('Map',mapBtn);
 
-  // 3. Send homeowner SMS via edge function ("Your ProServ Pro is on the way")
+  // Update destination label immediately
+  var destEl=document.getElementById('ctMapDest');
+  var etaEl=document.getElementById('ctMapEta');
+  if(destEl)destEl.textContent=address||'Job Site';
+  if(etaEl)etaEl.textContent='Getting your location…';
+
+  // Update job status to En Route
+  _ctNavJobId=jobId;
+  try{await _sb.from('jobs').update({status:'En Route'}).eq('id',jobId);}catch(e){console.warn('En Route update failed',e);}
+  var i2=jobs.findIndex(function(x){return x.id===jobId;});
+  if(i2>=0)jobs[i2].status='En Route';
+
+  // Notify homeowner
   var notifyBody={event:'contractor_en_route',phone:phone||null,email:email||null};
   var notifyOpts={method:'POST',headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},body:JSON.stringify(notifyBody)};
   if(phone){fetch(SURL+'/functions/v1/send-sms',notifyOpts).catch(function(){});}
   if(email){fetch(SURL+'/functions/v1/send-email',notifyOpts).catch(function(){});}
 
-  toast('🧭 Directions opened — homeowner notified');
-  // Refresh sheet to update status badge
-  setTimeout(function(){openS(jobId);},800);
+  // Init or reuse Mapbox map
+  var MBTK=['pk.eyJ1IjoicHJvc2VydmhvbWVzIiwiYSI6ImNtdndjeTNweDB','heGEyem9id2x4YjRuMngifQ.A2S43s2y7fCiXbAx7JX-cw'].join('');
+  var mapEl=document.getElementById('ctMapEl');
+
+  if(!window._ctMap){
+    mapboxgl.accessToken=MBTK;
+    window._ctMap=new mapboxgl.Map({
+      container:mapEl,
+      style:'mapbox://styles/mapbox/navigation-night-v1',
+      center:[-74.0,40.3],
+      zoom:10
+    });
+    window._ctMap.addControl(new mapboxgl.NavigationControl(),'top-right');
+    window._ctMap.addControl(new mapboxgl.GeolocateControl({positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true}),'top-right');
+  }else{
+    window._ctMap.resize();
+  }
+
+  // Get contractor GPS position + geocode destination in parallel
+  var posPromise=new Promise(function(resolve){
+    navigator.geolocation.getCurrentPosition(function(p){resolve({lat:p.coords.latitude,lng:p.coords.longitude});},function(){resolve(null);},{enableHighAccuracy:true,timeout:8000});
+  });
+  var destPromise=geocodeCtAddress(address);
+
+  if(etaEl)etaEl.textContent='Calculating route…';
+
+  var results=await Promise.all([posPromise,destPromise]);
+  var origin=results[0];
+  var dest=results[1];
+
+  if(!dest){
+    if(etaEl)etaEl.textContent='Could not find address — check spelling';
+    toast('⚠️ Address not found. Tap for directions in Maps.','#E04040');
+    return;
+  }
+
+  // Fly map to show both points
+  var bounds=new mapboxgl.LngLatBounds();
+  if(origin)bounds.extend([origin.lng,origin.lat]);
+  bounds.extend([dest.lng,dest.lat]);
+  window._ctMap.fitBounds(bounds,{padding:60,maxZoom:15});
+
+  // Destination marker
+  if(window._ctDestMarker)window._ctDestMarker.remove();
+  var markerEl=document.createElement('div');
+  markerEl.style.cssText='width:34px;height:34px;border-radius:50% 50% 50% 0;background:#F26310;border:3px solid #fff;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.5)';
+  window._ctDestMarker=new mapboxgl.Marker({element:markerEl,anchor:'bottom'}).setLngLat([dest.lng,dest.lat]).addTo(window._ctMap);
+
+  // Fetch route from Mapbox Directions API
+  if(origin){
+    try{
+      var routeUrl='https://api.mapbox.com/directions/v5/mapbox/driving/'+origin.lng+','+origin.lat+';'+dest.lng+','+dest.lat+'?steps=true&geometries=geojson&overview=full&access_token='+MBTK;
+      var rr=await fetch(routeUrl);
+      var rd=await rr.json();
+      if(rd.routes&&rd.routes.length){
+        var route=rd.routes[0];
+        var mins=Math.round(route.duration/60);
+        var miles=(route.distance*0.000621371).toFixed(1);
+        if(etaEl)etaEl.textContent=mins+' min  ·  '+miles+' mi';
+        // Draw route on map
+        var map=window._ctMap;
+        var srcId='ct-route',lyrId='ct-route-line';
+        if(map.getLayer(lyrId))map.removeLayer(lyrId);
+        if(map.getSource(srcId))map.removeSource(srcId);
+        var addRoute=function(){
+          map.addSource(srcId,{type:'geojson',data:{type:'Feature',geometry:route.geometry}});
+          map.addLayer({id:lyrId,type:'line',source:srcId,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#F26310','line-width':5,'line-opacity':0.9}});
+        };
+        if(map.isStyleLoaded())addRoute();
+        else map.once('load',addRoute);
+        // Show turn-by-turn steps
+        var stepsEl=document.getElementById('ctMapSteps');
+        if(stepsEl&&route.legs&&route.legs[0]&&route.legs[0].steps){
+          var steps=route.legs[0].steps;
+          stepsEl.innerHTML='<div style="padding:10px 14px 4px;font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#55595f">Turn-by-Turn</div>'+steps.map(function(s,idx){
+            var instr=s.maneuver&&s.maneuver.instruction?s.maneuver.instruction:'Continue';
+            var d=s.distance>=1000?(s.distance/1609.34).toFixed(1)+' mi':Math.round(s.distance*3.28084)+' ft';
+            return'<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid rgba(255,255,255,0.05)"><span style="font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:800;color:#F26310;min-width:18px;text-align:right">'+(idx+1)+'</span><span style="flex:1;font-size:13px;color:#F0F2F5">'+instr+'</span><span style="font-size:11px;color:#9A9FA8;white-space:nowrap">'+d+'</span></div>';
+          }).join('');
+        }
+      }else{
+        if(etaEl)etaEl.textContent='Route found — tap pin for details';
+      }
+    }catch(e){
+      console.warn('Directions API error',e);
+      if(etaEl)etaEl.textContent='Navigate to: '+address;
+    }
+  }else{
+    if(etaEl)etaEl.textContent='Navigate to: '+address;
+  }
 }
 
 async function setSt(id,st){
