@@ -429,18 +429,21 @@ textarea{resize:vertical;min-height:80px}
 .cg-ct-sig-spacer{height:52px}
 .cg-ct-footer{border-top:1px solid #e0e0e0;padding-top:12px;text-align:center;font-size:11px;color:#aaa}
 
-/* Print: only show contract, hide everything else */
+/* Print: only show contract, scaled to fit one 8.5×11 page */
 @media print {
+  @page{size:letter portrait;margin:0}
   body>*:not(#cgModal){display:none!important}
   #cgModal{position:static!important;background:#fff!important;display:block!important}
   #cgModal.hidden{display:block!important}
   .cg-wrap{background:#fff!important}
   .cg-toolbar,.cg-form-section,.cg-preview-actions{display:none!important}
-  .cg-preview-wrap{display:block!important;padding:0!important;max-width:100%!important}
-  .cg-contract{box-shadow:none!important;border-radius:0!important}
+  .cg-preview-wrap{display:block!important;padding:0!important;max-width:100%!important;margin:0!important}
+  .cg-contract{box-shadow:none!important;border-radius:0!important;width:8.5in;transform-origin:top left;transform:scale(0.82);page-break-after:avoid}
   .cg-ct-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cg-ct-accent{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cg-ct-table thead tr{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .cg-ct-party{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  *{page-break-inside:avoid}
 }
 </style>
 <script>try{var _pt=JSON.parse(localStorage.getItem('ps_theme'));if(_pt)document.documentElement.setAttribute('data-theme',_pt);}catch(e){}</script>
@@ -755,6 +758,15 @@ textarea{resize:vertical;min-height:80px}
               <button id="lcSaveLeadBtn" onclick="lcSaveLead()" style="flex:1;padding:12px;background:var(--accent,#2563eb);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">💾 Save Lead</button>
               <button onclick="lcClearLead()" style="padding:12px 16px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--fg-2);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Clear</button>
             </div>
+          </div>
+
+          <!-- ── GENERATE CONTRACT ── -->
+          <div class="lc-card" style="margin-top:14px">
+            <div class="lc-label">CONTRACT</div>
+            <p style="font-size:13px;color:var(--fg-2);margin:0 0 12px">Ready to close? Generate a branded service contract pre-filled from the lead above.</p>
+            <button onclick="openContractGenFromLead()" style="width:100%;padding:13px;background:#1A1A1A;color:#fff;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+              <span style="font-size:16px">📋</span> Generate Contract
+            </button>
           </div>
 
         </div>
@@ -1266,7 +1278,7 @@ textarea{resize:vertical;min-height:80px}
               <div class="cg-ct-party">
                 <div class="cg-ct-party-label">Service Provider</div>
                 <div class="cg-ct-party-name">ProServ Homes LLC</div>
-                <div class="cg-ct-party-info">Nick Cortes<br>proservhomes.co<br>(732) 882-3125<br>nick@proservhomes.co</div>
+                <div class="cg-ct-party-info">Nick Peterson<br>proservhomes.co<br>(732) 385-8683<br>nick@proservhomes.co</div>
               </div>
               <div class="cg-ct-party">
                 <div class="cg-ct-party-label">Customer</div>
@@ -1309,10 +1321,10 @@ textarea{resize:vertical;min-height:80px}
             <div class="cg-ct-section-title">Signatures</div>
             <div class="cg-ct-sigs">
               <div class="cg-ct-sig-block">
-                <img id="cgSigImg" class="cg-ct-sig-img" src="" alt="Nick Cortes Signature">
+                <img id="cgSigImg" class="cg-ct-sig-img" src="" alt="Nick Peterson Signature">
                 <hr class="cg-ct-sig-line">
                 <div class="cg-ct-sig-label">Authorized Signature</div>
-                <div class="cg-ct-sig-name">Nick Cortes — ProServ Homes LLC</div>
+                <div class="cg-ct-sig-name">Nick Peterson — ProServ Homes LLC</div>
                 <hr class="cg-ct-sig-line">
                 <div class="cg-ct-sig-label">Print Name &amp; Title</div>
                 <div class="cg-ct-sig-name" id="cg-ct-rep-date"></div>
@@ -4416,6 +4428,54 @@ function openContractGen(id){
 function closeContractGen(){
   document.getElementById('cgModal').classList.add('hidden');
   document.body.style.overflow='';
+}
+
+function openContractGenFromLead(){
+  // Pull data from the lead composer fields
+  var name=(document.getElementById('lcName')||{}).value||'';
+  var phone=(document.getElementById('lcPhone')||{}).value||'';
+  var email=(document.getElementById('lcEmail')||{}).value||'';
+  var address=(document.getElementById('lcAddress')||{}).value||'';
+  var svcSel=document.getElementById('lcService');
+  var svcLabel=svcSel?svcSel.options[svcSel.selectedIndex].text.replace(/^[^a-zA-Z]+/,'').trim():'';
+
+  // Set logo & sig
+  document.getElementById('cgLogoImg').src=_CG_LOGO;
+  document.getElementById('cgSigImg').src=_CG_SIG;
+
+  // Customer info
+  var parts=name.trim().split(/\s+/);
+  document.getElementById('cg_first').value=parts[0]||'';
+  document.getElementById('cg_last').value=parts.slice(1).join(' ')||'';
+  document.getElementById('cg_phone').value=phone;
+  document.getElementById('cg_email').value=email;
+
+  // Address parsing
+  var zipMatch=address.match(/\b(\d{5})\b/);
+  var stMatch=address.match(/\b([A-Z]{2})\b/);
+  document.getElementById('cg_zip').value=zipMatch?zipMatch[1]:'';
+  document.getElementById('cg_state').value=stMatch?stMatch[1]:'NJ';
+  var noZip=address.replace(/\b\d{5}\b/,'').replace(/,\s*$/,'').trim();
+  var lastC=noZip.lastIndexOf(',');
+  document.getElementById('cg_street').value=lastC>0?noZip.slice(0,lastC).trim():noZip;
+  document.getElementById('cg_city').value=lastC>0?noZip.slice(lastC+1).replace(/[A-Z]{2}/,'').trim():'';
+
+  // Service row
+  document.getElementById('cgSvcRows').innerHTML='';
+  cgAddSvcRow(svcLabel||'Service','',0);
+  cgUpdateTotal();
+
+  // Default dates
+  var yr=new Date().getFullYear();
+  document.getElementById('cg_start').value=yr+'-11-15';
+  document.getElementById('cg_end').value=(yr+1)+'-03-31';
+
+  // Open modal on form
+  document.getElementById('cgFormWrap').style.display='block';
+  document.getElementById('cgPreviewWrap').style.display='none';
+  document.getElementById('cgModal').classList.remove('hidden');
+  document.getElementById('cgModal').scrollTop=0;
+  document.body.style.overflow='hidden';
 }
 
 function cgShowForm(){
