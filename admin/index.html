@@ -770,7 +770,9 @@ textarea{resize:vertical;min-height:80px}
         </div>
         <!-- Chart -->
         <div style="padding:0 14px 12px">
-          <canvas id="finChart" height="180"></canvas>
+          <div style="position:relative;height:180px">
+            <canvas id="finChart"></canvas>
+          </div>
         </div>
         <!-- Service breakdown -->
         <div style="padding:0 14px 12px">
@@ -1033,8 +1035,30 @@ textarea{resize:vertical;min-height:80px}
       <div style="font-size:12px;color:var(--fg-3);font-weight:700;letter-spacing:.06em;margin-bottom:8px">LOGGED JOBS &amp; PAYMENTS</div>
       <div id="hwJobsList"></div>
     </div>
-    <div style="margin-top:4px">
-      <button class="mbtn mbtn-sec" onclick="closeModal('hwModal')" style="width:100%">Close</button>
+    <!-- Edit Profile (collapsed by default) -->
+    <div id="hwEditWrap" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+      <div style="font-size:12px;color:var(--fg-3);font-weight:700;letter-spacing:.06em;margin-bottom:10px">EDIT PROFILE</div>
+      <div class="field"><label>Full Name</label><input id="hwEditName" placeholder="Jane Smith"></div>
+      <div class="field"><label>Email</label><input type="email" id="hwEditEmail" placeholder="jane@email.com"></div>
+      <div class="field"><label>Phone</label><input type="tel" id="hwEditPhone" placeholder="(732) 555-0000"></div>
+      <div class="field"><label>Address</label><input id="hwEditAddress" placeholder="123 Main St, City, NJ 07000"></div>
+      <div class="field"><label>Home Type</label>
+        <select id="hwEditHomeType">
+          <option value="">Select…</option>
+          <option>Single Family</option>
+          <option>Townhouse</option>
+          <option>Condo</option>
+          <option>Multi-Family</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Square Footage</label><input type="number" id="hwEditSqft" placeholder="2000"></div>
+      <div class="field"><label>Notes for Techs</label><textarea id="hwEditNotes" style="background:var(--surface-2);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:10px;width:100%;font-size:14px;font-family:inherit;min-height:72px;resize:vertical" placeholder="Gate code, dogs, etc."></textarea></div>
+      <button class="mbtn mbtn-primary" onclick="saveHwProfile()" style="width:100%;margin-bottom:8px">Save Profile</button>
+    </div>
+    <div style="margin-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button class="mbtn" style="background:var(--surface-2);border:1px solid var(--border);font-size:13px" onclick="toggleHwEdit()">✏️ Edit Profile</button>
+      <button class="mbtn mbtn-sec" onclick="closeModal('hwModal')">Close</button>
     </div>
   </div>
 </div>
@@ -1369,7 +1393,7 @@ async function genPaymentLink(priceId,linkId,svcId,btn,jobIdOverride){
 }
 
 // Field mapping: local camelCase <-> DB snake_case
-function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,paymentLink:r.payment_link||'',status:r.status||'New',notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null,lat:r.lat||null,lng:r.lng||null,service_type:r.service_type||'per_visit',customer_type:r.customer_type||'residential'}}
+function jr2l(r){return{id:r.id,client:r.client,phone:r.phone,email:r.email||'',address:r.address,service:r.service,date:r.date,price:Number(r.price)||0,contractorId:r.contractor_id||'',contractorPay:Number(r.contractor_pay)||0,contractorPaid:!!r.contractor_paid,paymentLink:r.payment_link||'',status:r.status||'New',notes:r.notes||'',beforePhoto:r.before_photo||null,afterPhoto:r.after_photo||null,lat:r.lat||null,lng:r.lng||null,service_type:r.service_type||'per_visit',customer_type:r.customer_type||'residential',stripe_payment_id:r.stripe_payment_id||null,stripe_customer_id:r.stripe_customer_id||null}}
 function jl2r(j){return{id:j.id,client:j.client,phone:j.phone,email:j.email||'',address:j.address,service:j.service,date:j.date,price:j.price||0,contractor_id:j.contractorId||null,contractor_pay:j.contractorPay||0,contractor_paid:!!j.contractorPaid,payment_link:j.paymentLink||'',status:j.status||'New',notes:j.notes||'',lat:j.lat||null,lng:j.lng||null,service_type:j.service_type||'per_visit',customer_type:j.customer_type||'residential'}}
 function cr2l(r){return{id:r.id,name:r.name,phone:r.phone,email:r.email||'',specialty:r.specialty||'',spec:r.specialty||'',margin:Number(r.margin)||30,photo_url:r.photo_url||null,bio:r.bio||'',insurance_url:r.insurance_url||null,service_interests:r.service_interests||null,stripe_onboarded:!!r.stripe_onboarded,territory_zips:Array.isArray(r.territory_zips)?r.territory_zips:[]}}
 function cl2r(c){return{id:c.id,name:c.name,phone:c.phone,email:c.email||'',specialty:c.specialty||c.spec||'',margin:c.margin||30,territory_zips:Array.isArray(c.territory_zips)?c.territory_zips:[]}}
@@ -1582,10 +1606,10 @@ async function approvePayout(prId, ctName, amount){
   }
 }
 async function deletePayoutRequest(id){
-  if(!confirm('Delete this payout request? This cannot be undone.')) return;
+  showToast('Deleting…');
   var r=await _sb.from('payout_requests').delete().eq('id',id);
   if(r.error){ showToast('Error: '+r.error.message); return; }
-  showToast('Payout request deleted');
+  showToast('Payout request deleted ✓');
   loadPayoutRequests();
 }
 /* ── Applications ─────────────────────────────────────────────────── */
@@ -2146,6 +2170,7 @@ function populateContractorSelect(){var s=document.getElementById('jContractor')
 function renderContractors(){var el=document.getElementById('contractorList');if(!contractors.length){el.innerHTML='<div style="text-align:center;padding:48px;color:var(--fg-3)">No contractors yet</div>';return}el.innerHTML=contractors.map(function(c){var jc=jobs.filter(function(j){return j.contractorId===c.id}).length;var avHtml=c.photo_url?'<div class="ct-av" style="padding:0;overflow:hidden"><img src="'+esc(c.photo_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>':'<div class="ct-av">'+c.name[0]+'</div>';return'<div class="ct-card" onclick="openEditCtx(\''+c.id+'\')">'+avHtml+'<div class="ct-body"><div class="ct-name">'+esc(c.name)+'</div><div class="ct-spec">'+esc(c.spec||c.specialty||'')+'</div></div><div class="ct-jobs">'+jc+'<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left:3px"><polyline points="9 18 15 12 9 6"/></svg></div></div>'}).join('')}
 
 var _homeowners=[];
+var _hwCurrentIdx=null;
 var _customersView='contractors';
 function showCustomersView(v){
   _customersView=v;
@@ -2331,6 +2356,7 @@ async function toggleStripe(id, currentlyActive){
 function openHwDetail(idx){
   var h=typeof idx==='number'?_homeowners[idx]:_homeowners.find(function(x){return(x.email||'').toLowerCase()===(idx||'').toLowerCase()});
   if(!h)return;
+  _hwCurrentIdx=typeof idx==='number'?idx:_homeowners.indexOf(h);
   var init=(h.name||h.email||'?')[0].toUpperCase();
   var avEl=document.getElementById('hwAv');
   avEl.innerHTML='';avEl.style.padding='';avEl.textContent=init;
@@ -2343,6 +2369,15 @@ function openHwDetail(idx){
   document.getElementById('hwSqft').textContent='$'+Number(h.totalPaid).toLocaleString()+' paid';
   var nw=document.getElementById('hwNotesWrap'); var nt=document.getElementById('hwNotes');
   if(nw&&nt){nw.style.display='none';nt.textContent='';}
+  // Pre-fill edit form
+  document.getElementById('hwEditName').value=h.name||'';
+  document.getElementById('hwEditEmail').value=h.email||'';
+  document.getElementById('hwEditPhone').value=h.phone||'';
+  document.getElementById('hwEditAddress').value=h.address||'';
+  document.getElementById('hwEditHomeType').value=h.home_type||'';
+  document.getElementById('hwEditSqft').value=h.sqft||'';
+  document.getElementById('hwEditNotes').value=h.tech_notes||'';
+  var ew=document.getElementById('hwEditWrap');if(ew)ew.style.display='none';
   // Build job history
   var jl=document.getElementById('hwJobsList');
   if(jl){
@@ -2365,6 +2400,53 @@ function openHwDetail(idx){
     }
   }
   document.getElementById('hwModal').classList.remove('hidden');
+}
+function toggleHwEdit(){
+  var ew=document.getElementById('hwEditWrap');
+  if(!ew)return;
+  ew.style.display=ew.style.display==='none'?'block':'none';
+}
+async function saveHwProfile(){
+  var h=_homeowners[_hwCurrentIdx];
+  if(!h)return;
+  var name=document.getElementById('hwEditName').value.trim();
+  var email=document.getElementById('hwEditEmail').value.trim().toLowerCase();
+  var phone=document.getElementById('hwEditPhone').value.trim();
+  var address=document.getElementById('hwEditAddress').value.trim();
+  var homeType=document.getElementById('hwEditHomeType').value;
+  var sqft=document.getElementById('hwEditSqft').value;
+  var notes=document.getElementById('hwEditNotes').value.trim();
+  // Update all jobs for this homeowner in DB with new name/phone/address
+  var updates={client:name||h.name,phone:phone||h.phone,address:address||h.address};
+  var key=(h.email||'').toLowerCase()||(h.name||'').toLowerCase();
+  showToast('Saving…');
+  // Update homeowners table if exists, otherwise update all their jobs
+  var jobIds=h.jobs.map(function(j){return j.id;});
+  if(jobIds.length){
+    await _sb.from('jobs').update(updates).in('id',jobIds);
+  }
+  // Also upsert to homeowners profile table (soft create)
+  if(email){
+    await _sb.from('homeowners').upsert([{
+      email:email,
+      full_name:name,
+      phone:phone,
+      address:address,
+      home_type:homeType,
+      sqft:sqft?parseInt(sqft):null,
+      tech_notes:notes
+    }],{onConflict:'email',ignoreDuplicates:false});
+  }
+  // Refresh local state
+  h.name=name||h.name;h.phone=phone||h.phone;h.address=address||h.address;
+  h.home_type=homeType;h.sqft=sqft;h.tech_notes=notes;
+  h.jobs.forEach(function(j){j.client=h.name;j.phone=h.phone;j.address=h.address;});
+  document.getElementById('hwName').textContent=h.name||h.email||'Homeowner';
+  document.getElementById('hwPhone').textContent=h.phone||'—';
+  document.getElementById('hwAddr').textContent=h.address||'—';
+  document.getElementById('hwEditWrap').style.display='none';
+  renderHomeowners();
+  showToast('Profile saved ✓');
 }
 async function saveContractor(){var name=document.getElementById('ctName').value.trim();if(!name){showToast('Name required');return}var id=_editCtId||('c'+Date.now());var i=contractors.findIndex(function(x){return x.id===id});var margin=Number(document.getElementById('ctMargin').value)||30;var rawZips=document.getElementById('ctZips').value;var zips=rawZips.split(',').map(function(z){return z.trim().replace(/\D/g,'');}).filter(function(z){return z.length===5;}).slice(0,4);var c={id:id,name:name,phone:document.getElementById('ctPhone').value,email:document.getElementById('ctEmail').value.trim().toLowerCase(),specialty:document.getElementById('ctSpec').value,spec:document.getElementById('ctSpec').value,margin:margin,territory_zips:zips,jobs:0};if(i>=0)contractors[i]=c;else contractors.push(c);await _sb.from('contractors').upsert([cl2r(c)]);populateContractorSelect();renderContractors();renderTerritoryOverlays();closeModal('ctModal');showToast(name+' saved ✓'+(zips.length?' · '+zips.length+' ZIP'+(zips.length>1?'s':'')+'':''))}
 async function deleteContractor(){var id=document.getElementById('ctEditId').value;if(!id)return;contractors=contractors.filter(function(c){return c.id!==id});await _sb.from('contractors').delete().eq('id',id);populateContractorSelect();renderContractors();closeModal('ctModal');showToast('Contractor removed')}
@@ -3706,18 +3788,24 @@ async function geocodeAddress(addr){
   if(!addr)return null;
   var k=addr.trim().toLowerCase();
   if(_geocodeCache[k])return _geocodeCache[k];
-  try{
-    var r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(addr),{
-      headers:{'User-Agent':'ProServHomes/1.0'}
-    });
-    if(!r.ok)return null;
-    var d=await r.json();
-    if(d&&d.length>0){
-      var pos={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};
-      _geocodeCache[k]=pos;
-      return pos;
-    }
-  }catch(e){}
+  // Try exact address first, then with NJ/USA hint
+  var queries=[encodeURIComponent(addr),encodeURIComponent(addr+', NJ, USA')];
+  for(var qi=0;qi<queries.length;qi++){
+    try{
+      var r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q='+queries[qi],{
+        headers:{'User-Agent':'ProServHomes/1.0 (admin)'}
+      });
+      if(!r.ok)continue;
+      var d=await r.json();
+      if(d&&d.length>0){
+        var pos={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};
+        _geocodeCache[k]=pos;
+        console.log('[geocode] OK:',addr,'->',pos.lat,pos.lng);
+        return pos;
+      }
+    }catch(e){console.warn('[geocode] error:',addr,e);}
+  }
+  console.warn('[geocode] FAILED for:',addr);
   return null;
 }
 
