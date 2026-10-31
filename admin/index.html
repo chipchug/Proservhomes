@@ -3479,15 +3479,12 @@ function initMap(){
   setTimeout(function(){
     if(!document.getElementById('mapContainer'))return;
     _map=L.map('mapContainer',{zoomControl:true,attributionControl:true}).setView([40.1,-74.1],10);
-    // Carto Positron (clean, modern, light/dark aware)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter_nolabels/{z}/{x}/{y}{r}.png',{
-      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    // Carto dark matter — modern, clean, no API key needed
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png',{
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains:'abcd',
-      maxZoom:20
-    }).addTo(_map);
-    // Label layer on top so pins appear over base but under labels
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter_only_labels/{z}/{x}/{y}{r}.png',{
-      subdomains:'abcd',maxZoom:20,pane:'shadowPane'
+      maxZoom:19,
+      detectRetina:true
     }).addTo(_map);
     loadMapData();
   },150);
