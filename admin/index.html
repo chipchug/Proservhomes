@@ -207,6 +207,8 @@ textarea{resize:vertical;min-height:80px}
 
 /* MORE TAB (Books) */
 .books-head{padding:16px 16px 4px;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+.fin-period{padding:6px 14px;border-radius:20px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg-3);font-size:12px;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:all .15s}
+.fin-period.active{background:var(--green);color:#000;border-color:var(--green)}
 .month-sel{padding:0 16px 14px;display:flex;align-items:center;gap:10px}
 .month-sel select{max-width:200px}
 .books-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:0 16px 16px}
@@ -742,65 +744,38 @@ textarea{resize:vertical;min-height:80px}
 
 <!-- MORE (Books + Settings) -->
       <div id="tabMore" class="tab-pane">
-        <!-- ── Earnings Tracker ─────────────────────────────────────────── -->
+        <!-- ── Financials ────────────────────────────────────────────────── -->
         <div class="books-head" style="display:flex;align-items:center;justify-content:space-between">
-          <span>💰 Earnings Tracker</span>
-          <button onclick="etClearAll()" style="background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:12px;padding:4px 8px">Clear All</button>
+          <span>📊 Financials</span>
+          <button onclick="renderFinancials()" style="background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:12px;padding:4px 8px">↻ Refresh</button>
+        </div>
+        <!-- Period selector -->
+        <div style="padding:8px 14px 0;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="fin-period active" onclick="setFinPeriod('week',this)">Week</button>
+          <button class="fin-period" onclick="setFinPeriod('month',this)">Month</button>
+          <button class="fin-period" onclick="setFinPeriod('year',this)">Year</button>
+          <button class="fin-period" onclick="setFinPeriod('custom',this)">Custom</button>
+        </div>
+        <!-- Custom date range (hidden by default) -->
+        <div id="finCustomDates" style="display:none;padding:8px 14px 0;display:none;gap:8px;align-items:center">
+          <input type="date" id="finDateFrom" onchange="renderFinancials()" style="flex:1;padding:7px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px">
+          <span style="color:var(--fg-3);font-size:12px">to</span>
+          <input type="date" id="finDateTo" onchange="renderFinancials()" style="flex:1;padding:7px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px">
         </div>
         <!-- Summary tiles -->
-        <div class="books-summary" style="margin-bottom:0">
-          <div class="bs-tile"><div class="bs-val" id="etRevTotal" style="color:var(--green)">$0</div><div class="bs-lbl">Revenue</div></div>
-          <div class="bs-tile"><div class="bs-val" id="etPayTotal" style="color:var(--orange)">$0</div><div class="bs-lbl">Paid Out</div></div>
-          <div class="bs-tile"><div class="bs-val" id="etNetTotal" style="color:var(--fg)">$0</div><div class="bs-lbl">My Net</div></div>
+        <div class="books-summary">
+          <div class="bs-tile"><div class="bs-val" id="finRevTotal" style="color:var(--green)">$0</div><div class="bs-lbl">Revenue</div></div>
+          <div class="bs-tile"><div class="bs-val" id="finPayTotal" style="color:var(--orange)">$0</div><div class="bs-lbl">Paid Out</div></div>
+          <div class="bs-tile"><div class="bs-val" id="finNetTotal" style="color:var(--fg)">$0</div><div class="bs-lbl">Net Profit</div></div>
         </div>
-        <!-- Log a job -->
-        <div style="padding:12px 14px 6px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div>
-            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Service</div>
-            <select id="etSvc" onchange="etUpdatePreview()" style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px">
-              <option value="snow_seasonal">Snow — Seasonal</option>
-              <option value="snow_visit">Snow — Per Visit</option>
-              <option value="gutter">Gutter Cleaning</option>
-              <option value="pressure">Pressure Washing</option>
-              <option value="lights">Holiday Lights</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Size / Tier</div>
-            <select id="etSize" onchange="etUpdatePreview()" style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px">
-              <option value="small">Small</option>
-              <option value="medium">Medium</option>
-              <option value="large">Large</option>
-              <option value="custom">Custom $</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Contractor</div>
-            <select id="etTier" onchange="etUpdatePreview()" style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px">
-              <option value="20">20% tier</option>
-              <option value="30">30% tier</option>
-              <option value="35">35% tier</option>
-              <option value="0">No contractor</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin-bottom:4px">Revenue ($)</div>
-            <input id="etRevInput" type="number" inputmode="decimal" placeholder="auto" oninput="etUpdatePreview()" style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px;box-sizing:border-box">
-          </div>
+        <!-- Chart -->
+        <div style="padding:0 14px 12px">
+          <canvas id="finChart" height="180"></canvas>
         </div>
-        <div style="padding:0 14px 4px">
-          <input id="etNote" type="text" placeholder="Note (optional — name, address…)" style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--fg);font-size:13px;box-sizing:border-box;margin-bottom:8px">
-          <!-- Preview row -->
-          <div id="etPreview" style="background:var(--orange-dim);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--fg);margin-bottom:8px;display:none">
-            Revenue: <strong id="etPrevRev">—</strong> &nbsp;|&nbsp; Payout: <strong id="etPrevPay">—</strong> &nbsp;|&nbsp; My Net: <strong id="etPrevNet" style="color:var(--green)">—</strong>
-          </div>
-          <button class="mbtn" style="background:var(--orange);color:#fff;font-weight:700;font-size:14px" onclick="etLog()">+ Log This Job</button>
-        </div>
-        <!-- Jobs log table -->
-        <div style="padding:6px 14px 12px">
-          <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin-bottom:6px">Logged Jobs</div>
-          <div id="etLog" style="font-size:12px;color:var(--fg-3);text-align:center;padding:8px 0">No jobs logged yet.</div>
+        <!-- Service breakdown -->
+        <div style="padding:0 14px 12px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);margin-bottom:8px">By Service</div>
+          <div id="finBreakdown" style="font-size:13px;color:var(--fg-3)">—</div>
         </div>
         <!-- ── Payout Requests ──────────────────────────────────────────── -->
         <div class="books-head" style="display:flex;align-items:center;justify-content:space-between">
@@ -844,7 +819,7 @@ textarea{resize:vertical;min-height:80px}
     <button class="nb" onclick="switchTab('Customers',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Contractors</button>
     <button class="nb" onclick="switchTab('Leads',this);loadLeads()" id="navLeads" style="position:relative"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Leads<span id="leadsBadge" class="req-badge hidden"></span></button>
     <button class="nb" onclick="switchTab('Map',this);initMap()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>Map</button>
-    <button class="nb" onclick="switchTab('More',this)"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>More</button>
+    <button class="nb" onclick="switchTab('More',this);renderFinancials()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>More</button>
   </nav>
 </div>
 
@@ -1042,17 +1017,21 @@ textarea{resize:vertical;min-height:80px}
         <div style="font-size:14px;font-weight:600" id="hwAddr">—</div>
       </div>
       <div style="background:var(--surface-2);border-radius:10px;padding:11px 13px">
-        <div style="font-size:11px;color:var(--fg-3);font-weight:600;letter-spacing:.05em;margin-bottom:3px">HOME TYPE</div>
+        <div style="font-size:11px;color:var(--fg-3);font-weight:600;letter-spacing:.05em;margin-bottom:3px">SERVICE TYPE</div>
         <div style="font-size:14px;font-weight:600" id="hwHomeType">—</div>
       </div>
       <div style="background:var(--surface-2);border-radius:10px;padding:11px 13px">
-        <div style="font-size:11px;color:var(--fg-3);font-weight:600;letter-spacing:.05em;margin-bottom:3px">SQ FT</div>
-        <div style="font-size:14px;font-weight:600" id="hwSqft">—</div>
+        <div style="font-size:11px;color:var(--green);font-weight:600;letter-spacing:.05em;margin-bottom:3px">TOTAL PAID</div>
+        <div style="font-size:14px;font-weight:700;color:var(--green)" id="hwSqft">—</div>
       </div>
     </div>
     <div id="hwNotesWrap" style="display:none;background:var(--orange-dim);border-radius:10px;padding:11px 13px;margin-bottom:14px">
       <div style="font-size:11px;color:var(--orange);font-weight:700;letter-spacing:.05em;margin-bottom:4px">NOTES FOR TECHS</div>
       <div style="font-size:13px" id="hwNotes"></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;color:var(--fg-3);font-weight:700;letter-spacing:.06em;margin-bottom:8px">LOGGED JOBS &amp; PAYMENTS</div>
+      <div id="hwJobsList"></div>
     </div>
     <div style="margin-top:4px">
       <button class="mbtn mbtn-sec" onclick="closeModal('hwModal')" style="width:100%">Close</button>
@@ -1092,6 +1071,7 @@ textarea{resize:vertical;min-height:80px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
 <script>
 var SURL='https://chmicqvorgjqlthufgwt.supabase.co';
@@ -1554,7 +1534,10 @@ async function loadPayoutRequests(){
       ?'<span style="background:#1a3a1a;color:#4caf50;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">Paid</span>'
       :'<span style="background:var(--orange-dim,#3a2200);color:var(--orange);border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">Pending</span>';
     var approveBtn=isPending
-      ?'<button onclick="approvePayout(\''+p.id+'\',\''+p.contractor_name+'\','+p.amount+')" style="padding:8px 16px;border-radius:9px;border:none;background:#635BFF;color:#fff;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;flex-shrink:0">Pay Now</button>'
+      ?'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">'
+       +'<button onclick="approvePayout(\''+p.id+'\',\''+p.contractor_name+'\','+p.amount+')" style="padding:8px 16px;border-radius:9px;border:none;background:#635BFF;color:#fff;font-family:\'Barlow Condensed\',sans-serif;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">Pay Now</button>'
+       +'<button onclick="deletePayoutRequest(\''+p.id+'\')" style="padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--fg-3);font-size:11px;cursor:pointer;font-weight:600">Delete</button>'
+       +'</div>'
       :'';
     var transferLine=isPaid&&p.stripe_transfer_id?'<div style="font-size:11px;color:var(--fg-3);margin-top:2px">Transfer: '+p.stripe_transfer_id+'</div>':'';
     return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">'
@@ -1597,6 +1580,13 @@ async function approvePayout(prId, ctName, amount){
     showToast('Network error — check console');
     console.error('[approvePayout]',e);
   }
+}
+async function deletePayoutRequest(id){
+  if(!confirm('Delete this payout request? This cannot be undone.')) return;
+  var r=await _sb.from('payout_requests').delete().eq('id',id);
+  if(r.error){ showToast('Error: '+r.error.message); return; }
+  showToast('Payout request deleted');
+  loadPayoutRequests();
 }
 /* ── Applications ─────────────────────────────────────────────────── */
 var _applications = [];
@@ -1855,94 +1845,119 @@ async function enterApp(){
   document.getElementById('ovSub').textContent="Here's your business overview.";
   var rr=await _sb.from('job_requests').select('*').order('id',{ascending:false});
   requests=(rr.data||[]).filter(function(r){return r.status==='pending'||r.status==='acknowledged'||r.status==='quoted'});
-  populateBooksMonths();populateContractorSelect();buildSvcSelect('jSvc');renderDashboard();renderJobsTable();renderContractors();renderBooks();renderRequests();loadPayoutRequests();
+  populateBooksMonths();populateContractorSelect();buildSvcSelect('jSvc');renderDashboard();renderJobsTable();renderContractors();renderBooks();renderFinancials();renderRequests();loadPayoutRequests();
   var _jp=new URLSearchParams(window.location.search).get('job');
   if(_jp)setTimeout(function(){openJobDetail(_jp);},300);
 }
 
 function switchTab(n,el){['Overview','Requests','Jobs','Customers','Leads','Map','More'].forEach(function(t){var e=document.getElementById('tab'+t);if(e)e.classList.remove('active')});var tgt=document.getElementById('tab'+n);if(tgt)tgt.classList.add('active');document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});if(el)el.classList.add('active');document.querySelector('.scroll').scrollTop=0;}
 
-/* ── Earnings Tracker ──────────────────────────────────────────────────── */
-var _etPricing={
-  snow_seasonal:{small:299,medium:399,large:499},
-  snow_visit:{small:100,medium:135,large:170},
-  gutter:{small:149,medium:199,large:279},
-  pressure:{small:149,medium:199,large:279},
-  lights:{small:299,medium:449,large:649},
-  other:{small:0,medium:0,large:0}
-};
-function etFmt(n){return'$'+Math.round(n).toLocaleString();}
-function etUpdatePreview(){
-  var svc=document.getElementById('etSvc').value;
-  var size=document.getElementById('etSize').value;
-  var tier=parseInt(document.getElementById('etTier').value)||0;
-  var custom=parseFloat(document.getElementById('etRevInput').value)||0;
-  var base=custom||(size==='custom'?0:(_etPricing[svc]&&_etPricing[svc][size])||0);
-  if(!base){document.getElementById('etPreview').style.display='none';return;}
-  var pay=base*(tier/100);
-  var net=base-pay;
-  document.getElementById('etPrevRev').textContent=etFmt(base);
-  document.getElementById('etPrevPay').textContent=etFmt(pay)+(tier?' ('+tier+'%)':'');
-  document.getElementById('etPrevNet').textContent=etFmt(net);
-  document.getElementById('etPreview').style.display='block';
+/* ── Financials ─────────────────────────────────────────────────────────── */
+var _finPeriod='week';
+var _finChart=null;
+function setFinPeriod(p,btn){
+  _finPeriod=p;
+  document.querySelectorAll('.fin-period').forEach(function(b){b.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  var cd=document.getElementById('finCustomDates');
+  if(cd){cd.style.display=(p==='custom'?'flex':'none');}
+  if(p!=='custom')renderFinancials();
 }
-function etLoad(){
-  try{return JSON.parse(localStorage.getItem('ps_et_jobs')||'[]');}catch(e){return[];}
+function _finDateRange(){
+  var now=new Date();
+  var from,to;
+  to=new Date(now);to.setHours(23,59,59,999);
+  if(_finPeriod==='week'){from=new Date(now);from.setDate(now.getDate()-6);from.setHours(0,0,0,0);}
+  else if(_finPeriod==='month'){from=new Date(now.getFullYear(),now.getMonth(),1);}
+  else if(_finPeriod==='year'){from=new Date(now.getFullYear(),0,1);}
+  else{
+    var fi=document.getElementById('finDateFrom'),ti=document.getElementById('finDateTo');
+    from=fi&&fi.value?new Date(fi.value+'T00:00:00'):new Date(now.getFullYear(),0,1);
+    to=ti&&ti.value?new Date(ti.value+'T23:59:59'):new Date(now);
+  }
+  return{from:from,to:to};
 }
-function etSave(jobs){
-  try{localStorage.setItem('ps_et_jobs',JSON.stringify(jobs));}catch(e){}
+function renderFinancials(){
+  var range=_finDateRange();
+  var filtered=jobs.filter(function(j){
+    if(!j.date)return false;
+    var d=new Date(j.date+'T12:00:00');
+    return d>=range.from&&d<=range.to&&j.status==='Paid';
+  });
+  var totRev=filtered.reduce(function(s,j){return s+Number(j.price||0);},0);
+  var totPay=filtered.reduce(function(s,j){return s+Number(j.contractorPay||0);},0);
+  var totNet=totRev-totPay;
+  document.getElementById('finRevTotal').textContent='$'+totRev.toLocaleString();
+  document.getElementById('finPayTotal').textContent='$'+totPay.toLocaleString();
+  document.getElementById('finNetTotal').textContent='$'+totNet.toLocaleString();
+  // Build chart data — bucket by day (week), week (month/year), or month (year/custom long)
+  var buckets={};
+  var bucketFn;
+  if(_finPeriod==='week'){
+    bucketFn=function(d){return(d.getMonth()+1)+'/'+d.getDate();}
+  } else if(_finPeriod==='month'){
+    bucketFn=function(d){return(d.getMonth()+1)+'/'+d.getDate();}
+  } else {
+    bucketFn=function(d){var ms=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return ms[d.getMonth()]+' '+d.getFullYear();}
+  }
+  // Seed all bucket labels for the range
+  var labels=[];
+  var cur=new Date(range.from);
+  if(_finPeriod==='week'||_finPeriod==='month'){
+    while(cur<=range.to){labels.push(bucketFn(cur));cur.setDate(cur.getDate()+1);}
+  } else {
+    while(cur<=range.to){var lbl=bucketFn(cur);if(!labels.length||labels[labels.length-1]!==lbl)labels.push(lbl);cur.setDate(cur.getDate()+1);}
+  }
+  labels.forEach(function(l){buckets[l]=0;});
+  filtered.forEach(function(j){
+    var d=new Date(j.date+'T12:00:00');
+    var k=bucketFn(d);
+    if(buckets[k]!==undefined)buckets[k]+=Number(j.price||0);
+    else buckets[k]=Number(j.price||0);
+  });
+  var vals=labels.map(function(l){return buckets[l]||0;});
+  // Chart
+  var canvas=document.getElementById('finChart');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  if(_finChart){try{_finChart.destroy();}catch(e){}}
+  var isDark=document.documentElement.getAttribute('data-theme')==='dark'||(document.documentElement.getAttribute('data-theme')!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches);
+  var gridColor=isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';
+  var labelColor=isDark?'#888':'#aaa';
+  _finChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels:labels,datasets:[{data:vals,backgroundColor:'rgba(99,216,143,0.75)',borderRadius:5,borderSkipped:false}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+Number(c.raw).toLocaleString();}}}},
+      scales:{
+        x:{grid:{color:gridColor},ticks:{color:labelColor,font:{size:10},maxRotation:45,minRotation:0}},
+        y:{grid:{color:gridColor},ticks:{color:labelColor,font:{size:10},callback:function(v){return'$'+(v>=1000?(v/1000).toFixed(1)+'k':v);}}}
+      }
+    }
+  });
+  // Service breakdown
+  var svcTotals={};
+  filtered.forEach(function(j){
+    var k=j.service||'Other';
+    svcTotals[k]=(svcTotals[k]||0)+Number(j.price||0);
+  });
+  var svcEntries=Object.entries(svcTotals).sort(function(a,b){return b[1]-a[1];});
+  var bd=document.getElementById('finBreakdown');
+  if(bd){
+    if(!svcEntries.length){bd.innerHTML='<span style="color:var(--fg-3)">No paid jobs in this period</span>';}
+    else{
+      bd.innerHTML=svcEntries.map(function(e){
+        var pct=totRev>0?Math.round(e[1]/totRev*100):0;
+        return'<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">'
+          +'<div style="flex:1;font-size:12px;font-weight:600">'+esc(e[0])+'</div>'
+          +'<div style="font-size:12px;color:var(--green);font-weight:700">$'+Number(e[1]).toLocaleString()+'</div>'
+          +'<div style="font-size:11px;color:var(--fg-3);min-width:28px;text-align:right">'+pct+'%</div>'
+          +'</div>';
+      }).join('');
+    }
+  }
 }
-function etLog(){
-  var svc=document.getElementById('etSvc').value;
-  var size=document.getElementById('etSize').value;
-  var tier=parseInt(document.getElementById('etTier').value)||0;
-  var custom=parseFloat(document.getElementById('etRevInput').value)||0;
-  var base=custom||(size==='custom'?0:(_etPricing[svc]&&_etPricing[svc][size])||0);
-  if(!base){alert('Enter a revenue amount or pick a size with a known price.');return;}
-  var note=document.getElementById('etNote').value.trim();
-  var jobs=etLoad();
-  jobs.unshift({id:Date.now(),date:new Date().toISOString(),svc:svc,size:size,tier:tier,rev:base,pay:Math.round(base*(tier/100)*100)/100,net:Math.round(base*(1-tier/100)*100)/100,note:note});
-  etSave(jobs);
-  document.getElementById('etRevInput').value='';
-  document.getElementById('etNote').value='';
-  document.getElementById('etPreview').style.display='none';
-  etRender();
-}
-function etDelete(id){
-  var jobs=etLoad().filter(function(j){return j.id!==id;});
-  etSave(jobs);etRender();
-}
-function etClearAll(){
-  if(!confirm('Clear all logged jobs?'))return;
-  etSave([]);etRender();
-}
-var _etSvcLabels={snow_seasonal:'❄️ Seasonal',snow_visit:'❄️ Per Visit',gutter:'🍂 Gutters',pressure:'💧 Pressure',lights:'💡 Lights',other:'📋 Other'};
-function etRender(){
-  var jobs=etLoad();
-  var totRev=0,totPay=0,totNet=0;
-  jobs.forEach(function(j){totRev+=j.rev;totPay+=j.pay;totNet+=j.net;});
-  document.getElementById('etRevTotal').textContent=etFmt(totRev);
-  document.getElementById('etPayTotal').textContent=etFmt(totPay);
-  document.getElementById('etNetTotal').textContent=etFmt(totNet);
-  var el=document.getElementById('etLog');
-  if(!jobs.length){el.innerHTML='<div style="text-align:center;padding:8px;color:var(--fg-3);font-size:12px">No jobs logged yet.</div>';return;}
-  var rows=jobs.map(function(j){
-    var d=new Date(j.date);
-    var ds=(d.getMonth()+1)+'/'+d.getDate();
-    var sizeLabel=j.size.charAt(0).toUpperCase()+j.size.slice(1);
-    return '<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:6px 10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">'
-      +'<div style="font-size:11px;color:var(--fg-3)">'+ds+'</div>'
-      +'<div><div style="font-size:12px;font-weight:600">'+(_etSvcLabels[j.svc]||j.svc)+' · '+sizeLabel+(j.tier?' · '+j.tier+'%':'')+'</div>'
-      +(j.note?'<div style="font-size:11px;color:var(--fg-3)">'+j.note+'</div>':'')+'</div>'
-      +'<div style="text-align:right"><div style="font-size:12px;font-weight:700;color:var(--green)">'+etFmt(j.net)+'</div>'
-      +'<div style="font-size:10px;color:var(--fg-3)">of '+etFmt(j.rev)+'</div></div>'
-      +'<button onclick="etDelete('+j.id+')" style="background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:16px;padding:0 2px;line-height:1">×</button>'
-      +'</div>';
-  }).join('');
-  el.innerHTML=rows;
-}
-// Init on page load
-(function(){etRender();etUpdatePreview();})();
 
 function renderDashboard(){
   var now=new Date();var mn=now.getMonth();var yr=now.getFullYear();
@@ -2195,22 +2210,45 @@ async function saveNewHomeowner(){
 async function loadHomeowners(){
   var el=document.getElementById('homeownerList');
   el.innerHTML='<div style="text-align:center;padding:48px;color:var(--fg-3)">Loading…</div>';
-  var r=await _sb.from('homeowners').select('*').order('name',{ascending:true});
-  _homeowners=(r.data||[]);
+  // Derive homeowners from jobs — group by email (fallback: client name)
+  var seen={};
+  jobs.forEach(function(j){
+    var key=(j.email||'').trim().toLowerCase()||(j.client||'').trim().toLowerCase();
+    if(!key)return;
+    if(!seen[key]){
+      seen[key]={
+        name:j.client||'',email:j.email||'',phone:j.phone||'',address:j.address||'',
+        jobs:[],totalPaid:0,stripeCustomerId:j.stripe_customer_id||null,
+        serviceType:j.service_type||'per_visit'
+      };
+    }
+    seen[key].jobs.push(j);
+    if(j.status==='Paid')seen[key].totalPaid+=Number(j.price||0);
+    if(j.stripe_customer_id&&!seen[key].stripeCustomerId)seen[key].stripeCustomerId=j.stripe_customer_id;
+    if(j.service_type==='seasonal')seen[key].serviceType='seasonal';
+  });
+  _homeowners=Object.values(seen).sort(function(a,b){return(b.totalPaid-a.totalPaid)||a.name.localeCompare(b.name);});
   renderHomeowners();
 }
 function renderHomeowners(){
   var el=document.getElementById('homeownerList');
-  if(!_homeowners.length){el.innerHTML='<div style="text-align:center;padding:48px;color:var(--fg-3)">No homeowner accounts yet</div>';return;}
-  el.innerHTML=_homeowners.map(function(h){
+  if(!_homeowners.length){el.innerHTML='<div style="text-align:center;padding:48px;color:var(--fg-3)">No homeowners yet - jobs with client info will appear here</div>';return;}
+  el.innerHTML=_homeowners.map(function(h,idx){
     var init=(h.name||h.email||'?')[0].toUpperCase();
-    var jc=jobs.filter(function(j){return j.email&&j.email.toLowerCase()===(h.email||'').toLowerCase()}).length;
-    var hwAvHtml=h.photo_url?'<div class="ct-av" style="padding:0;overflow:hidden;background:var(--green)"><img src="'+esc(h.photo_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>':'<div class="ct-av" style="background:var(--green)">'+init+'</div>';
-    return'<div class="ct-card" onclick="openHwDetail(\''+esc(h.email||'')+'\')">'+hwAvHtml
-      +'<div class="ct-body"><div class="ct-name">'+esc(h.name||h.email||'Unknown')+'</div>'
-      +'<div class="ct-spec">'+esc(h.email||'')+(h.phone?'  ·  '+esc(h.phone):'')+'</div>'
-      +(h.address?'<div class="ct-spec" style="color:var(--fg-3);font-size:11px">'+esc(h.address)+'</div>':'')
-      +'</div><div class="ct-jobs">'+jc+'<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left:3px"><polyline points="9 18 15 12 9 6"/></svg></div></div>';
+    var jc=h.jobs.length;
+    var isSeasonal=h.serviceType==='seasonal';
+    var badge=isSeasonal?'<span style="background:rgba(34,197,94,.15);color:var(--green);border-radius:5px;padding:1px 6px;font-size:10px;font-weight:800;letter-spacing:.05em">SEASONAL</span>':'';
+    return'<div class="ct-card" onclick="openHwDetail(\''+idx+'\')">'+
+      '<div class="ct-av" style="background:var(--green)">'+init+'</div>'+
+      '<div class="ct-body">'+
+        '<div class="ct-name" style="display:flex;align-items:center;gap:6px">'+esc(h.name||h.email||'Unknown')+badge+'</div>'+
+        '<div class="ct-spec">'+esc(h.email||h.phone||'')+'</div>'+
+        (h.address?'<div class="ct-spec" style="color:var(--fg-3);font-size:11px">'+esc(h.address)+'</div>':'')+
+      '</div>'+
+      '<div style="text-align:right;flex-shrink:0">'+
+        '<div style="font-size:15px;font-weight:800;color:var(--green)">$'+Number(h.totalPaid).toLocaleString()+'</div>'+
+        '<div style="font-size:11px;color:var(--fg-3)">'+jc+' job'+(jc!==1?'s':'')+'</div>'+
+      '</div></div>';
   }).join('');
 }
 function openAddContractor(){_editCtId=null;document.getElementById('ctEditId').value='';document.getElementById('ctName').value='';document.getElementById('ctPhone').value='';document.getElementById('ctEmail').value='';document.getElementById('ctSpec').value='';document.getElementById('ctZips').value='';document.getElementById('ctMargin').value='30';document.getElementById('ctModalTitle').textContent='Add Contractor';document.getElementById('delCtBtn').classList.add('hidden');document.getElementById('ctModal').classList.remove('hidden')}
@@ -2290,23 +2328,42 @@ async function toggleStripe(id, currentlyActive){
   if(idx>=0)contractors[idx].stripe_onboarded=newVal;
   openEditCtx(id); // refresh modal
 }
-function openHwDetail(email){
-  var h=_homeowners.find(function(x){return(x.email||'').toLowerCase()===(email||'').toLowerCase()});
+function openHwDetail(idx){
+  var h=typeof idx==='number'?_homeowners[idx]:_homeowners.find(function(x){return(x.email||'').toLowerCase()===(idx||'').toLowerCase()});
   if(!h)return;
-  var jc=jobs.filter(function(j){return(j.email||'').toLowerCase()===(h.email||'').toLowerCase()}).length;
   var init=(h.name||h.email||'?')[0].toUpperCase();
   var avEl=document.getElementById('hwAv');
-  if(h.photo_url){avEl.textContent='';avEl.style.padding='0';avEl.innerHTML='<img src="'+esc(h.photo_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';}
-  else{avEl.innerHTML='';avEl.style.padding='';avEl.textContent=init;}
+  avEl.innerHTML='';avEl.style.padding='';avEl.textContent=init;
   document.getElementById('hwName').textContent=h.name||h.email||'Homeowner';
   document.getElementById('hwEmail').textContent=h.email||'';
   document.getElementById('hwPhone').textContent=h.phone||'—';
-  document.getElementById('hwJobs').textContent=jc+' job'+(jc===1?'':'s');
+  document.getElementById('hwJobs').textContent=h.jobs.length+' job'+(h.jobs.length===1?'':'s');
   document.getElementById('hwAddr').textContent=h.address||'—';
-  document.getElementById('hwHomeType').textContent=h.home_type||'—';
-  document.getElementById('hwSqft').textContent=h.sqft?h.sqft+' sq ft':'—';
+  document.getElementById('hwHomeType').textContent=h.serviceType==='seasonal'?'Seasonal Contract':'Per Visit';
+  document.getElementById('hwSqft').textContent='$'+Number(h.totalPaid).toLocaleString()+' paid';
   var nw=document.getElementById('hwNotesWrap'); var nt=document.getElementById('hwNotes');
-  if(nw&&nt){nw.style.display=h.tech_notes?'':'none';nt.textContent=h.tech_notes||'';}
+  if(nw&&nt){nw.style.display='none';nt.textContent='';}
+  // Build job history
+  var jl=document.getElementById('hwJobsList');
+  if(jl){
+    var sorted=h.jobs.slice().sort(function(a,b){return(b.date||'').localeCompare(a.date||'');});
+    if(!sorted.length){jl.innerHTML='<div style="color:var(--fg-3);font-size:13px;padding:8px 0">No jobs yet</div>';} else {
+      jl.innerHTML=sorted.map(function(j){
+        var isPaid=j.status==='Paid';
+        var hasStripe=!!j.stripe_payment_id;
+        var stripeTag=hasStripe?'<span style="background:#635BFF22;color:#635BFF;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800;margin-left:4px">Stripe</span>':'';
+        return'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">'
+          +'<div style="flex:1;min-width:0">'
+          +'<div style="font-size:13px;font-weight:600">'+esc(j.service)+stripeTag+'</div>'
+          +'<div style="font-size:11px;color:var(--fg-3)">'+fmtDate(j.date)+(j.address?' · '+esc(j.address):'')+'</div>'
+          +'</div>'
+          +'<div style="text-align:right;flex-shrink:0">'
+          +'<div style="font-size:14px;font-weight:800;color:'+(isPaid?'var(--green)':'var(--orange)')+'">$'+Number(j.price||0).toLocaleString()+'</div>'
+          +'<div style="font-size:10px;color:var(--fg-3)">'+j.status+'</div>'
+          +'</div></div>';
+      }).join('');
+    }
+  }
   document.getElementById('hwModal').classList.remove('hidden');
 }
 async function saveContractor(){var name=document.getElementById('ctName').value.trim();if(!name){showToast('Name required');return}var id=_editCtId||('c'+Date.now());var i=contractors.findIndex(function(x){return x.id===id});var margin=Number(document.getElementById('ctMargin').value)||30;var rawZips=document.getElementById('ctZips').value;var zips=rawZips.split(',').map(function(z){return z.trim().replace(/\D/g,'');}).filter(function(z){return z.length===5;}).slice(0,4);var c={id:id,name:name,phone:document.getElementById('ctPhone').value,email:document.getElementById('ctEmail').value.trim().toLowerCase(),specialty:document.getElementById('ctSpec').value,spec:document.getElementById('ctSpec').value,margin:margin,territory_zips:zips,jobs:0};if(i>=0)contractors[i]=c;else contractors.push(c);await _sb.from('contractors').upsert([cl2r(c)]);populateContractorSelect();renderContractors();renderTerritoryOverlays();closeModal('ctModal');showToast(name+' saved ✓'+(zips.length?' · '+zips.length+' ZIP'+(zips.length>1?'s':'')+'':''))}
@@ -3679,7 +3736,14 @@ async function loadMapData(){
     if(!j.address)continue;
     var pos=null;
     if(j.lat&&j.lng){pos={lat:j.lat,lng:j.lng};}
-    else{pos=await geocodeAddress(j.address);}
+    else{
+      pos=await geocodeAddress(j.address);
+      // Persist back to DB so we don't re-geocode every load
+      if(pos&&_sb){
+        _sb.from('jobs').update({lat:pos.lat,lng:pos.lng}).eq('id',j.id).then(function(){});
+        j.lat=pos.lat;j.lng=pos.lng;
+      }
+    }
     if(!pos)continue;
     pins.push({
       lat:pos.lat,lng:pos.lng,
