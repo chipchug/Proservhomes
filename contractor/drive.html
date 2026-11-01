@@ -733,14 +733,17 @@ function geocodeAddr(addr, cb) {
 }
 
 /* ── OPEN NATIVE MAPS ── */
+/* NOTE: window.open() is blocked in iOS standalone PWA mode.
+   Use window.location.href so Apple Maps / Google Maps actually launches.
+   On iOS this opens Apple Maps (maps:// scheme); on Android Google Maps. */
 function openMaps() {
   if (!_job) return;
   var addr = _job.address || _job.serviceAddress || '';
   var ua = navigator.userAgent || '';
-  if (/iPhone|iPad|iPod|Mac/i.test(ua)) {
-    window.open('maps://maps.apple.com/?daddr=' + encodeURIComponent(addr));
+  if (/iPhone|iPad|iPod/i.test(ua)) {
+    window.location.href = 'maps://maps.apple.com/?daddr=' + encodeURIComponent(addr);
   } else {
-    window.open('https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(addr));
+    window.location.href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(addr);
   }
 }
 
