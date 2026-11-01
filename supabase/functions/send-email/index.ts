@@ -288,6 +288,16 @@ async function buildEmails(payload: EmailPayload, adminEmail?: string): Promise<
       });
     }
     if (contractor?.email) {
+      const completedPayDetailsHtml = job
+        ? [
+            `<strong>Service:</strong> ${job.service}`,
+            job.address        ? `<strong>Address:</strong> ${job.address}` : null,
+            job.scheduled_date ? `<strong>Date:</strong> ${job.scheduled_date}` : null,
+            (job.payout_amount != null && job.payout_amount > 0)
+              ? `<strong>Your Pay:</strong> ${formatCurrency(job.payout_amount)}`
+              : null,
+          ].filter(Boolean).join("<br>")
+        : "";
       msgs.push({
         to: contractor.email,
         recipient: "contractor",
@@ -295,7 +305,7 @@ async function buildEmails(payload: EmailPayload, adminEmail?: string): Promise<
         html: emailHtml({
           headline: "Job marked complete!",
           body: `This job has been marked as complete. Payment will be processed within 2–3 business days. Log in to track your earnings or request a payout.`,
-          jobDetails: jobDetailsHtml,
+          jobDetails: completedPayDetailsHtml,
           ctaUrl: "https://proservhomes.co/contractor/",
           ctaLabel: "View My Earnings",
         }),

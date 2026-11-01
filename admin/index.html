@@ -2438,7 +2438,7 @@ await _sb.from('jobs').update(updatePayload).eq('id',id);
 renderDashboard();renderJobsTable();renderBooks();closeModal('detModal');showToast('Status: '+st);
 // SMS on key status changes
 var evtMap={Complete:'job_completed',Cancelled:'job_cancelled'};
-if(evtMap[st]&&evtMap[st]!==evtMap[prev]){var jj=jobs[i];var ct=contractors.find(function(c){return c.id===jj.contractorId});sendSmsNotification({event:evtMap[st],job:{id:jj.id,service:jj.service,address:jj.address,scheduled_date:jj.date,amount:jj.price},homeowner:{name:jj.client,phone:jj.phone||null,email:jj.email||null},contractor:ct?{name:ct.name,phone:ct.phone||null,email:ct.email||null}:null});
+if(evtMap[st]&&evtMap[st]!==evtMap[prev]){var jj=jobs[i];var ct=contractors.find(function(c){return c.id===jj.contractorId});sendSmsNotification({event:evtMap[st],job:{id:jj.id,service:jj.service,address:jj.address,scheduled_date:jj.date,amount:jj.price,payout_amount:jj.contractorPay||0},homeowner:{name:jj.client,phone:jj.phone||null,email:jj.email||null},contractor:ct?{name:ct.name,phone:ct.phone||null,email:ct.email||null}:null});
 // Gutter guard 24hr follow-up is handled by the Supabase cron edge function
 // (gutter-guard-followup) — no setTimeout needed. completed_at is now set above.
 if(st==='Complete'&&jj.service&&jj.service.toLowerCase().indexOf('gutter')>-1&&jj.phone){showToast('🌿 Job complete — gutter guard follow-up queued for 24h');}
