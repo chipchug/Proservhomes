@@ -127,7 +127,7 @@
   .ct-total-val { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; color: var(--orange); }
 
   /* Terms */
-  .ct-terms { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .ct-terms { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; margin-bottom: 24px; }
   .ct-term h4 { font-size: 12px; font-weight: 700; color: var(--dark); margin-bottom: 2px; }
   .ct-term p { font-size: 12px; color: var(--mid); line-height: 1.55; }
 
@@ -168,8 +168,8 @@
     }
 
     /* Force single page */
-    * { page-break-inside: avoid; }
-    .ct-period, .ct-table, .ct-total-row, .ct-sigs, .ct-terms { page-break-inside: avoid; }
+    .ct-period, .ct-table, .ct-total-row, .ct-sigs, .ct-term { page-break-inside: avoid; }
+    .ct-terms { page-break-inside: auto; }
 
     /* Color accuracy */
     .ct-header, .ct-accent, .ct-table thead tr,
@@ -197,7 +197,7 @@
     .ct-total-row { padding: 8px 12px; margin-bottom: 12px; }
     .ct-total-label { font-size: 11px; }
     .ct-total-val { font-size: 20px; }
-    .ct-terms { gap: 5px; margin-bottom: 14px; }
+    .ct-terms { gap: 5px 16px; margin-bottom: 14px; grid-template-columns: 1fr 1fr; }
     .ct-term h4 { font-size: 10px; }
     .ct-term p { font-size: 10px; line-height: 1.4; }
     .ct-sigs { gap: 16px; margin-bottom: 14px; }
