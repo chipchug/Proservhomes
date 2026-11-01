@@ -144,16 +144,68 @@
   .ct-footer { border-top: 1px solid var(--border); padding-top: 12px; text-align: center; font-size: 11px; color: #aaa; }
 
   /* ── PRINT ── */
+  @page {
+    size: letter portrait;
+    margin: 0;
+  }
   @media print {
-    body { background: #fff !important; }
+    html, body { background: #fff !important; height: 100%; }
     .page-wrap, .print-actions { display: none !important; }
     #contract-wrap { display: block !important; }
-    .contract { max-width: 100%; padding: 0; }
-    .contract-inner { box-shadow: none; border-radius: 0; }
-    .ct-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .ct-accent { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .ct-table thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .ct-period, .ct-table, .ct-total-row { page-break-inside: avoid; }
+
+    /* Scale the whole contract to fit letter page */
+    .contract {
+      max-width: 100%;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+    }
+    .contract-inner {
+      box-shadow: none;
+      border-radius: 0;
+      /* Scale down to ensure single page fit */
+      transform-origin: top left;
+    }
+
+    /* Force single page */
+    * { page-break-inside: avoid; }
+    .ct-period, .ct-table, .ct-total-row, .ct-sigs, .ct-terms { page-break-inside: avoid; }
+
+    /* Color accuracy */
+    .ct-header, .ct-accent, .ct-table thead tr,
+    .ct-total-row, .ct-table tbody tr:nth-child(even) {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* Tighten spacing for single-page fit */
+    .ct-header { padding: 14px 20px; }
+    .ct-header img { height: 34px; }
+    .ct-doctype { font-size: 14px; }
+    .ct-body { padding: 14px 20px; }
+    .ct-parties { gap: 8px; margin-bottom: 12px; }
+    .ct-party { padding: 8px 10px; }
+    .ct-party-name { font-size: 12px; }
+    .ct-party-info { font-size: 11px; line-height: 1.4; }
+    .ct-period { margin-bottom: 12px; }
+    .ct-period-cell { padding: 7px 10px; }
+    .ct-period-value { font-size: 11px; }
+    .ct-section-title { margin-top: 12px; margin-bottom: 5px; font-size: 9px; }
+    .ct-table thead th { padding: 6px 10px; font-size: 10px; }
+    .ct-table tbody td { padding: 7px 10px; font-size: 11px; }
+    .ct-table .service-desc { font-size: 10px; }
+    .ct-total-row { padding: 8px 12px; margin-bottom: 12px; }
+    .ct-total-label { font-size: 11px; }
+    .ct-total-val { font-size: 20px; }
+    .ct-terms { gap: 5px; margin-bottom: 14px; }
+    .ct-term h4 { font-size: 10px; }
+    .ct-term p { font-size: 10px; line-height: 1.4; }
+    .ct-sigs { gap: 16px; margin-bottom: 14px; }
+    .ct-sig-img { height: 38px; }
+    .ct-sig-name { font-size: 11px; }
+    .ct-sig-label { font-size: 9px; }
+    .ct-sig-spacer { height: 38px; }
+    .ct-footer { font-size: 9px; padding-top: 8px; }
   }
 </style>
 </head>
