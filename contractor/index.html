@@ -608,6 +608,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
+/* ── CarPlay / Android Auto auto-redirect ── */
+(function(){
+  var ua=navigator.userAgent||'';
+  var isCP=/CarPlay/i.test(ua);
+  var isAA=/android_auto|AutomotiveOS|AA-/i.test(ua);
+  var w=window.innerWidth,h=window.innerHeight;
+  // Heuristic: very wide landscape display ≤520px tall (in-car screen)
+  var isCarScreen=w>=700&&h<=520&&w>h*1.4&&('ontouchstart' in window||navigator.maxTouchPoints>0);
+  if(isCP||isAA||isCarScreen){
+    // Only redirect if user has an active session (already logged in)
+    try{var s=JSON.parse(localStorage.getItem('ps_c_session'));if(s&&s.id){window.location.replace('drive.html');return;}}catch(e){}
+  }
+})();
+
 var SURL='https://chmicqvorgjqlthufgwt.supabase.co';
 var SKEY='sb_publishable_7W-vHGcu-U60LiTsG_7i5g_7ijIyTOJ';
 var _sb=supabase.createClient(SURL,SKEY);
