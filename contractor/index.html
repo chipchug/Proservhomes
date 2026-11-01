@@ -533,6 +533,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div id="ctNavDestBadge" style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#F26310;background:rgba(242,99,16,0.12);border:1px solid rgba(242,99,16,0.3);border-radius:8px;padding:4px 8px;white-space:nowrap;flex-shrink:0"></div>
     </div>
 
+    <!-- NEXT JOB CARD (shown when contractor has an upcoming job) -->
+    <div id="ctNavJobCard" style="display:none;flex-shrink:0;background:#111;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 14px">
+      <div style="display:flex;align-items:center;gap:12px;background:#1a1a1a;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:10px 12px;overflow:hidden">
+        <div id="ctNavJobImg" style="width:46px;height:46px;border-radius:10px;overflow:hidden;flex-shrink:0;background:#222"></div>
+        <div style="flex:1;min-width:0">
+          <div id="ctNavJobTitle" style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:#F0F2F5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+          <div id="ctNavJobAddr" style="font-size:12px;color:#9A9FA8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+        </div>
+        <button id="ctNavJobBtn" style="flex-shrink:0;background:#F26310;color:#fff;border:none;border-radius:10px;padding:9px 14px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:6px">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          Navigate
+        </button>
+      </div>
+    </div>
+
     <!-- MAP container — fills remaining space -->
     <div id="ctMapEl" style="flex:1;position:relative;min-height:0">
       <!-- Drive Now overlay (shown after route loads, before driving) -->
@@ -1012,8 +1027,17 @@ function swTab(n,el){
     if(mapEl){mapEl.style.display='flex';mapEl.style.flex='1';}
     document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active')});
     if(el)el.classList.add('active');
-    // Resize map after it becomes visible
-    if(window._ctMap){setTimeout(function(){window._ctMap.resize();},50);}
+    // Init map if not already done
+    var MBTK2=['pk.eyJ1IjoicHJvc2VydmhvbWVzIiwiYSI6ImNtdndjeTNweDB','heGEyem9id2x4YjRuMngifQ.A2S43s2y7fCiXbAx7JX-cw'].join('');
+    var ctMapContainer=document.getElementById('ctMapEl');
+    if(!window._ctMap&&ctMapContainer&&typeof mapboxgl!=='undefined'){
+      mapboxgl.accessToken=MBTK2;
+      window._ctMap=new mapboxgl.Map({container:ctMapContainer,style:'mapbox://styles/mapbox/navigation-night-v1',center:[-74.15,40.1],zoom:10});
+      window._ctMap.addControl(new mapboxgl.NavigationControl(),'top-right');
+      window._ctMap.addControl(new mapboxgl.GeolocateControl({positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true}),'top-right');
+    } else if(window._ctMap){setTimeout(function(){window._ctMap.resize();},50);}
+    // Refresh next-job card
+    _ctRefreshNavCard();
     return;
   }
   // Leaving Map tab — restore scroll area
@@ -1050,6 +1074,22 @@ function rHome(){
   ll.innerHTML=act.slice(0,5).map(jrow).join('')
 }
 
+function _ctRefreshNavCard(){
+  var card=document.getElementById('ctNavJobCard');
+  if(!card)return;
+  var nx=mj().filter(function(j){return j.status!=='Complete'&&j.status!=='Invoiced';}).sort(function(a,b){return new Date(a.date)-new Date(b.date);})[0];
+  if(!nx){card.style.display='none';return;}
+  var cat=svcCat(nx.service);var cfg=svcCfg(cat);
+  var imgEl=document.getElementById('ctNavJobImg');
+  if(imgEl){if(cfg&&cfg.img){imgEl.innerHTML='<img src="'+cfg.img+'" style="width:100%;height:100%;object-fit:cover">';}else{imgEl.style.background='rgba(242,99,16,0.2)';imgEl.innerHTML='<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:22px">'+(cfg&&cfg.icon?cfg.icon:'🏠')+'</div>';}}
+  var titleEl=document.getElementById('ctNavJobTitle');
+  if(titleEl)titleEl.textContent=cat||nx.service||'Job';
+  var addrEl=document.getElementById('ctNavJobAddr');
+  if(addrEl)addrEl.textContent=nx.address||'—';
+  var btn=document.getElementById('ctNavJobBtn');
+  if(btn)btn.onclick=function(){if(nx.address)openNavOnly(nx.address);};
+  card.style.display='block';
+}
 function rJobs(){var j=mj().sort(function(a,b){var an=_isNewJob(a)?1:0,bn=_isNewJob(b)?1:0;if(bn!==an)return bn-an;return new Date(b.date)-new Date(a.date);});var el=document.getElementById('allList');if(!j.length){el.innerHTML='<div style="color:var(--fg-3);text-align:center;padding:48px 0">No jobs assigned yet</div>';return}el.innerHTML=j.map(jrow).join('');_updateJobsBadge();}
 
 // ─── "NEW" job tracking — unseen Scheduled jobs get a NEW pill ───────────
