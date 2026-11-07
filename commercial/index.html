@@ -217,12 +217,25 @@ img { max-width:100%; display:block; }
 }
 
 /* ── STAT BAR ── */
-.stat-bar { background:#111510; border-bottom:1px solid rgba(255,255,255,0.07); padding-block:20px; }
-.stat-items { display:flex; justify-content:center; gap:clamp(32px,6vw,80px); flex-wrap:wrap; }
-.stat-item { text-align:center; }
-.stat-num { font-family:'Barlow Condensed',sans-serif; font-size:2rem; font-weight:900; color:#fff; letter-spacing:0.02em; line-height:1; }
+.stat-bar { background:#111510; border-bottom:1px solid rgba(255,255,255,0.07); padding-block:28px; }
+.stat-items {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:28px 20px;
+  max-width:520px; margin:0 auto;
+}
+@media (min-width:600px) {
+  .stat-items {
+    grid-template-columns:repeat(4,1fr);
+    max-width:900px; gap:0;
+  }
+  .stat-item { border-right:1px solid rgba(255,255,255,0.07); }
+  .stat-item:last-child { border-right:none; }
+}
+.stat-item { text-align:center; padding-block:4px; }
+.stat-num { font-family:'Barlow Condensed',sans-serif; font-size:2.2rem; font-weight:900; color:#fff; letter-spacing:0.02em; line-height:1; }
 .stat-num span { color:var(--orange); }
-.stat-label { font-size:0.78rem; font-weight:600; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:0.08em; margin-top:4px; }
+.stat-label { font-size:0.72rem; font-weight:600; color:rgba(255,255,255,0.40); text-transform:uppercase; letter-spacing:0.08em; margin-top:5px; }
 
 /* ── SECTION HELPERS ── */
 .section { padding-block:clamp(56px,8vw,88px); }
@@ -426,21 +439,34 @@ img { max-width:100%; display:block; }
 .form-success-title { font-family:'Barlow',sans-serif; font-weight:800; font-size:1.2rem; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; }
 .form-success-sub { font-size:0.9rem; color:rgba(255,255,255,0.55); }
 
-/* ── FOOTER ── */
-.site-footer { background:#060908; border-top:1px solid rgba(255,255,255,0.07); padding-block:48px 32px; }
-.footer-inner { display:flex; justify-content:space-between; align-items:flex-start; gap:32px; flex-wrap:wrap; }
-.footer-brand { max-width:280px; }
-.footer-logo { height:44px; width:auto; margin-bottom:14px; }
-.footer-tagline { font-size:0.84rem; color:rgba(255,255,255,0.4); line-height:1.6; }
-.footer-links { display:flex; gap:40px; flex-wrap:wrap; }
-.footer-col-title { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.35); margin-bottom:12px; }
-.footer-col ul { list-style:none; display:flex; flex-direction:column; gap:8px; }
-.footer-col a { font-size:0.88rem; color:rgba(255,255,255,0.5); text-decoration:none; transition:color 0.15s; }
-.footer-col a:hover { color:#fff; }
-.footer-bottom { margin-top:40px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
-.footer-copy { font-size:0.78rem; color:rgba(255,255,255,0.3); }
-.footer-contact a { font-size:0.85rem; color:rgba(255,255,255,0.45); text-decoration:none; }
-.footer-contact a:hover { color:var(--orange); }
+/* ── FOOTER (global) ── */
+.site-footer{background:#1a1a1a;border-top:1px solid rgba(255,255,255,.08);padding:56px max(20px,env(safe-area-inset-left,0px)) calc(40px + env(safe-area-inset-bottom,0px));}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]) .site-footer{background:#f0efed;border-top-color:rgba(0,0,0,.1);}}
+:root[data-theme="light"] .site-footer{background:#f0efed;border-top-color:rgba(0,0,0,.1);}
+.footer-inner{max-width:min(1080px,92vw);margin:0 auto;}
+.footer-top{display:flex;flex-direction:column;align-items:flex-start;gap:32px;padding-bottom:40px;border-bottom:1px solid rgba(255,255,255,.07);}
+@media(min-width:580px){.footer-top{flex-direction:row;align-items:flex-start;justify-content:space-between;}}
+.footer-logo img{height:56px;width:auto;display:block;filter:brightness(.85);}
+.footer-tagline{font-size:13px;color:rgba(255,255,255,.35);margin-top:10px;line-height:1.5;max-width:220px;}
+.footer-nav{display:flex;gap:32px 28px;flex-wrap:wrap;}
+@media(min-width:820px){.footer-nav{gap:40px;}}
+.footer-nav-col{}
+.footer-nav-label{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#1DB954;margin-bottom:12px;}
+.footer-nav-col ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.footer-nav-col li a{font-size:14px;color:rgba(255,255,255,.5);text-decoration:none;transition:color .15s;}
+.footer-nav-col li a:hover{color:rgba(255,255,255,.85);}
+.footer-bottom{padding-top:24px;display:flex;flex-direction:column;gap:6px;}
+@media(min-width:580px){.footer-bottom{flex-direction:row;align-items:center;justify-content:space-between;}}
+.footer-copy{font-size:12px;color:rgba(255,255,255,.3);letter-spacing:.02em;}
+.footer-legal{display:flex;gap:16px;}
+.footer-legal a{font-size:12px;color:rgba(255,255,255,.3);text-decoration:none;}
+.footer-legal a:hover{color:rgba(255,255,255,.5);}
+.footer-social{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);}
+.footer-social-label{font-size:11px;font-weight:600;color:rgba(255,255,255,.3);letter-spacing:.08em;text-transform:uppercase;margin-right:4px;}
+.footer-social-link{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10);color:rgba(255,255,255,.65);font-size:12px;font-weight:500;text-decoration:none;transition:background .15s,color .15s;}
+.footer-social-link:hover{background:rgba(255,255,255,.13);color:#fff;}
+.footer-social-link svg{width:14px;height:14px;flex-shrink:0;}
+.footer-social-link img{width:16px;height:16px;flex-shrink:0;object-fit:contain;}
 </style>
 </head>
 <body>
@@ -465,7 +491,7 @@ img { max-width:100%; display:block; }
       </a>
       <a href="#proposal" class="nav-cta">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        Request Proposal
+        Req. Proposal
       </a>
     </div>
   </div>
@@ -813,47 +839,101 @@ img { max-width:100%; display:block; }
 </section>
 
 <!-- FOOTER -->
-<footer class="site-footer" aria-label="Site footer">
-  <div class="wrap">
-    <div class="footer-inner">
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-top">
       <div class="footer-brand">
-        <img class="footer-logo" src="/assets/logo-white.png" alt="ProServ Homes" width="140" height="44">
-        <p class="footer-tagline">Full-service exterior maintenance for residential and commercial properties across Ocean and Monmouth County, NJ.</p>
+        <div class="footer-logo"><img src="/assets/logo-white.png" alt="ProServ Homes"></div>
+        <p class="footer-tagline">New Jersey's fastest-growing home services network.</p>
       </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <div class="footer-col-title">Services</div>
+      <nav class="footer-nav">
+        <div class="footer-nav-col">
+          <div class="footer-nav-label">Services</div>
           <ul>
-            <li><a href="/snow-removal-jackson/">Snow Removal</a></li>
-            <li><a href="/gutter-cleaning-jackson/">Gutter Cleaning</a></li>
-            <li><a href="/pressure-washing-jackson/">Pressure Washing</a></li>
+            <li><a href="/gutter-cleaning/">Gutter Cleaning</a></li>
+            <li><a href="/pressure-washing/">Pressure Washing</a></li>
+            <li><a href="/fence-installation/">Fence Installation</a></li>
+            <li><a href="/concrete-pavers/">Concrete &amp; Pavers</a></li>
+            <li><a href="/dryer-vent-cleaning/">Dryer Vent Cleaning</a></li>
+            <li><a href="/christmas-lights/">Christmas Lights</a></li>
+            <li><a href="/snow-removal/">Snow Removal</a></li>
+          </ul>
+        </div>
+        <div class="footer-nav-col">
+          <div class="footer-nav-label">Locations</div>
+          <ul>
+            <li><a href="/gutter-cleaning-toms-river/">Toms River</a></li>
+            <li><a href="/gutter-cleaning-brick/">Brick</a></li>
+            <li><a href="/gutter-cleaning-lakewood/">Lakewood</a></li>
+            <li><a href="/gutter-cleaning-jackson/">Jackson</a></li>
+            <li><a href="/gutter-cleaning-howell/">Howell</a></li>
+            <li><a href="/gutter-cleaning-freehold/">Freehold</a></li>
+            <li><a href="/service-area/">All Locations →</a></li>
+          </ul>
+        </div>
+        <div class="footer-nav-col">
+          <div class="footer-nav-label">Homeowners</div>
+          <ul>
+            <li><a href="/homeowner/">Book a Service</a></li>
+            <li><a href="/homeowner/">Homeowner Login</a></li>
+          </ul>
+        </div>
+        <div class="footer-nav-col">
+          <div class="footer-nav-label">Contractors</div>
+          <ul>
+            <li><a href="/contractor/">Contractor Login</a></li>
+            <li><a href="/contractor/apply.html">Apply Now</a></li>
+            <li><a href="/contractor/apply.html#perks">Why ProServ Pro</a></li>
+          </ul>
+        </div>
+        <div class="footer-nav-col">
+          <div class="footer-nav-label">Company</div>
+          <ul>
+            <li><a href="/about/">About Us</a></li>
             <li><a href="/commercial/">Commercial</a></li>
+            <li><a href="/service-area/">Service Area</a></li>
+            <li><a href="tel:7323858683">(732) 385-8683</a></li>
+            <li><a href="mailto:hello@proservhomes.co">Contact Us</a></li>
           </ul>
         </div>
-        <div class="footer-col">
-          <div class="footer-col-title">Company</div>
-          <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/contractor/">Work With Us</a></li>
-            <li><a href="/homeowner/">Homeowner Portal</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <div class="footer-col-title">Contact</div>
-          <ul>
-            <li><a href="tel:+17323858683">(732) 385-8683</a></li>
-            <li><a href="mailto:hello@proservhomes.co">hello@proservhomes.co</a></li>
-            <li><a href="#proposal">Request Proposal</a></li>
-          </ul>
-        </div>
-      </div>
+      </nav>
+    </div>
+    <div class="footer-social">
+      <span class="footer-social-label">Find us on</span>
+      <a class="footer-social-link" href="https://maps.app.goo.gl/6cJ3hFg3Bf2BSVUP6" target="_blank" rel="noopener">
+        <img src="/assets/icon-google.png" alt="Google">
+        Google
+      </a>
+      <a class="footer-social-link" href="https://www.facebook.com/profile.php?id=61595791230628" target="_blank" rel="noopener">
+        <img src="/assets/icon-facebook.png" alt="Facebook">
+        Facebook
+      </a>
+      <a class="footer-social-link" href="https://www.instagram.com/proservhomes.co" target="_blank" rel="noopener">
+        <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="Instagram"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12c0 3.259.014 3.668.072 4.948.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24c3.259 0 3.668-.014 4.948-.072 1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.689.072-4.948 0-3.259-.014-3.667-.072-4.947-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.163 6.162 6.163 3.405 0 6.162-2.76 6.162-6.163 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z" fill="currentColor"/></svg>
+        Instagram
+      </a>
+      <a class="footer-social-link" href="https://www.yelp.com/biz/pro-serv-jackson-township" target="_blank" rel="noopener">
+        <img src="/assets/icon-yelp.png" alt="Yelp">
+        Yelp
+      </a>
+      <a class="footer-social-link" href="https://nextdoor.com/page/chipchug-st-augustine-fl/" target="_blank" rel="noopener">
+        <img src="/assets/icon-nextdoor.png" alt="Nextdoor">
+        Nextdoor
+      </a>
+      <a class="footer-social-link" href="https://www.trustpilot.com/review/proservhomes.co" target="_blank" rel="noopener">
+        <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="Trustpilot"><path d="m17.227 16.67 2.19 6.742 -7.413 -5.388 5.223 -1.354zM24 9.31h-9.165L12.005 0.589l-2.84 8.723L0 9.3l7.422 5.397 -2.84 8.714 7.422 -5.388 4.583 -3.326L24 9.311z" fill="currentColor"/></svg>
+        Trustpilot
+      </a>
+      <a class="footer-social-link" href="http://www.homeadvisor.com/sm/spProfileDisplay/?spId=165703259&preview=true" target="_blank" rel="noopener">
+        <img src="/icons/homeadvisor.png" alt="HomeAdvisor" width="20" height="20" style="filter:brightness(0) invert(1);opacity:.85;vertical-align:middle;">
+        HomeAdvisor
+      </a>
     </div>
     <div class="footer-bottom">
-      <span class="footer-copy">&copy; 2026 ProServ Homes. All rights reserved. Ocean &amp; Monmouth County, NJ.</span>
-      <div class="footer-contact">
-        <a href="tel:+17323858683">(732) 385-8683</a>
-        &nbsp;&middot;&nbsp;
-        <a href="mailto:hello@proservhomes.co">hello@proservhomes.co</a>
+      <p class="footer-copy">© 2026–2027 ProServ Homes · Ocean &amp; Monmouth County NJ</p>
+      <div class="footer-legal">
+        <a href="/privacy.html">Privacy Policy</a>
+        <a href="/terms.html">Terms of Service</a>
       </div>
     </div>
   </div>
