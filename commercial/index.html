@@ -468,6 +468,20 @@ img { max-width:100%; display:block; }
 .footer-social-link svg{width:14px;height:14px;flex-shrink:0;}
 .footer-social-link img{width:16px;height:16px;flex-shrink:0;object-fit:contain;}
 </style>
+
+<style>
+/* ── Hamburger nav menu ── */
+.nav-menu-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:42px;height:42px;background:#1a1a1a;border-radius:10px;border:none;cursor:pointer;flex-shrink:0;padding:0;margin-left:4px;}
+.nav-menu-btn span{display:block;width:20px;height:2px;background:#fff;border-radius:2px;transition:transform .2s,opacity .2s;}
+.nav-drawer{position:fixed;top:62px;left:0;right:0;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:99;padding:20px 0 28px;animation:drawerIn .18s ease;}
+@keyframes drawerIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.drawer-inner{max-width:1120px;margin:0 auto;padding-inline:clamp(16px,5vw,48px);display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+@media(max-width:480px){.drawer-inner{grid-template-columns:1fr;gap:20px;}}
+.drawer-section-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-soft);margin-bottom:12px;}
+.drawer-links{display:flex;flex-direction:column;gap:2px;}
+.drawer-links a{color:var(--fg);text-decoration:none;font-size:.95rem;font-weight:500;padding:8px 10px;border-radius:7px;transition:background .15s,color .15s;}
+.drawer-links a:hover{background:var(--bg-alt);color:var(--orange);}
+</style>
 </head>
 <body>
 
@@ -493,9 +507,37 @@ img { max-width:100%; display:block; }
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Req. Proposal
       </a>
+      <button class="nav-menu-btn" id="navMenuBtn" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </div>
 </nav>
+<div class="nav-drawer" id="navDrawer" hidden>
+  <div class="drawer-inner">
+    <div>
+      <div class="drawer-section-label">Services</div>
+      <div class="drawer-links">
+        <a href="/gutter-cleaning/">Gutter Cleaning</a>
+        <a href="/pressure-washing/">Pressure Washing</a>
+        <a href="/snow-removal/">Snow Removal</a>
+        <a href="/fence-installation/">Fence Installation</a>
+        <a href="/concrete-pavers/">Concrete &amp; Pavers</a>
+        <a href="/christmas-lights/">Christmas Lights</a>
+        <a href="/dryer-vent-cleaning/">Dryer Vent Cleaning</a>
+      </div>
+    </div>
+    <div>
+      <div class="drawer-section-label">Company</div>
+      <div class="drawer-links">
+        <a href="/about/">About Us</a>
+        <a href="/commercial/">Commercial</a>
+        <a href="/service-area/">Service Area</a>
+        <a href="tel:7323858683">(732) 385-8683</a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- HERO -->
 <section class="hero" aria-label="Commercial property services hero">
@@ -995,5 +1037,30 @@ img { max-width:100%; display:block; }
 })();
 </script>
 
+
+<script>
+(function(){
+  var btn=document.getElementById('navMenuBtn');
+  var drawer=document.getElementById('navDrawer');
+  if(!btn||!drawer)return;
+  btn.addEventListener('click',function(){
+    var open=!drawer.hidden;
+    drawer.hidden=open;
+    btn.setAttribute('aria-expanded',String(!open));
+  });
+  document.addEventListener('click',function(e){
+    if(!drawer.hidden&&!btn.contains(e.target)&&!drawer.contains(e.target)){
+      drawer.hidden=true;
+      btn.setAttribute('aria-expanded','false');
+    }
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&!drawer.hidden){
+      drawer.hidden=true;
+      btn.setAttribute('aria-expanded','false');
+    }
+  });
+})();
+</script>
 </body>
 </html>
