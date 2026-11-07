@@ -160,6 +160,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .cta-long{display:none;}
 }
 </style>
+
+<style>
+/* ── Location FAQ section ── */
+.faq-local-section{padding:72px 0;background:var(--bg);}
+.faq-loc-list{display:flex;flex-direction:column;gap:10px;margin-top:40px;max-width:780px;}
+.faq-loc-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.faq-loc-q{width:100%;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:.95rem;background:none;border:none;color:var(--fg);cursor:pointer;text-align:left;gap:12px;line-height:1.4;}
+.faq-loc-q svg{flex-shrink:0;color:var(--fg-soft);transition:transform .2s;}
+.faq-loc-item.open .faq-loc-q svg{transform:rotate(180deg);}
+.faq-loc-a{padding:0 20px;max-height:0;overflow:hidden;transition:max-height .35s ease,padding .35s ease;font-size:.92rem;color:var(--fg-mid);line-height:1.7;}
+.faq-loc-item.open .faq-loc-a{max-height:400px;padding-bottom:20px;}
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What areas of New Jersey does ProServ Homes serve for snow removal?", "acceptedAnswer": {"@type": "Answer", "text": "We service residential and commercial properties throughout Ocean County and Monmouth County, NJ — including Jackson, Toms River, Lakewood, Brick, Manchester, Barnegat, Howell, Freehold, Wall, and 20+ additional townships. Use the quote form above to confirm coverage for your specific address."}}, {"@type": "Question", "name": "How much does professional snow removal cost in New Jersey?", "acceptedAnswer": {"@type": "Answer", "text": "Per-push residential plowing starts at $79 for a standard driveway in our service area. Seasonal contracts — which cover unlimited plows above your trigger depth for the full winter — are available for a flat rate that varies by driveway size and service scope. Most homeowners find seasonal contracts offer better value than per-storm billing in active winters."}}, {"@type": "Question", "name": "Do you offer seasonal snow removal contracts in NJ?", "acceptedAnswer": {"@type": "Answer", "text": "Yes — seasonal contracts are available throughout our Ocean and Monmouth County service area. A seasonal contract means you pay one flat rate for the entire winter and we show up after every qualifying storm without any action required on your end. Seasonal signups open in October and routes fill on a first-come basis."}}, {"@type": "Question", "name": "What is a snow removal trigger depth, and what should I choose?", "acceptedAnswer": {"@type": "Answer", "text": "Your trigger depth is the snowfall accumulation level that activates your service — once snow reaches that depth, we plow. Our standard trigger is 2 inches, which covers most hazardous accumulation events. Clients with steep driveways, ADA-accessible paths, or high-liability properties sometimes choose a 1-inch trigger for earlier response."}}, {"@type": "Question", "name": "Do you salt as well as plow?", "acceptedAnswer": {"@type": "Answer", "text": "Yes — salt and calcium chloride treatment is available after every plow pass. Post-plow salting prevents the overnight refreeze cycle that makes driveways dangerously icy by morning, especially in New Jersey's fluctuating late-winter temperatures. Salt treatment can be added per visit or included in a seasonal bundle."}}, {"@type": "Question", "name": "Are you licensed and insured for snow removal in NJ?", "acceptedAnswer": {"@type": "Answer", "text": "ProServ Homes carries $1M/$2M general liability insurance and commercial auto coverage with snowplow endorsement. We are Google Guaranteed and BBB accredited. Certificates of insurance are available same day for HOAs, property managers, and commercial clients that require documentation before service begins."}}, {"@type": "Question", "name": "Do you handle commercial snow removal in Ocean and Monmouth County?", "acceptedAnswer": {"@type": "Answer", "text": "Yes — we service commercial parking lots, office parks, retail storefronts, medical facilities, and multi-family residential complexes throughout our service area. Commercial clients receive priority storm routing, dedicated account management, and optional pre-storm treatments to protect high-traffic surfaces."}}, {"@type": "Question", "name": "What is the difference between plowing and shoveling, and which do I need?", "acceptedAnswer": {"@type": "Answer", "text": "Plowing uses a truck-mounted blade to push snow off a driveway — it's fast and cost-effective for paved surfaces. Shoveling is used for walkways, stairs, and tight areas a truck can't access. Standard service includes both — the driveway is plowed and the front walkway to your door is cleared by hand as part of every visit."}}]}</script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -322,6 +335,46 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </section>
 
+<section class="faq-local-section">
+  <div class="wrap">
+    <p class="section-label">Know Before You Book</p>
+    <h2 class="section-h">Common Questions About Snow Removal in Ocean & Monmouth County, NJ</h2>
+    <div class="faq-loc-list">
+      <div class="faq-loc-item">
+        <button class="faq-loc-q" aria-expanded="false">What areas of New Jersey does ProServ Homes serve for snow removal?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-loc-a"><p>We service residential and commercial properties throughout Ocean County and Monmouth County, NJ — including Jackson, Toms River, Lakewood, Brick, Manchester, Barnegat, Howell, Freehold, Wall, and 20+ additional townships. Use the quote form above to confirm coverage for your specific address.</p></div>
+      </div>
+      <div class="faq-loc-item">
+        <button class="faq-loc-q" aria-expanded="false">How much does professional snow removal cost in New Jersey?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-loc-a"><p>Per-push residential plowing starts at $79 for a standard driveway in our service area. Seasonal contracts — which cover unlimited plows above your trigger depth for the full winter — are available for a flat rate that varies by driveway size and service scope. Most homeowners find seasonal contracts offer better value than per-storm billing in active winters.</p></div>
+      </div>
+      <div class="faq-loc-item">
+        <button class="faq-loc-q" aria-expanded="false">Do you offer seasonal snow removal contracts in NJ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-loc-a"><p>Yes — seasonal contracts are available throughout our Ocean and Monmouth County service area. A seasonal contract means you pay one flat rate for the entire winter and we show up after every qualifying storm without any action required on your end. Seasonal signups open in October and routes fill on a first-come basis.</p></div>
+      </div>
+      <div class="faq-loc-item">
+        <button class="faq-loc-q" aria-expanded="false">What is a snow removal trigger depth, and what should I choose?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-loc-a"><p>Your trigger depth is the snowfall accumulation level that activates your service — once snow reaches that depth, we plow. Our standard trigger is 2 inches, which covers most hazardous accumulation events. Clients with steep driveways, ADA-accessible paths, or high-liability properties sometimes choose a 1-inch trigger for earlier response.</p></div>
+      </div>
+      <div class="faq-loc-item">
+        <button class="faq-loc-q" aria-expanded="false">Do you salt as well as plow?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-loc-a"><p>Yes — salt and calcium chloride treatment is available after every plow pass. Post-plow salting prevents the overnight refreeze cycle that makes driveways dangerously icy by morning, especially in New Jersey's fluctuating late-winter temperatures. Salt treatment can be added per visit or included in a seasonal bundle.</p></div>
+      </div>
+      <div class="faq-loc-item">
+        <button class="faq-loc-q" aria-expanded="false">Are you licensed and insured for snow removal in NJ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-loc-a"><p>ProServ Homes carries $1M/$2M general liability insurance and commercial auto coverage with snowplow endorsement. We are Google Guaranteed and BBB accredited. Certificates of insurance are available same day for HOAs, property managers, and commercial clients that require documentation before service begins.</p></div>
+      </div>
+      <div class="faq-loc-item">
+        <button class="faq-loc-q" aria-expanded="false">Do you handle commercial snow removal in Ocean and Monmouth County?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-loc-a"><p>Yes — we service commercial parking lots, office parks, retail storefronts, medical facilities, and multi-family residential complexes throughout our service area. Commercial clients receive priority storm routing, dedicated account management, and optional pre-storm treatments to protect high-traffic surfaces.</p></div>
+      </div>
+      <div class="faq-loc-item">
+        <button class="faq-loc-q" aria-expanded="false">What is the difference between plowing and shoveling, and which do I need?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-loc-a"><p>Plowing uses a truck-mounted blade to push snow off a driveway — it's fast and cost-effective for paved surfaces. Shoveling is used for walkways, stairs, and tight areas a truck can't access. Standard service includes both — the driveway is plowed and the front walkway to your door is cleared by hand as part of every visit.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
 <section class="cta-band">
   <div class="wrap cta-inner">
     <h2>Don't Get Caught in the Storm</h2>
@@ -378,6 +431,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
   });
 })();
+</script>
+<script>
+document.querySelectorAll('.faq-loc-q').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var item=btn.closest('.faq-loc-item');
+    var open=item.classList.toggle('open');
+    btn.setAttribute('aria-expanded',open);
+  });
+});
 </script>
 </body>
 </html>
