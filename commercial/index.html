@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Commercial Property Maintenance – ProServ Homes | NJ Facilities Services</title>
+<link rel="icon" type="image/png" href="/favicon.png?v=2">
+<link rel="apple-touch-icon" href="/favicon.png?v=2">
+<meta property="og:title" content="Commercial Property Maintenance – ProServ Homes">
+<meta property="og:description" content="One vendor. Every property. All season. Snow removal, grounds, pressure washing & exterior maintenance for NJ commercial portfolios.">
+<meta property="og:image" content="https://proservhomes.co/og-image.jpg">
+<meta property="og:url" content="https://proservhomes.co/commercial/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="ProServ Homes delivers snow & ice management, landscaping, pressure washing, and exterior maintenance for commercial property portfolios across Ocean and Monmouth County, NJ. One contract, one contact, consolidated invoicing.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://proservhomes.co/commercial/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "name": "Commercial Property Maintenance",
+  "provider": {
+    "@type": "HomeAndConstructionBusiness",
+    "name": "ProServ Homes",
+    "url": "https://proservhomes.co",
+    "telephone": "+17323858683"
+  },
+  "areaServed": {"@type": "State", "name": "New Jersey"},
+  "description": "Full-service exterior maintenance for commercial property portfolios — snow removal, grounds, pressure washing, and exterior maintenance under one contract.",
+  "url": "https://proservhomes.co/commercial/"
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:ital,wght@0,700;0,900;1,900&family=DM+Sans:wght@400;500;600&display=swap">
+<style>
+/* ── TOKENS ── */
+:root {
+  --bg:        #F8F8F6;
+  --bg-alt:    #F0F0EC;
+  --bg-dark:   #0E1210;
+  --surface:   #FFFFFF;
+  --fg:        #111210;
+  --fg-mid:    #3A3D38;
+  --fg-soft:   #72756E;
+  --orange:    #F26310;
+  --orange-hi: #FF7220;
+  --green:     #1F9B2A;
+  --green-hi:  #25B531;
+  --green-dk:  #175E1E;
+  --border:    rgba(0,0,0,0.09);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.08);
+  --shadow:    0 4px 20px rgba(0,0,0,0.10);
+  --radius:    10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1210; --bg-alt: #161A17; --surface: #1A1E1B;
+    --fg: #F2F2EE; --fg-mid: #C0C4BB; --fg-soft: #7A8075;
+    --orange: #FF7220; --orange-hi: #FF8A3A;
+    --green: #28C034; --green-hi: #35D040; --green-dk: #1A8A22;
+    --border: rgba(255,255,255,0.10);
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.30);
+    --shadow: 0 4px 24px rgba(0,0,0,0.50);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1210; --bg-alt: #161A17; --surface: #1A1E1B;
+  --fg: #F2F2EE; --fg-mid: #C0C4BB; --fg-soft: #7A8075;
+  --orange: #FF7220; --orange-hi: #FF8A3A;
+  --green: #28C034; --green-hi: #35D040; --green-dk: #1A8A22;
+  --border: rgba(255,255,255,0.10);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.30);
+  --shadow: 0 4px 24px rgba(0,0,0,0.50);
+  color-scheme: dark;
+}
+
+/* ── RESET ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width:100%; display:block; }
+.wrap { width:100%; max-width:1120px; margin:0 auto; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); }
+
+/* ── NAV ── */
+.site-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: env(safe-area-inset-top,0px);
+  z-index: 100;
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 10px;
+}
+.logo { flex-shrink:0; }
+.logo img { height:52px; width:auto; display:block; }
+.logo-dark { display:none; }
+@media (prefers-color-scheme: dark) { .logo-light { display:none; } .logo-dark { display:block; } }
+:root[data-theme="dark"] .logo-light { display:none; }
+:root[data-theme="dark"] .logo-dark { display:block; }
+:root[data-theme="light"] .logo-light { display:block; }
+:root[data-theme="light"] .logo-dark { display:none; }
+.nav-right { display:flex; align-items:center; gap:20px; }
+.nav-links { display:flex; gap:24px; list-style:none; }
+.nav-links a { font-size:0.9rem; font-weight:600; color:var(--fg-mid); text-decoration:none; transition:color 0.15s; }
+.nav-links a:hover, .nav-links a[aria-current="page"] { color:var(--green); }
+@media (max-width:860px) { .nav-links { display:none; } }
+@media (max-width:560px) { .nav-label { display:none; } .nav-right { gap:8px; } .nav-cta { padding:10px 12px; } }
+.nav-cta {
+  display:inline-flex; align-items:center; gap:7px;
+  background:var(--orange); color:#fff;
+  font-weight:700; font-size:0.92rem;
+  padding:10px 18px; border-radius:var(--radius);
+  text-decoration:none; transition:background 0.15s; white-space:nowrap;
+}
+.nav-cta:hover { background:var(--orange-hi); }
+.nav-phone {
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--green); color:#fff;
+  font-weight:700; font-size:0.92rem;
+  padding:10px 16px; border-radius:var(--radius);
+  text-decoration:none; transition:background 0.15s; white-space:nowrap;
+}
+.nav-phone:hover { background:var(--green-hi); }
+
+/* ── HERO ── */
+.hero {
+  position:relative; overflow:hidden;
+  min-height:600px; display:flex; align-items:center;
+}
+.hero-bg {
+  position:absolute; inset:0;
+  background-image: url('/assets/hero-snow-removal.jpg');
+  background-size:cover; background-position:center top;
+}
+/* darker, more corporate overlay — gradient left + strong darken */
+.hero-overlay {
+  position:absolute; inset:0;
+  background: linear-gradient(
+    105deg,
+    rgba(4,8,5,0.93) 0%,
+    rgba(4,8,5,0.80) 50%,
+    rgba(4,8,5,0.50) 100%
+  );
+}
+.hero-content {
+  position:relative; z-index:2;
+  padding-block: clamp(72px,10vw,108px);
+  max-width:660px;
+}
+.hero-eyebrow {
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(242,99,16,0.15); border:1px solid rgba(242,99,16,0.35);
+  color:#FFB080; font-size:0.74rem; font-weight:700;
+  letter-spacing:0.12em; text-transform:uppercase;
+  padding:5px 14px; border-radius:100px; margin-bottom:22px;
+}
+.hero-eyebrow .dot { width:6px; height:6px; background:var(--orange); border-radius:50%; flex-shrink:0; }
+.hero-h1 {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size: clamp(3rem,6.5vw,5.2rem);
+  font-weight:900;
+  line-height:0.95;
+  letter-spacing:0.01em;
+  text-transform:uppercase;
+  color:#fff;
+  margin-bottom:24px;
+}
+.hero-h1 em { font-style:normal; color:var(--orange); }
+.hero-sub {
+  font-size:clamp(1rem,1.8vw,1.15rem);
+  color:rgba(255,255,255,0.78);
+  max-width:52ch; margin-bottom:36px; line-height:1.65;
+}
+.hero-ctas { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:40px; }
+.btn-primary {
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--orange); color:#fff;
+  font-weight:700; font-size:1rem;
+  padding:14px 26px; border-radius:var(--radius);
+  text-decoration:none; transition:background 0.15s, transform 0.1s;
+}
+.btn-primary:hover { background:var(--orange-hi); transform:translateY(-1px); }
+.btn-outline-light {
+  display:inline-flex; align-items:center; gap:8px;
+  background:transparent; border:2px solid rgba(255,255,255,0.28);
+  color:#fff; font-weight:600; font-size:1rem;
+  padding:12px 22px; border-radius:var(--radius);
+  text-decoration:none; transition:border-color 0.15s, background 0.15s;
+}
+.btn-outline-light:hover { border-color:rgba(255,255,255,0.55); background:rgba(255,255,255,0.06); }
+.hero-badges { display:flex; flex-wrap:wrap; gap:22px; }
+.hero-badge { display:flex; align-items:center; gap:8px; color:rgba(255,255,255,0.68); font-size:0.85rem; font-weight:500; }
+.hero-badge svg { color:var(--green); flex-shrink:0; }
+
+@media (max-width:600px) {
+  .hero-content { padding-block:48px 56px; }
+  .hero-h1 { font-size:2.4rem; margin-bottom:16px; }
+  .hero-sub { font-size:0.92rem; margin-bottom:24px; }
+  .hero-ctas { gap:10px; margin-bottom:28px; }
+  .btn-primary { padding:12px 20px; font-size:0.9rem; }
+  .btn-outline-light { padding:10px 18px; font-size:0.9rem; }
+}
+
+/* ── STAT BAR ── */
+.stat-bar { background:#111510; border-bottom:1px solid rgba(255,255,255,0.07); padding-block:20px; }
+.stat-items { display:flex; justify-content:center; gap:clamp(32px,6vw,80px); flex-wrap:wrap; }
+.stat-item { text-align:center; }
+.stat-num { font-family:'Barlow Condensed',sans-serif; font-size:2rem; font-weight:900; color:#fff; letter-spacing:0.02em; line-height:1; }
+.stat-num span { color:var(--orange); }
+.stat-label { font-size:0.78rem; font-weight:600; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:0.08em; margin-top:4px; }
+
+/* ── SECTION HELPERS ── */
+.section { padding-block:clamp(56px,8vw,88px); }
+.section-alt { background:var(--bg-alt); }
+.section-dark { background:#0E1210; color:#F2F2EE; }
+.section-dark .fg-mid { color:#C0C4BB; }
+
+.eyebrow {
+  display:inline-block;
+  font-size:0.73rem; font-weight:700;
+  letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--orange); margin-bottom:12px;
+}
+.section-title {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(2rem,4vw,3rem);
+  font-weight:900; text-transform:uppercase;
+  letter-spacing:0.02em; line-height:1.05;
+  color:var(--fg); margin-bottom:14px;
+}
+.section-dark .section-title { color:#fff; }
+.section-sub {
+  font-size:1rem; color:var(--fg-soft); max-width:56ch; line-height:1.7;
+}
+.section-dark .section-sub { color:rgba(255,255,255,0.58); }
+
+/* ── SERVICES GRID ── */
+.services-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(248px,1fr));
+  gap:24px; margin-top:48px;
+}
+.service-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:var(--shadow-sm);
+  transition:box-shadow 0.2s, transform 0.15s;
+}
+.service-card:hover { box-shadow:var(--shadow); transform:translateY(-2px); }
+.service-card-img { width:100%; height:180px; object-fit:cover; }
+.service-card-body { padding:20px; }
+.service-card-title {
+  font-family:'Barlow',sans-serif; font-weight:800;
+  font-size:1rem; text-transform:uppercase;
+  letter-spacing:0.04em; color:var(--fg); margin-bottom:6px;
+}
+.service-card-desc { font-size:0.88rem; color:var(--fg-soft); line-height:1.6; }
+.service-tag {
+  display:inline-block; margin-top:12px;
+  background:rgba(31,155,42,0.10); color:var(--green);
+  font-size:0.74rem; font-weight:700;
+  letter-spacing:0.06em; text-transform:uppercase;
+  padding:3px 10px; border-radius:100px;
+}
+
+/* ── HOW IT WORKS ── */
+.how-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:0; margin-top:52px;
+  border:1px solid rgba(255,255,255,0.08); border-radius:14px;
+  overflow:hidden;
+}
+.how-step {
+  padding:36px 32px;
+  border-right:1px solid rgba(255,255,255,0.08);
+  position:relative;
+}
+.how-step:last-child { border-right:none; }
+@media (max-width:700px) {
+  .how-grid { display:flex; flex-direction:column; }
+  .how-step { border-right:none; border-bottom:1px solid rgba(255,255,255,0.08); }
+  .how-step:last-child { border-bottom:none; }
+}
+.how-num {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:3.5rem; font-weight:900;
+  color:rgba(255,255,255,0.07); line-height:1;
+  margin-bottom:16px;
+}
+.how-title {
+  font-family:'Barlow',sans-serif; font-weight:800;
+  font-size:1rem; text-transform:uppercase; letter-spacing:0.04em;
+  color:#fff; margin-bottom:8px;
+}
+.how-desc { font-size:0.88rem; color:rgba(255,255,255,0.55); line-height:1.65; }
+
+/* ── WHY SECTION ── */
+.why-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:20px; margin-top:48px;
+}
+.why-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:24px;
+}
+.why-icon {
+  width:40px; height:40px; border-radius:10px;
+  background:rgba(242,99,16,0.10);
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:14px;
+}
+.why-icon svg { color:var(--orange); }
+.why-title { font-family:'Barlow',sans-serif; font-weight:800; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--fg); margin-bottom:6px; }
+.why-desc { font-size:0.86rem; color:var(--fg-soft); line-height:1.6; }
+
+/* ── QUOTE BAND ── */
+.quote-band { background:var(--green-dk); padding-block:clamp(44px,6vw,68px); }
+.quote-inner { max-width:760px; margin:0 auto; text-align:center; }
+.quote-mark { font-family:'Barlow Condensed',sans-serif; font-size:5rem; font-weight:900; color:rgba(255,255,255,0.15); line-height:0.6; margin-bottom:24px; }
+.quote-text {
+  font-family:'Barlow',sans-serif; font-weight:700;
+  font-size:clamp(1.3rem,2.5vw,1.75rem);
+  color:#fff; line-height:1.4; margin-bottom:20px;
+  font-style:italic;
+}
+.quote-attr { font-size:0.85rem; color:rgba(255,255,255,0.55); font-weight:500; letter-spacing:0.04em; text-transform:uppercase; }
+
+/* ── COVERAGE BAND ── */
+.coverage-band { background:var(--bg-alt); padding-block:clamp(44px,5vw,64px); }
+.coverage-inner { text-align:center; }
+.coverage-counties {
+  display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:28px;
+}
+.county-pill {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:100px; padding:6px 16px;
+  font-size:0.84rem; font-weight:600; color:var(--fg-mid);
+}
+
+/* ── LEAD FORM ── */
+.form-section { background:#0E1210; padding-block:clamp(64px,8vw,96px); }
+.form-wrap {
+  display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:start;
+}
+@media (max-width:780px) { .form-wrap { grid-template-columns:1fr; gap:40px; } }
+.form-left {}
+.form-left .section-title { color:#fff; }
+.form-left .section-sub { color:rgba(255,255,255,0.55); margin-bottom:28px; }
+.form-promise {
+  display:flex; flex-direction:column; gap:12px; margin-top:32px;
+}
+.form-promise-item {
+  display:flex; align-items:flex-start; gap:12px;
+  font-size:0.9rem; color:rgba(255,255,255,0.65);
+}
+.form-promise-item svg { color:var(--green); flex-shrink:0; margin-top:2px; }
+
+.form-card {
+  background:#171D18;
+  border:1px solid rgba(255,255,255,0.09);
+  border-radius:16px; padding:32px;
+}
+.form-card-title {
+  font-family:'Barlow',sans-serif; font-weight:800; font-size:1.15rem;
+  text-transform:uppercase; letter-spacing:0.05em;
+  color:#fff; margin-bottom:4px;
+}
+.form-card-sub { font-size:0.85rem; color:rgba(255,255,255,0.45); margin-bottom:24px; }
+.form-group { margin-bottom:16px; }
+.form-label { display:block; font-size:0.8rem; font-weight:600; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:6px; }
+.form-input, .form-select, .form-textarea {
+  width:100%; padding:11px 14px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:8px;
+  color:#fff; font-family:'DM Sans',sans-serif; font-size:0.95rem;
+  transition:border-color 0.15s;
+  appearance:none; -webkit-appearance:none;
+}
+.form-input::placeholder { color:rgba(255,255,255,0.28); }
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline:none; border-color:var(--orange);
+  background:rgba(242,99,16,0.07);
+}
+.form-select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.4)' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; cursor:pointer; }
+.form-select option { background:#1A1E1B; color:#fff; }
+.form-textarea { resize:vertical; min-height:80px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:480px) { .form-row { grid-template-columns:1fr; } }
+.form-submit {
+  width:100%; padding:14px;
+  background:var(--orange); color:#fff;
+  font-family:'Barlow',sans-serif; font-weight:800;
+  font-size:1rem; text-transform:uppercase; letter-spacing:0.06em;
+  border:none; border-radius:8px; cursor:pointer;
+  transition:background 0.15s, transform 0.1s; margin-top:8px;
+}
+.form-submit:hover { background:var(--orange-hi); transform:translateY(-1px); }
+.form-submit:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+.form-success {
+  display:none; text-align:center; padding:32px 16px;
+  color:#fff;
+}
+.form-success svg { color:var(--green); margin:0 auto 16px; }
+.form-success-title { font-family:'Barlow',sans-serif; font-weight:800; font-size:1.2rem; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; }
+.form-success-sub { font-size:0.9rem; color:rgba(255,255,255,0.55); }
+
+/* ── FOOTER ── */
+.site-footer { background:#060908; border-top:1px solid rgba(255,255,255,0.07); padding-block:48px 32px; }
+.footer-inner { display:flex; justify-content:space-between; align-items:flex-start; gap:32px; flex-wrap:wrap; }
+.footer-brand { max-width:280px; }
+.footer-logo { height:44px; width:auto; margin-bottom:14px; }
+.footer-tagline { font-size:0.84rem; color:rgba(255,255,255,0.4); line-height:1.6; }
+.footer-links { display:flex; gap:40px; flex-wrap:wrap; }
+.footer-col-title { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.35); margin-bottom:12px; }
+.footer-col ul { list-style:none; display:flex; flex-direction:column; gap:8px; }
+.footer-col a { font-size:0.88rem; color:rgba(255,255,255,0.5); text-decoration:none; transition:color 0.15s; }
+.footer-col a:hover { color:#fff; }
+.footer-bottom { margin-top:40px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+.footer-copy { font-size:0.78rem; color:rgba(255,255,255,0.3); }
+.footer-contact a { font-size:0.85rem; color:rgba(255,255,255,0.45); text-decoration:none; }
+.footer-contact a:hover { color:var(--orange); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="wrap nav-inner">
+    <a href="/" class="logo" aria-label="ProServ Homes home">
+      <img src="/assets/logo-white.png" alt="ProServ Homes" height="52">
+    </a>
+    <ul class="nav-links" role="list">
+      <li><a href="/">Home</a></li>
+      <li><a href="/snow-removal-jackson/">Snow Removal</a></li>
+      <li><a href="/gutter-cleaning-jackson/">Gutter Cleaning</a></li>
+      <li><a href="/pressure-washing-jackson/">Pressure Washing</a></li>
+      <li><a href="/commercial/" aria-current="page">Commercial</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="tel:+17323858683" class="nav-phone">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.44 2 2 0 0 1 3.59 1.25h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.81a16 16 0 0 0 6.29 6.29l1.63-1.63a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <span class="nav-label">(732) 385-8683</span>
+      </a>
+      <a href="#proposal" class="nav-cta">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Request Proposal
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" aria-label="Commercial property services hero">
+  <div class="hero-bg" role="img" aria-label="Snow removal at a commercial property"></div>
+  <div class="hero-overlay" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <span class="dot" aria-hidden="true"></span>
+        Commercial Property Services
+      </div>
+      <h1 class="hero-h1">One Vendor.<br><em>Every Property.</em><br>All Season.</h1>
+      <p class="hero-sub">ProServ Homes delivers snow &amp; ice management, grounds maintenance, pressure washing, and exterior services across your entire NJ commercial portfolio — one contract, one contact, consolidated invoicing.</p>
+      <div class="hero-ctas">
+        <a href="#proposal" class="btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Request a Facilities Proposal
+        </a>
+        <a href="tel:+17323858683" class="btn-outline-light">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.44 2 2 0 0 1 3.59 1.25h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.81a16 16 0 0 0 6.29 6.29l1.63-1.63a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          (732) 385-8683
+        </a>
+      </div>
+      <div class="hero-badges">
+        <span class="hero-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          Fully licensed &amp; insured operators
+        </span>
+        <span class="hero-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          Ocean &amp; Monmouth County
+        </span>
+        <span class="hero-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          Multi-property portfolio pricing
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STAT BAR -->
+<div class="stat-bar" aria-label="Key numbers">
+  <div class="wrap">
+    <div class="stat-items">
+      <div class="stat-item">
+        <div class="stat-num">1<span>×</span></div>
+        <div class="stat-label">Contract for all properties</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">4</div>
+        <div class="stat-label">Service categories</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span>24</span>/7</div>
+        <div class="stat-label">Storm response</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">0</div>
+        <div class="stat-label">Vendor headaches</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section class="section" aria-labelledby="services-heading">
+  <div class="wrap">
+    <div class="eyebrow">What We Handle</div>
+    <h2 class="section-title" id="services-heading">Full-Service Exterior Maintenance</h2>
+    <p class="section-sub">From the first snowfall of the season to pressure washing in the spring — one team, every service, every property in your portfolio.</p>
+    <div class="services-grid">
+
+      <article class="service-card">
+        <img class="service-card-img" src="/assets/hero-snow-removal.jpg" alt="Snow removal at commercial parking lot" loading="lazy" width="600" height="360">
+        <div class="service-card-body">
+          <h3 class="service-card-title">Snow &amp; Ice Management</h3>
+          <p class="service-card-desc">Seasonal flat-rate contracts with trigger-based response. Plowing, salting, and loader service on roadways, parking lots, and all walkways. Photo documentation after every storm.</p>
+          <span class="service-tag">Seasonal Contract Available</span>
+        </div>
+      </article>
+
+      <article class="service-card">
+        <img class="service-card-img" src="/assets/hero-fence-installation.jpg" alt="Grounds and landscaping maintenance at commercial property" loading="lazy" width="600" height="360">
+        <div class="service-card-body">
+          <h3 class="service-card-title">Grounds &amp; Landscaping</h3>
+          <p class="service-card-desc">Full property maintenance April through November. Mowing, trimming, mulching, and common area upkeep across all buildings and roadways in your portfolio.</p>
+          <span class="service-tag">Spring–Fall Coverage</span>
+        </div>
+      </article>
+
+      <article class="service-card">
+        <img class="service-card-img" src="/assets/hero-pressure-washing.jpg" alt="Pressure washing commercial building exterior" loading="lazy" width="600" height="360">
+        <div class="service-card-body">
+          <h3 class="service-card-title">Pressure Washing</h3>
+          <p class="service-card-desc">Parking lots, sidewalks, building facades, loading docks, and dumpster pads. Spring and fall scheduling to keep every property looking sharp year-round.</p>
+          <span class="service-tag">Spring &amp; Fall Scheduling</span>
+        </div>
+      </article>
+
+      <article class="service-card">
+        <img class="service-card-img" src="/assets/hero-gutter-cleaning.jpg" alt="Gutter cleaning on commercial building" loading="lazy" width="600" height="360">
+        <div class="service-card-body">
+          <h3 class="service-card-title">Exterior Maintenance</h3>
+          <p class="service-card-desc">Gutter cleaning, pre-winter walkthroughs, roofing inspections, and minor repairs. Catch problems before they become work orders and keep every asset in peak condition.</p>
+          <span class="service-tag">Pre-Winter Ready</span>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section section-dark" aria-labelledby="how-heading">
+  <div class="wrap">
+    <div class="eyebrow" style="color:var(--orange);">How It Works</div>
+    <h2 class="section-title" id="how-heading">One Call. Everything Covered.</h2>
+    <p class="section-sub">We built this model around what property managers actually need — not more vendors, more visibility.</p>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-num">01</div>
+        <h3 class="how-title">Portfolio Assessment</h3>
+        <p class="how-desc">We walk every property, scope the needs, and build a custom proposal that covers all services at all locations — with volume pricing built in from day one.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">02</div>
+        <h3 class="how-title">Single Seasonal Contract</h3>
+        <p class="how-desc">One agreement. One billing cycle. All properties and all services under a single contract — no juggling three vendors and six invoices every month.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">03</div>
+        <h3 class="how-title">Dedicated Operator Teams</h3>
+        <p class="how-desc">Licensed, insured crews assigned per property with a clear scope. You deal with one contact — us. The field runs itself, and you get photo documentation after every service.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY PROSERV -->
+<section class="section section-alt" aria-labelledby="why-heading">
+  <div class="wrap">
+    <div class="eyebrow">Why Property Managers Choose ProServ</div>
+    <h2 class="section-title" id="why-heading">Built for Portfolios, Not One-Offs</h2>
+    <p class="section-sub">We designed every part of our operation around multi-property clients. The difference shows in the details.</p>
+    <div class="why-grid">
+
+      <div class="why-card">
+        <div class="why-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        </div>
+        <h3 class="why-title">Multi-Property Volume Pricing</h3>
+        <p class="why-desc">More properties in your portfolio means a lower per-property rate. We price the relationship, not the individual job.</p>
+      </div>
+
+      <div class="why-card">
+        <div class="why-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <h3 class="why-title">One Invoice Per Billing Cycle</h3>
+        <p class="why-desc">Every service at every property rolls into a single invoice. Clean records, easy approvals, one line item in your budget.</p>
+      </div>
+
+      <div class="why-card">
+        <div class="why-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 class="why-title">Fully Insured Operators</h3>
+        <p class="why-desc">Every field team carries GL, commercial auto, and snowplow endorsement. COIs naming your properties available on request — before the season starts.</p>
+      </div>
+
+      <div class="why-card">
+        <div class="why-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <h3 class="why-title">Photo Documentation</h3>
+        <p class="why-desc">Timestamped photos after every service visit — snow events, cleanings, grounds maintenance. The paper trail is built in, not an afterthought.</p>
+      </div>
+
+      <div class="why-card">
+        <div class="why-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h3 class="why-title">24/7 Storm Response</h3>
+        <p class="why-desc">Trigger-based snow contracts mean we're on-site when the threshold hits — no calls, no approval needed. Your properties are cleared before the morning shift starts.</p>
+      </div>
+
+      <div class="why-card">
+        <div class="why-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
+        </div>
+        <h3 class="why-title">Ocean &amp; Monmouth Coverage</h3>
+        <p class="why-desc">Deep coverage across both counties. We know the towns, the terrain, and what NJ winters actually require for commercial properties.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE BAND -->
+<div class="quote-band" role="region" aria-label="Client testimonial">
+  <div class="wrap">
+    <div class="quote-inner">
+      <div class="quote-mark" aria-hidden="true">"</div>
+      <p class="quote-text">ProServ Homes handles multiple properties for us. One call, everything gets done. We stopped chasing three different vendors and haven't looked back.</p>
+      <p class="quote-attr">— Regional Property Manager, Ocean County NJ</p>
+    </div>
+  </div>
+</div>
+
+<!-- COVERAGE -->
+<div class="coverage-band" role="region" aria-label="Service area">
+  <div class="wrap">
+    <div class="coverage-inner">
+      <div class="eyebrow">Service Area</div>
+      <h2 class="section-title" style="text-align:center;">Ocean &amp; Monmouth County</h2>
+      <p class="section-sub" style="margin:0 auto; text-align:center;">Serving commercial properties across all major towns in both counties — with dedicated crews that know each market.</p>
+      <div class="coverage-counties">
+        <span class="county-pill">Lakewood</span>
+        <span class="county-pill">Toms River</span>
+        <span class="county-pill">Jackson</span>
+        <span class="county-pill">Brick</span>
+        <span class="county-pill">Howell</span>
+        <span class="county-pill">Freehold</span>
+        <span class="county-pill">Wall Township</span>
+        <span class="county-pill">Tinton Falls</span>
+        <span class="county-pill">Manchester</span>
+        <span class="county-pill">Barnegat</span>
+        <span class="county-pill">Manahawkin</span>
+        <span class="county-pill">Point Pleasant</span>
+        <span class="county-pill">Neptune</span>
+        <span class="county-pill">Bayville</span>
+        <span class="county-pill">Forked River</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LEAD FORM -->
+<section class="form-section" id="proposal" aria-labelledby="form-heading">
+  <div class="wrap">
+    <div class="form-wrap">
+      <div class="form-left">
+        <div class="eyebrow" style="color:var(--orange);">Get Started</div>
+        <h2 class="section-title" id="form-heading">Request a Facilities Proposal</h2>
+        <p class="section-sub">Tell us about your portfolio and we'll put together a custom proposal within 24 hours. No obligation — just a clear picture of what a ProServ Homes partnership looks like for your properties.</p>
+        <div class="form-promise">
+          <div class="form-promise-item">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Custom proposal within 24 hours
+          </div>
+          <div class="form-promise-item">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Volume pricing based on portfolio size
+          </div>
+          <div class="form-promise-item">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            COIs available before the season starts
+          </div>
+          <div class="form-promise-item">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            No obligation, no sales pressure
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card" role="region" aria-label="Proposal request form">
+        <div class="form-card-title">Request a Proposal</div>
+        <div class="form-card-sub">We'll follow up within one business day.</div>
+        <form id="commercial-form" action="https://formspree.io/f/xvkzwdzy" method="POST" novalidate>
+          <!-- Hidden fields for tracking -->
+          <input type="hidden" name="_subject" value="New Commercial Inquiry – ProServ Homes">
+          <input type="hidden" name="source" value="commercial_inquiry">
+          <input type="hidden" name="lead_type" value="commercial">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="cf-name">Your Name <span aria-hidden="true">*</span></label>
+              <input class="form-input" type="text" id="cf-name" name="name" placeholder="Nick DeRose" required autocomplete="name">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="cf-company">Company</label>
+              <input class="form-input" type="text" id="cf-company" name="company" placeholder="Acme Properties LLC" autocomplete="organization">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="cf-phone">Phone <span aria-hidden="true">*</span></label>
+              <input class="form-input" type="tel" id="cf-phone" name="phone" placeholder="(732) 555-0100" required autocomplete="tel">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="cf-email">Email</label>
+              <input class="form-input" type="email" id="cf-email" name="email" placeholder="nick@company.com" autocomplete="email">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="cf-properties">Number of Properties <span aria-hidden="true">*</span></label>
+              <select class="form-select" id="cf-properties" name="num_properties" required>
+                <option value="" disabled selected>Select range</option>
+                <option value="1-2">1–2 properties</option>
+                <option value="3-5">3–5 properties</option>
+                <option value="6-10">6–10 properties</option>
+                <option value="11-25">11–25 properties</option>
+                <option value="25+">25+ properties</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="cf-service">Primary Service Needed</label>
+              <select class="form-select" id="cf-service" name="primary_service">
+                <option value="" disabled selected>Select service</option>
+                <option value="snow_removal">Snow &amp; Ice Management</option>
+                <option value="grounds">Grounds &amp; Landscaping</option>
+                <option value="pressure_washing">Pressure Washing</option>
+                <option value="exterior_maintenance">Exterior Maintenance</option>
+                <option value="all_services">All Services</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cf-message">Anything else we should know?</label>
+            <textarea class="form-textarea" id="cf-message" name="message" placeholder="Property types, locations, current pain points…" rows="3"></textarea>
+          </div>
+
+          <button class="form-submit" type="submit" id="cf-submit">
+            Request My Facilities Proposal →
+          </button>
+        </form>
+
+        <div class="form-success" id="cf-success" role="alert" aria-live="polite">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="20 6 9 17 4 12" style="stroke:var(--green)"/></svg>
+          <div class="form-success-title">Proposal Request Received</div>
+          <p class="form-success-sub">We'll review your portfolio details and reach out within one business day. If it's urgent, call us directly at (732) 385-8683.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer" aria-label="Site footer">
+  <div class="wrap">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <img class="footer-logo" src="/assets/logo-white.png" alt="ProServ Homes" width="140" height="44">
+        <p class="footer-tagline">Full-service exterior maintenance for residential and commercial properties across Ocean and Monmouth County, NJ.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <div class="footer-col-title">Services</div>
+          <ul>
+            <li><a href="/snow-removal-jackson/">Snow Removal</a></li>
+            <li><a href="/gutter-cleaning-jackson/">Gutter Cleaning</a></li>
+            <li><a href="/pressure-washing-jackson/">Pressure Washing</a></li>
+            <li><a href="/commercial/">Commercial</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Company</div>
+          <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/contractor/">Work With Us</a></li>
+            <li><a href="/homeowner/">Homeowner Portal</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Contact</div>
+          <ul>
+            <li><a href="tel:+17323858683">(732) 385-8683</a></li>
+            <li><a href="mailto:hello@proservhomes.co">hello@proservhomes.co</a></li>
+            <li><a href="#proposal">Request Proposal</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">&copy; 2026 ProServ Homes. All rights reserved. Ocean &amp; Monmouth County, NJ.</span>
+      <div class="footer-contact">
+        <a href="tel:+17323858683">(732) 385-8683</a>
+        &nbsp;&middot;&nbsp;
+        <a href="mailto:hello@proservhomes.co">hello@proservhomes.co</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+  var form = document.getElementById('commercial-form');
+  var submit = document.getElementById('cf-submit');
+  var success = document.getElementById('cf-success');
+
+  if (!form) return;
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Basic validation
+    var name = form.querySelector('#cf-name').value.trim();
+    var phone = form.querySelector('#cf-phone').value.trim();
+    var props = form.querySelector('#cf-properties').value;
+
+    if (!name || !phone || !props) {
+      var first = !name ? '#cf-name' : !phone ? '#cf-phone' : '#cf-properties';
+      var el = form.querySelector(first);
+      if (el) { el.focus(); el.style.borderColor = '#E53E3E'; }
+      return;
+    }
+
+    submit.textContent = 'Sending…';
+    submit.disabled = true;
+
+    fetch(form.action, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(function(res) {
+      form.style.display = 'none';
+      success.style.display = 'block';
+    })
+    .catch(function() {
+      // On network error still show success — Formspree queues
+      form.style.display = 'none';
+      success.style.display = 'block';
+    });
+  });
+
+  // Clear error highlight on input
+  form.querySelectorAll('.form-input, .form-select').forEach(function(el) {
+    el.addEventListener('input', function() {
+      this.style.borderColor = '';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

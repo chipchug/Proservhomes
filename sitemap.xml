@@ -46,4 +46,10 @@
   <url><loc>https://proservhomes.co/pressure-washing-jackson/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://proservhomes.co/pressure-washing-lakewood/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
 
+  <url>
+    <loc>https://proservhomes.co/commercial/</loc>
+    <lastmod>2026-11-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
 </urlset>
