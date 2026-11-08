@@ -3,20 +3,21 @@
 --
 -- Any time a job's status becomes 'Complete' — admin status buttons, admin
 -- edit modal, contractor app, or a direct insert — Postgres calls the
--- job-complete-notify edge function, which texts the homeowner a link to
--- the homeowner app. The function itself guarantees one text per job.
+-- job-complete-notify edge function, which texts AND emails the homeowner a
+-- link to the homeowner app. The function guarantees one of each per job.
 
 create extension if not exists pg_net;
 
--- 1. Tracking flag
+-- 1. Tracking flags (one per channel)
 alter table jobs
-  add column if not exists completion_sms_sent boolean default false;
+  add column if not exists completion_sms_sent   boolean default false,
+  add column if not exists completion_email_sent boolean default false;
 
--- Don't text customers whose jobs were already finished before this shipped
+-- Don't notify customers whose jobs were already finished before this shipped
 update jobs
-  set completion_sms_sent = true
-  where status in ('Complete', 'Paid')
-    and coalesce(completion_sms_sent, false) = false;
+  set completion_sms_sent = true,
+      completion_email_sent = true
+  where status in ('Complete', 'Paid');
 
 -- 2. Always stamp completed_at on the transition, whichever screen did it
 --    (the admin edit modal and new-job form didn't, so the gutter-guard
@@ -40,7 +41,8 @@ create trigger jobs_stamp_completed_at
   before insert or update of status on jobs
   for each row execute function jobs_stamp_completed_at();
 
--- 3. Fire the edge function on the transition to Complete
+-- 3. Fire the edge function on the transition to Complete — or when an email
+--    is added to an already-complete job (e.g. contractor finished it first)
 create or replace function jobs_notify_complete()
 returns trigger
 language plpgsql
@@ -49,9 +51,16 @@ set search_path = public, extensions, net
 as $$
 begin
   if new.status = 'Complete'
-     and (tg_op = 'INSERT' or old.status is distinct from 'Complete')
-     and coalesce(new.completion_sms_sent, false) = false
-     and new.phone is not null and new.phone <> '' then
+     and (tg_op = 'INSERT'
+          or old.status is distinct from 'Complete'
+          or old.email is distinct from new.email)
+     and (
+       (coalesce(new.completion_sms_sent, false) = false
+         and coalesce(new.phone, '') <> '')
+       or
+       (coalesce(new.completion_email_sent, false) = false
+         and coalesce(new.email, '') <> '')
+     ) then
     perform net.http_post(
       url     := 'https://chmicqvorgjqlthufgwt.supabase.co/functions/v1/job-complete-notify',
       body    := jsonb_build_object('job_id', new.id),
@@ -69,5 +78,5 @@ $$;
 
 drop trigger if exists jobs_notify_complete on jobs;
 create trigger jobs_notify_complete
-  after insert or update of status on jobs
+  after insert or update of status, email on jobs
   for each row execute function jobs_notify_complete();
