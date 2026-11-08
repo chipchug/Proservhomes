@@ -1,0 +1,14 @@
+# Supabase CLI config — read by `supabase functions deploy`.
+# Functions called by outside services (Meta, Stripe, Postgres triggers)
+# send no Supabase JWT, so JWT verification MUST stay off for them —
+# otherwise every call is rejected with 401 before our code runs.
+project_id = "chmicqvorgjqlthufgwt"
+
+[functions.receive-fb-lead]
+verify_jwt = false   # Meta Lead Ads webhook
+
+[functions.stripe-webhook]
+verify_jwt = false   # Stripe webhook
+
+[functions.job-complete-notify]
+verify_jwt = false   # called by DB trigger with the publishable key
