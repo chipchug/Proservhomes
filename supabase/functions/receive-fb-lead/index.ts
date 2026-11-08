@@ -281,7 +281,16 @@ Deno.serve(async (req: Request) => {
       const formId: string    = change.value?.form_id;
       if (!leadgenId) continue;
 
-      console.log('Processing lead:', leadgenId, 'form:', formId);
+      console.log('Processing lead:', leadgenId, 'form:', formId, '| via:', body.source || 'meta_webhook');
+
+      // Dedupe: the poll-fb-leads backup may deliver the same lead the webhook already did
+      {
+        const { data: seen } = await supabase.from('fb_leads').select('id').eq('leadgen_id', leadgenId).limit(1);
+        if (seen && seen.length) {
+          console.log('Lead already processed — skipping:', leadgenId);
+          continue;
+        }
+      }
 
       // Fetch full lead from Graph API
       let leadData: any = {};
@@ -320,6 +329,7 @@ Deno.serve(async (req: Request) => {
 
       // Save to fb_leads
       const { error: dbErr } = await supabase.from('fb_leads').insert({
+        leadgen_id:   leadgenId,
         group_url:    `fb_lead_ad:${formId || 'unknown'}`,
         text_snippet: textSnippet,
         post_url:     null,
@@ -331,9 +341,15 @@ Deno.serve(async (req: Request) => {
         source:       'lead_ad',
       });
 
+      if (dbErr && dbErr.code === '23505') {
+        // Unique violation on leadgen_id — webhook and poller raced; the other one notified
+        console.log('Lead inserted concurrently by another delivery — skipping:', leadgenId);
+        continue;
+      }
       if (dbErr) {
         console.warn('Full insert failed, trying base columns:', dbErr.message);
         await supabase.from('fb_leads').insert({
+          leadgen_id:   leadgenId,
           group_url:    `fb_lead_ad:${formId || 'unknown'}`,
           text_snippet: textSnippet,
           post_url:     null,

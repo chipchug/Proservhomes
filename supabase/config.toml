@@ -12,3 +12,6 @@ verify_jwt = false   # Stripe webhook
 
 [functions.job-complete-notify]
 verify_jwt = false   # called by DB trigger with the publishable key
+
+[functions.poll-fb-leads]
+verify_jwt = false   # cron + browser diagnostic (?diagnose=1)
