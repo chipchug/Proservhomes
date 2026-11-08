@@ -74,7 +74,7 @@ async function sendNtfy(topic: string, name: string, phone: string, service: str
     return false;
   }
   try {
-    const title = `🔥 New Lead: ${name || 'Unknown'}`;
+    const title = `New Lead: ${name || 'Unknown'}`;
     const lines = [
       service ? `Service: ${service}` : '',
       phone   ? `Phone: ${phone}`     : '',
