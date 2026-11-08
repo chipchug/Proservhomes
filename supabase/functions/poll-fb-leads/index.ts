@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         source: "poll-fb-leads",
         object: "page",
-        entry: [{ id: pageId, changes: [{ field: "leadgen", value: { leadgen_id: l.id, form_id: l.form_id } }] }],
+        entry: [{ id: pageId, changes: [{ field: "leadgen", value: { leadgen_id: l.id, form_id: l.form_id, created_time: l.created_time } }] }],
       }),
     });
     if (r.ok) delivered.push(`${l.id} (${l.form}, ${l.created_time})`);

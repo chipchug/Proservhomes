@@ -309,7 +309,7 @@ Deno.serve(async (req: Request) => {
       let leadData: any = {};
       try {
         const res = await fetch(
-          `https://graph.facebook.com/v19.0/${leadgenId}?access_token=${pageAccessToken}`
+          `https://graph.facebook.com/v19.0/${leadgenId}?fields=created_time,field_data,form_id&access_token=${pageAccessToken}`
         );
         leadData = await res.json();
         if (leadData.error) {
@@ -399,7 +399,17 @@ Deno.serve(async (req: Request) => {
       }
 
       // ── 3. Auto-text the prospect ──────────────────────────────────────────
-      if (phone && twilioSid && twilioAuth) {
+      // Only for FRESH leads. A lead recovered late by poll-fb-leads may already
+      // be in conversation with Nick — "just got your inquiry" would be wrong.
+      const createdRaw = change.value?.created_time || leadData.created_time;
+      const ageMin = createdRaw ? (Date.now() - new Date(createdRaw).getTime()) / 60000 : 0;
+      const fresh = !(ageMin > 30);
+      if (!fresh) {
+        console.log(`Prospect auto-text skipped — lead is ${Math.round(ageMin)} min old (late recovery)`);
+        // Also stop missed-lead-followup from texting it later
+        await supabase.from('fb_leads').update({ followup_sent: true }).eq('leadgen_id', leadgenId);
+      }
+      if (fresh && phone && twilioSid && twilioAuth) {
         const prospectPhone = normalizePhone(phone);
         const firstText = getFirstText(name, service);
         await sendSms(twilioSid, twilioAuth, prospectPhone, firstText);
