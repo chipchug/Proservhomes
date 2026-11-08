@@ -13,7 +13,8 @@
  *   job_booked       — homeowner books / admin alert
  *   job_accepted     — homeowner gets assigned notice, contractor gets job notice
  *   job_started      — admin alert with before photos when contractor starts job
- *   job_completed    — homeowner done notice, contractor payment coming
+ *   job_completed    — contractor payment coming + admin alert
+ *   job_complete_homeowner — homeowner receipt/photos link (sent by job-complete-notify)
  *   job_cancelled    — homeowner + contractor cancelled notice
  *   payout_request   — admin only
  *   payout_processed — contractor payment confirmation
@@ -271,22 +272,32 @@ async function buildEmails(payload: EmailPayload, adminEmail?: string): Promise<
     return msgs;
   }
 
-  // ── job_completed ─────────────────────────────────────────────────────────
-  if (event === "job_completed") {
-    if (homeowner?.email) {
+  // ── job_complete_homeowner ───────────────────────────────────────────────
+  // Sent server-side by job-complete-notify (DB trigger), alongside the text.
+  // Deep-links straight to the finished job in the homeowner app.
+  if (event === "job_complete_homeowner") {
+    if (homeowner?.email && job) {
+      const first = homeowner.name?.trim().split(/\s+/)[0] || "there";
       msgs.push({
         to: homeowner.email,
         recipient: "homeowner",
-        subject: "🎉 Your ProServ Homes job is complete!",
+        subject: "✅ Your ProServ Homes job is complete — receipt & photos inside",
         html: emailHtml({
-          headline: "Job complete — nice work!",
-          body: `Your service has been completed. We hope you're happy with the result! You can view your invoice and pay online through the homeowner portal. And if you have a moment, a Google review means the world to a small team like ours.`,
+          headline: `All done, ${first}!`,
+          body: `Your service is complete. Your receipt and before/after photos are ready in your ProServ Homes account — sign in with this email address to see them, pay your invoice, and keep a running history of everything done at your home.`,
           jobDetails: jobDetailsHtml,
-          ctaUrl: "https://proservhomes.co/homeowner/",
-          ctaLabel: "View Invoice & Leave a Review",
+          ctaUrl: `https://proservhomes.co/homeowner/?job=${encodeURIComponent(job.id)}`,
+          ctaLabel: "View Receipt & Photos",
         }),
       });
     }
+    return msgs;
+  }
+
+  // ── job_completed ─────────────────────────────────────────────────────────
+  // Homeowner email is NOT sent here — job-complete-notify owns it (see above)
+  // so it fires from every path and only once.
+  if (event === "job_completed") {
     if (contractor?.email) {
       const completedPayDetailsHtml = job
         ? [
