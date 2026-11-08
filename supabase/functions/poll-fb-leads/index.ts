@@ -17,7 +17,8 @@
  *
  *   ...?diagnose=1&fix=1  — also (re)subscribes the Page to leadgen webhooks
  *
- * Secrets: FB_PAGE_ACCESS_TOKEN (same one receive-fb-lead uses)
+ * Secrets: FB_PAGE_ACCESS_TOKEN (same one receive-fb-lead uses); RESEND_API_KEY +
+ *          ADMIN_EMAIL for the hourly "pipeline broken" alert
  * Auto: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  * Deploy: --no-verify-jwt (pinned in supabase/config.toml)
  */
@@ -44,6 +45,24 @@ const json = (body: unknown, status = 200) =>
     headers: { "Content-Type": "application/json" },
   });
 
+// Email Nick when the lead pipeline itself is broken — at most once an hour
+// (cron runs every 5 min; only alert on the run in the first 5 minutes of the hour)
+async function alertBroken(problem: string, detail: unknown) {
+  const key = Deno.env.get("RESEND_API_KEY");
+  const to = Deno.env.get("ADMIN_EMAIL") || "nick@chipchug.com";
+  if (!key || new Date().getUTCMinutes() >= 5) return;
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: "ProServ Homes <noreply@proservhomes.co>",
+      to: [to],
+      subject: "⚠️ Facebook leads are NOT coming in — action needed",
+      html: `<p><strong>${problem}</strong></p><p>New Facebook leads won't reach you until this is fixed. Check Leads Center manually in the meantime.</p><p>Diagnose: <a href="https://chmicqvorgjqlthufgwt.supabase.co/functions/v1/poll-fb-leads?diagnose=1">open diagnostic</a></p><pre style="font-size:12px">${JSON.stringify(detail, null, 2)}</pre>`,
+    }),
+  }).catch((e) => console.error("[poll-fb-leads] alert email failed:", e));
+}
+
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   const diagnose = url.searchParams.get("diagnose") === "1";
@@ -65,6 +84,7 @@ Deno.serve(async (req) => {
   const me = await graph("me?fields=id,name", token);
   if (!me.ok) {
     console.error("[poll-fb-leads] Token invalid:", JSON.stringify(me.data.error));
+    if (!diagnose) await alertBroken("Facebook Page token is invalid or expired", me.data.error);
     return json({
       problem: "FB_PAGE_ACCESS_TOKEN is invalid or expired — this is why leads aren't arriving",
       graph_error: me.data.error,
@@ -113,6 +133,7 @@ Deno.serve(async (req) => {
   if (!forms.ok) {
     console.error("[poll-fb-leads] Can't list forms:", JSON.stringify(forms.data.error));
     report.forms_error = forms.data.error;
+    if (!diagnose) await alertBroken("Can't read lead forms from Facebook (permissions changed?)", forms.data.error);
     return json(report, diagnose ? 200 : 500);
   }
   const formList: Array<{ id: string; name: string; status: string }> = forms.data.data || [];

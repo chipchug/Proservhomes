@@ -11,7 +11,9 @@
  *   RESEND_API_KEY        — from resend.com dashboard
  *   TWILIO_ACCOUNT_SID
  *   TWILIO_AUTH_TOKEN
- *   NTFY_TOPIC            — your private ntfy.sh topic string (e.g. proserv-nick-abc123)
+ *   NTFY_TOPIC            — your ntfy.sh topic string
+ *   NTFY_TOKEN            — ntfy access token (tk_...) if the topic is reserved/private
+ *                           (or NTFY_USER + NTFY_PASS)
  *
  * Meta setup:
  *   1. Meta App → Webhooks → Page → subscribe to "leadgen" field
@@ -73,31 +75,42 @@ async function sendNtfy(topic: string, name: string, phone: string, service: str
     console.warn('NTFY_TOPIC not set — skipping push notification');
     return false;
   }
-  try {
-    const title = `New Lead: ${name || 'Unknown'}`;
-    const lines = [
-      service ? `Service: ${service}` : '',
-      phone   ? `Phone: ${phone}`     : '',
-      'Open the app to respond →',
-    ].filter(Boolean).join('\n');
+  // Publish as JSON to the ntfy root — no HTTP headers carry user text, so
+  // names with accents/emoji can't break the request (the old Title-header bug)
+  const lines = [
+    service ? `Service: ${service}` : '',
+    phone   ? `Phone: ${phone}`     : '',
+    'Open the app to respond →',
+  ].filter(Boolean).join('\n');
 
-    const res = await fetch(`https://ntfy.sh/${topic}`, {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  // Private/reserved topics need auth: NTFY_TOKEN (tk_...) or NTFY_USER + NTFY_PASS
+  const token = Deno.env.get('NTFY_TOKEN');
+  const user  = Deno.env.get('NTFY_USER');
+  const pass  = Deno.env.get('NTFY_PASS');
+  if (token)              headers['Authorization'] = `Bearer ${token}`;
+  else if (user && pass)  headers['Authorization'] = 'Basic ' + btoa(`${user}:${pass}`);
+
+  try {
+    const res = await fetch('https://ntfy.sh/', {
       method: 'POST',
-      headers: {
-        'Title':    title,
-        'Priority': 'urgent',
-        'Tags':     'loudspeaker,money_with_wings',
-        'Content-Type': 'text/plain',
-      },
-      body: lines,
+      headers,
+      body: JSON.stringify({
+        topic,
+        title: `New Lead: ${name || 'Unknown'}`,
+        message: lines,
+        priority: 5,
+        tags: ['loudspeaker', 'money_with_wings'],
+        click: phone ? `tel:${normalizePhone(phone)}` : undefined,
+      }),
     });
     if (res.ok) {
       console.log('ntfy push sent — topic:', topic);
       return true;
-    } else {
-      console.error('ntfy push failed — status:', res.status);
-      return false;
     }
+    const detail = await res.text().catch(() => '');
+    console.error('ntfy push failed — status:', res.status, '| auth sent:', !!headers['Authorization'], '|', detail);
+    return false;
   } catch (e) {
     console.error('ntfy push exception:', e);
     return false;
