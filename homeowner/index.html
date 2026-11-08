@@ -888,8 +888,6 @@ async function verifyOtp(){
   } else if(_pm==='cancelled'){
     setTimeout(function(){showToast('Payment cancelled — no charge was made.');},400);
     try{history.replaceState({},'',window.location.pathname);}catch(e){}
-  } else if(_jp){
-    setTimeout(function(){openSheet(_jp);},300);
   }
 }
 function backToPhone(){
@@ -1789,8 +1787,7 @@ function switchTab(t){
     // Refresh jobs from DB so status is always current
     var _email = USER.email || _homePhone;
     if(_sb && _email){
-      _sb.from('jobs').select('*').eq('email',_email).order('date',{ascending:false}).then(function(jr){
-        if(jr.data) JOBS = jr.data.map(jr2l);
+      _loadJobsFor(_email).then(function(){
         try{renderHome();}catch(e){}
         try{renderHistory();}catch(e){}
       });
@@ -2068,6 +2065,30 @@ function _showScreen(id){
   console.log('[PSH] _showScreen:', id);
 }
 
+// Jobs are keyed by the email the admin typed in — match case-insensitively
+// (escape LIKE wildcards so "_" in an address doesn't match any character)
+function _loadJobsFor(email){
+  var pat=String(email||'').replace(/[\\%_]/g,function(c){return '\\'+c;});
+  return _sb.from('jobs').select('*').ilike('email',pat).order('date',{ascending:false})
+    .then(function(jr){ if(jr.data) JOBS=jr.data.map(jr2l); })
+    .catch(function(e){ console.warn('[PSH] job load failed',e); });
+}
+
+// Deep link from the "job complete" text: /homeowner/?job=<id>
+// Captured at page load so it survives the login round-trip.
+var _pendingJobId=(function(){try{return new URLSearchParams(window.location.search).get('job');}catch(e){return null;}})();
+function _openPendingJob(){
+  if(!_pendingJobId) return;
+  var id=_pendingJobId; _pendingJobId=null;
+  var _pm=null;try{_pm=new URLSearchParams(window.location.search).get('payment');}catch(e){}
+  if(_pm) return; // payment return flow handles its own sheet
+  setTimeout(function(){
+    if(JOBS.some(function(x){return x.id===id;})){ openSheet(id); }
+    else { showToast('We couldn\u2019t find that job on this account \u2014 sign in with the email you gave us.'); }
+    try{history.replaceState({},'',window.location.pathname);}catch(e){}
+  },350);
+}
+
 // Check DB first, then route — no flash of profileSetup for returning users
 function _goToProfileSetup(email){
   _homePhone = email;
@@ -2078,19 +2099,20 @@ function _goToProfileSetup(email){
       // Returning user — go straight to dashboard, skip profileSetup entirely
       var hw=hr.data[0]; var name=hw.name||'';
       USER={name:name||email,first:name?name.split(' ')[0]:email.split('@')[0],email:email,addr:hw.address||'',phone:hw.phone||'',init:(name||email)[0].toUpperCase(),createdAt:hw.created_at||null,homeType:hw.home_type||'',sqft:hw.sqft||'',techNotes:hw.tech_notes||''};
-      _sb.from('jobs').select('*').eq('email',email).order('date',{ascending:false}).then(function(jr){
-        if(jr.data&&jr.data.length) JOBS=jr.data.map(jr2l);
+      _loadJobsFor(email).then(function(){
         _showScreen('appShell');
         try{initApp();}catch(e){console.error('[PSH] initApp',e);}
-      }).catch(function(){
-        _showScreen('appShell');
-        try{initApp();}catch(e){console.error('[PSH] initApp',e);}
+        _openPendingJob();
       });
     } else {
-      // New user — go straight to app (profile setup is part of onboarding walkthrough)
-      _showScreen('appShell');
-      try{initApp();}catch(e){console.error('[PSH] initApp',e);}
-      if(typeof obShowForNewUser==='function')obShowForNewUser();
+      // New user — go straight to app (profile setup is part of onboarding walkthrough).
+      // Still load jobs: someone arriving from a "job complete" text already has one.
+      _loadJobsFor(email).then(function(){
+        _showScreen('appShell');
+        try{initApp();}catch(e){console.error('[PSH] initApp',e);}
+        if(typeof obShowForNewUser==='function')obShowForNewUser();
+        _openPendingJob();
+      });
     }
   }).catch(function(e){
     console.warn('[PSH] profile check failed, going to app:', e);

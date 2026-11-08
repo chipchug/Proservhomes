@@ -170,14 +170,9 @@ function buildMessages(payload: SmsPayload): Array<{ to: string; body: string; r
   }
 
   if (event === "job_completed") {
-    // → Homeowner: job done, rate us
-    if (homeowner?.phone) {
-      msgs.push({
-        to: homeowner.phone,
-        recipient: "homeowner",
-        body: `Hi ${homeowner.name}! Your ProServ Homes job is complete. 🎉\n\n${jobLine}\n\nWe hope you're happy with the work! View your invoice: https://proservhomes.co/homeowner/`,
-      });
-    }
+    // → Homeowner: NOT sent from here. The job-complete-notify function owns
+    //   that text — it's fired by a database trigger so it covers every path
+    //   (admin + contractor app) and is guaranteed to send only once.
     // → Contractor: payment processing
     if (contractor?.phone) {
       msgs.push({
